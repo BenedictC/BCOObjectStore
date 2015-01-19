@@ -1,0 +1,299 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		8263CE2119EE62A400A37967 /* LUMLine.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE0F19EE62A400A37967 /* LUMLine.m */; };
+		8263CE2219EE62A400A37967 /* LUMStation.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1119EE62A400A37967 /* LUMStation.m */; };
+		8263CE2319EE62A400A37967 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1219EE62A400A37967 /* main.m */; };
+		8263CE2519EE62A400A37967 /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1719EE62A400A37967 /* BCOIndexDescription.m */; };
+		8263CE2619EE62A400A37967 /* BCOObjectStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1919EE62A400A37967 /* BCOObjectStore.m */; };
+		8263CE2719EE62A400A37967 /* BCOObjectStoreCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1B19EE62A400A37967 /* BCOObjectStoreCoordinator.m */; };
+		8263CE2819EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1D19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		822B9EFD19E92B76009A4030 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		822B9EFF19E92B76009A4030 /* BCOObjectStore */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BCOObjectStore; sourceTree = BUILT_PRODUCTS_DIR; };
+		8263CE0E19EE62A400A37967 /* LUMLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMLine.h; sourceTree = "<group>"; };
+		8263CE0F19EE62A400A37967 /* LUMLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMLine.m; sourceTree = "<group>"; };
+		8263CE1019EE62A400A37967 /* LUMStation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMStation.h; sourceTree = "<group>"; };
+		8263CE1119EE62A400A37967 /* LUMStation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMStation.m; sourceTree = "<group>"; };
+		8263CE1219EE62A400A37967 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		8263CE1619EE62A400A37967 /* BCOIndexDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexDescription.h; sourceTree = "<group>"; };
+		8263CE1719EE62A400A37967 /* BCOIndexDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndexDescription.m; sourceTree = "<group>"; };
+		8263CE1819EE62A400A37967 /* BCOObjectStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStore.h; sourceTree = "<group>"; };
+		8263CE1919EE62A400A37967 /* BCOObjectStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStore.m; sourceTree = "<group>"; };
+		8263CE1A19EE62A400A37967 /* BCOObjectStoreCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinator.h; sourceTree = "<group>"; };
+		8263CE1B19EE62A400A37967 /* BCOObjectStoreCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinator.m; sourceTree = "<group>"; };
+		8263CE1C19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinatorSnapshot.h; sourceTree = "<group>"; };
+		8263CE1D19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinatorSnapshot.m; sourceTree = "<group>"; };
+		8263CE1F19EE62A400A37967 /* BCOObjectStore+Query.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStore+Query.h"; sourceTree = "<group>"; };
+		8263CE2019EE62A400A37967 /* BCOObjectStore+Query.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "BCOObjectStore+Query.m"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		822B9EFC19E92B76009A4030 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		822B9EF619E92B76009A4030 = {
+			isa = PBXGroup;
+			children = (
+				8263CE0D19EE62A400A37967 /* Demo App */,
+				8263CE1319EE62A400A37967 /* ObjectStore */,
+				8263CE1E19EE62A400A37967 /* ObjectStore+Query */,
+				822B9F0019E92B76009A4030 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		822B9F0019E92B76009A4030 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				822B9EFF19E92B76009A4030 /* BCOObjectStore */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8263CE0D19EE62A400A37967 /* Demo App */ = {
+			isa = PBXGroup;
+			children = (
+				8263CE0E19EE62A400A37967 /* LUMLine.h */,
+				8263CE0F19EE62A400A37967 /* LUMLine.m */,
+				8263CE1019EE62A400A37967 /* LUMStation.h */,
+				8263CE1119EE62A400A37967 /* LUMStation.m */,
+				8263CE1219EE62A400A37967 /* main.m */,
+			);
+			name = "Demo App";
+			path = "ObjectStore/Demo App";
+			sourceTree = "<group>";
+		};
+		8263CE1319EE62A400A37967 /* ObjectStore */ = {
+			isa = PBXGroup;
+			children = (
+				8263CE1A19EE62A400A37967 /* BCOObjectStoreCoordinator.h */,
+				8263CE1B19EE62A400A37967 /* BCOObjectStoreCoordinator.m */,
+				8263CE1C19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.h */,
+				8263CE1D19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m */,
+				8263CE1619EE62A400A37967 /* BCOIndexDescription.h */,
+				8263CE1719EE62A400A37967 /* BCOIndexDescription.m */,
+				8263CE1819EE62A400A37967 /* BCOObjectStore.h */,
+				8263CE1919EE62A400A37967 /* BCOObjectStore.m */,
+			);
+			name = ObjectStore;
+			path = ObjectStore/ObjectStore;
+			sourceTree = "<group>";
+		};
+		8263CE1E19EE62A400A37967 /* ObjectStore+Query */ = {
+			isa = PBXGroup;
+			children = (
+				8263CE1F19EE62A400A37967 /* BCOObjectStore+Query.h */,
+				8263CE2019EE62A400A37967 /* BCOObjectStore+Query.m */,
+			);
+			name = "ObjectStore+Query";
+			path = "ObjectStore/ObjectStore+Query";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		822B9EFE19E92B76009A4030 /* BCOObjectStore */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 822B9F0619E92B76009A4030 /* Build configuration list for PBXNativeTarget "BCOObjectStore" */;
+			buildPhases = (
+				822B9EFB19E92B76009A4030 /* Sources */,
+				822B9EFC19E92B76009A4030 /* Frameworks */,
+				822B9EFD19E92B76009A4030 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BCOObjectStore;
+			productName = GraphStore;
+			productReference = 822B9EFF19E92B76009A4030 /* BCOObjectStore */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		822B9EF719E92B76009A4030 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0600;
+				ORGANIZATIONNAME = "Benedict Cohen";
+				TargetAttributes = {
+					822B9EFE19E92B76009A4030 = {
+						CreatedOnToolsVersion = 6.0.1;
+					};
+				};
+			};
+			buildConfigurationList = 822B9EFA19E92B76009A4030 /* Build configuration list for PBXProject "BCOObjectStore" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 822B9EF619E92B76009A4030;
+			productRefGroup = 822B9F0019E92B76009A4030 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				822B9EFE19E92B76009A4030 /* BCOObjectStore */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		822B9EFB19E92B76009A4030 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8263CE2519EE62A400A37967 /* BCOIndexDescription.m in Sources */,
+				8263CE2719EE62A400A37967 /* BCOObjectStoreCoordinator.m in Sources */,
+				8263CE2619EE62A400A37967 /* BCOObjectStore.m in Sources */,
+				8263CE2119EE62A400A37967 /* LUMLine.m in Sources */,
+				8263CE2319EE62A400A37967 /* main.m in Sources */,
+				8263CE2819EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */,
+				8263CE2219EE62A400A37967 /* LUMStation.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		822B9F0419E92B76009A4030 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		822B9F0519E92B76009A4030 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		822B9F0719E92B76009A4030 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = BCOObjectStore;
+			};
+			name = Debug;
+		};
+		822B9F0819E92B76009A4030 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = BCOObjectStore;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		822B9EFA19E92B76009A4030 /* Build configuration list for PBXProject "BCOObjectStore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				822B9F0419E92B76009A4030 /* Debug */,
+				822B9F0519E92B76009A4030 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		822B9F0619E92B76009A4030 /* Build configuration list for PBXNativeTarget "BCOObjectStore" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				822B9F0719E92B76009A4030 /* Debug */,
+				822B9F0819E92B76009A4030 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 822B9EF719E92B76009A4030 /* Project object */;
+}
