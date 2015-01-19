@@ -7,13 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8263CE2119EE62A400A37967 /* LUMLine.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE0F19EE62A400A37967 /* LUMLine.m */; };
-		8263CE2219EE62A400A37967 /* LUMStation.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1119EE62A400A37967 /* LUMStation.m */; };
-		8263CE2319EE62A400A37967 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1219EE62A400A37967 /* main.m */; };
-		8263CE2519EE62A400A37967 /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1719EE62A400A37967 /* BCOIndexDescription.m */; };
-		8263CE2619EE62A400A37967 /* BCOObjectStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1919EE62A400A37967 /* BCOObjectStore.m */; };
-		8263CE2719EE62A400A37967 /* BCOObjectStoreCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1B19EE62A400A37967 /* BCOObjectStoreCoordinator.m */; };
-		8263CE2819EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 8263CE1D19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m */; };
+		82AF598D1A6D70370056EDB2 /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF597D1A6D70370056EDB2 /* BCOIndexDescription.m */; };
+		82AF598E1A6D70370056EDB2 /* BCOObjectStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF597F1A6D70370056EDB2 /* BCOObjectStore.m */; };
+		82AF598F1A6D70370056EDB2 /* BCOObjectStoreCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59811A6D70370056EDB2 /* BCOObjectStoreCoordinator.m */; };
+		82AF59901A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59831A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m */; };
+		82AF59911A6D70370056EDB2 /* BCOObjectStore+Query.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59861A6D70370056EDB2 /* BCOObjectStore+Query.m */; };
+		82AF59921A6D70370056EDB2 /* LUMLine.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59891A6D70370056EDB2 /* LUMLine.m */; };
+		82AF59931A6D70370056EDB2 /* LUMStation.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF598B1A6D70370056EDB2 /* LUMStation.m */; };
+		82AF59941A6D70370056EDB2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF598C1A6D70370056EDB2 /* main.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -30,21 +31,21 @@
 
 /* Begin PBXFileReference section */
 		822B9EFF19E92B76009A4030 /* BCOObjectStore */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BCOObjectStore; sourceTree = BUILT_PRODUCTS_DIR; };
-		8263CE0E19EE62A400A37967 /* LUMLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMLine.h; sourceTree = "<group>"; };
-		8263CE0F19EE62A400A37967 /* LUMLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMLine.m; sourceTree = "<group>"; };
-		8263CE1019EE62A400A37967 /* LUMStation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMStation.h; sourceTree = "<group>"; };
-		8263CE1119EE62A400A37967 /* LUMStation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMStation.m; sourceTree = "<group>"; };
-		8263CE1219EE62A400A37967 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		8263CE1619EE62A400A37967 /* BCOIndexDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexDescription.h; sourceTree = "<group>"; };
-		8263CE1719EE62A400A37967 /* BCOIndexDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndexDescription.m; sourceTree = "<group>"; };
-		8263CE1819EE62A400A37967 /* BCOObjectStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStore.h; sourceTree = "<group>"; };
-		8263CE1919EE62A400A37967 /* BCOObjectStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStore.m; sourceTree = "<group>"; };
-		8263CE1A19EE62A400A37967 /* BCOObjectStoreCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinator.h; sourceTree = "<group>"; };
-		8263CE1B19EE62A400A37967 /* BCOObjectStoreCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinator.m; sourceTree = "<group>"; };
-		8263CE1C19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinatorSnapshot.h; sourceTree = "<group>"; };
-		8263CE1D19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinatorSnapshot.m; sourceTree = "<group>"; };
-		8263CE1F19EE62A400A37967 /* BCOObjectStore+Query.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStore+Query.h"; sourceTree = "<group>"; };
-		8263CE2019EE62A400A37967 /* BCOObjectStore+Query.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "BCOObjectStore+Query.m"; sourceTree = "<group>"; };
+		82AF597C1A6D70370056EDB2 /* BCOIndexDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexDescription.h; sourceTree = "<group>"; };
+		82AF597D1A6D70370056EDB2 /* BCOIndexDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndexDescription.m; sourceTree = "<group>"; };
+		82AF597E1A6D70370056EDB2 /* BCOObjectStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStore.h; sourceTree = "<group>"; };
+		82AF597F1A6D70370056EDB2 /* BCOObjectStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStore.m; sourceTree = "<group>"; };
+		82AF59801A6D70370056EDB2 /* BCOObjectStoreCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinator.h; sourceTree = "<group>"; };
+		82AF59811A6D70370056EDB2 /* BCOObjectStoreCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinator.m; sourceTree = "<group>"; };
+		82AF59821A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinatorSnapshot.h; sourceTree = "<group>"; };
+		82AF59831A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinatorSnapshot.m; sourceTree = "<group>"; };
+		82AF59851A6D70370056EDB2 /* BCOObjectStore+Query.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStore+Query.h"; sourceTree = "<group>"; };
+		82AF59861A6D70370056EDB2 /* BCOObjectStore+Query.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "BCOObjectStore+Query.m"; sourceTree = "<group>"; };
+		82AF59881A6D70370056EDB2 /* LUMLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMLine.h; sourceTree = "<group>"; };
+		82AF59891A6D70370056EDB2 /* LUMLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMLine.m; sourceTree = "<group>"; };
+		82AF598A1A6D70370056EDB2 /* LUMStation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMStation.h; sourceTree = "<group>"; };
+		82AF598B1A6D70370056EDB2 /* LUMStation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMStation.m; sourceTree = "<group>"; };
+		82AF598C1A6D70370056EDB2 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,9 +62,9 @@
 		822B9EF619E92B76009A4030 = {
 			isa = PBXGroup;
 			children = (
-				8263CE0D19EE62A400A37967 /* Demo App */,
-				8263CE1319EE62A400A37967 /* ObjectStore */,
-				8263CE1E19EE62A400A37967 /* ObjectStore+Query */,
+				82AF597B1A6D70370056EDB2 /* BCOObjectStore */,
+				82AF59841A6D70370056EDB2 /* BCOObjectStore+Query */,
+				82AF59871A6D70370056EDB2 /* Demo App */,
 				822B9F0019E92B76009A4030 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -76,43 +77,40 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		8263CE0D19EE62A400A37967 /* Demo App */ = {
+		82AF597B1A6D70370056EDB2 /* BCOObjectStore */ = {
 			isa = PBXGroup;
 			children = (
-				8263CE0E19EE62A400A37967 /* LUMLine.h */,
-				8263CE0F19EE62A400A37967 /* LUMLine.m */,
-				8263CE1019EE62A400A37967 /* LUMStation.h */,
-				8263CE1119EE62A400A37967 /* LUMStation.m */,
-				8263CE1219EE62A400A37967 /* main.m */,
+				82AF597C1A6D70370056EDB2 /* BCOIndexDescription.h */,
+				82AF597D1A6D70370056EDB2 /* BCOIndexDescription.m */,
+				82AF597E1A6D70370056EDB2 /* BCOObjectStore.h */,
+				82AF597F1A6D70370056EDB2 /* BCOObjectStore.m */,
+				82AF59801A6D70370056EDB2 /* BCOObjectStoreCoordinator.h */,
+				82AF59811A6D70370056EDB2 /* BCOObjectStoreCoordinator.m */,
+				82AF59821A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.h */,
+				82AF59831A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m */,
 			);
-			name = "Demo App";
-			path = "ObjectStore/Demo App";
+			path = BCOObjectStore;
 			sourceTree = "<group>";
 		};
-		8263CE1319EE62A400A37967 /* ObjectStore */ = {
+		82AF59841A6D70370056EDB2 /* BCOObjectStore+Query */ = {
 			isa = PBXGroup;
 			children = (
-				8263CE1A19EE62A400A37967 /* BCOObjectStoreCoordinator.h */,
-				8263CE1B19EE62A400A37967 /* BCOObjectStoreCoordinator.m */,
-				8263CE1C19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.h */,
-				8263CE1D19EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m */,
-				8263CE1619EE62A400A37967 /* BCOIndexDescription.h */,
-				8263CE1719EE62A400A37967 /* BCOIndexDescription.m */,
-				8263CE1819EE62A400A37967 /* BCOObjectStore.h */,
-				8263CE1919EE62A400A37967 /* BCOObjectStore.m */,
+				82AF59851A6D70370056EDB2 /* BCOObjectStore+Query.h */,
+				82AF59861A6D70370056EDB2 /* BCOObjectStore+Query.m */,
 			);
-			name = ObjectStore;
-			path = ObjectStore/ObjectStore;
+			path = "BCOObjectStore+Query";
 			sourceTree = "<group>";
 		};
-		8263CE1E19EE62A400A37967 /* ObjectStore+Query */ = {
+		82AF59871A6D70370056EDB2 /* Demo App */ = {
 			isa = PBXGroup;
 			children = (
-				8263CE1F19EE62A400A37967 /* BCOObjectStore+Query.h */,
-				8263CE2019EE62A400A37967 /* BCOObjectStore+Query.m */,
+				82AF59881A6D70370056EDB2 /* LUMLine.h */,
+				82AF59891A6D70370056EDB2 /* LUMLine.m */,
+				82AF598A1A6D70370056EDB2 /* LUMStation.h */,
+				82AF598B1A6D70370056EDB2 /* LUMStation.m */,
+				82AF598C1A6D70370056EDB2 /* main.m */,
 			);
-			name = "ObjectStore+Query";
-			path = "ObjectStore/ObjectStore+Query";
+			path = "Demo App";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -171,13 +169,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8263CE2519EE62A400A37967 /* BCOIndexDescription.m in Sources */,
-				8263CE2719EE62A400A37967 /* BCOObjectStoreCoordinator.m in Sources */,
-				8263CE2619EE62A400A37967 /* BCOObjectStore.m in Sources */,
-				8263CE2119EE62A400A37967 /* LUMLine.m in Sources */,
-				8263CE2319EE62A400A37967 /* main.m in Sources */,
-				8263CE2819EE62A400A37967 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */,
-				8263CE2219EE62A400A37967 /* LUMStation.m in Sources */,
+				82AF59921A6D70370056EDB2 /* LUMLine.m in Sources */,
+				82AF598D1A6D70370056EDB2 /* BCOIndexDescription.m in Sources */,
+				82AF598E1A6D70370056EDB2 /* BCOObjectStore.m in Sources */,
+				82AF59901A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */,
+				82AF598F1A6D70370056EDB2 /* BCOObjectStoreCoordinator.m in Sources */,
+				82AF59911A6D70370056EDB2 /* BCOObjectStore+Query.m in Sources */,
+				82AF59941A6D70370056EDB2 /* main.m in Sources */,
+				82AF59931A6D70370056EDB2 /* LUMStation.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

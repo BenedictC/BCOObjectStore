@@ -6,7 +6,7 @@
 //  Copyright (c) 2014 Benedict Cohen. All rights reserved.
 //
 
-#import "BCOObjectStoreCoordinator+Query.h"
+#import "BCOObjectStore+Query.h"
 
 @implementation BCOObjectStoreCoordinator (Query)
 
