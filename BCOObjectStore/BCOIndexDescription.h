@@ -16,9 +16,8 @@ typedef id<NSCopying>(^BCOIndexer)(id object);
 
 @interface BCOIndexDescription : NSObject
 
--(instancetype)initWithIndexer:(BCOIndexer)indexer isUnique:(BOOL)isUnique __attribute__((objc_designated_initializer));
+-(instancetype)initWithIndexer:(BCOIndexer)indexer __attribute__((objc_designated_initializer));
 
 @property(nonatomic, copy, readonly) BCOIndexer indexer;
-@property(nonatomic, readonly, getter=isUnique) BOOL unique;
 
 @end

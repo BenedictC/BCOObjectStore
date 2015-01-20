@@ -15,9 +15,8 @@
 -(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
 
 @property(readonly) NSSet *objects;
-@property(readonly) NSDictionary *indexDescriptions;
+-(NSSet *)objectsForKeys:(NSArray *)keys inIndexNamed:(NSString *)indexName;
 
--(NSSet *)objectsForIndexName:(NSString *)indexName;
--(NSSet *)objectsForIndexName:(NSString *)indexName key:(id)key;
+@property(readonly) NSDictionary *indexDescriptions;
 
 @end

@@ -16,7 +16,7 @@
 
 @property(readonly) NSDictionary *storesByName;
 
--(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
--(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors fromStores:(NSArray *)storesNames;
+-(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
+-(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors;
 
 @end

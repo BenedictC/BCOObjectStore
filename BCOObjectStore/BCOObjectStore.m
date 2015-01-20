@@ -8,69 +8,13 @@
 
 #import "BCOObjectStore.h"
 #import "BCOIndexDescription.h"
+#import "BCOIndex.h"
 
 
 
-#pragma mark - BCOObjectStoreIndex
-@interface BCOObjectStoreIndex : NSObject
-@property(readonly) BCOIndexDescription *indexDescription;
-@property(readonly) NSSet *indexedObjects;
-@property(readonly) NSMutableDictionary *objectSetsByKey;
-@end
-
-
-
-@implementation BCOObjectStoreIndex
-
--(instancetype)initWithObjects:(NSSet *)objects indexDescription:(BCOIndexDescription *)indexDescription
-{
-    NSParameterAssert(objects);
-    NSParameterAssert(indexDescription);
-
-    self = [super init];
-    if (self == nil) return nil;
-
-    _indexDescription = indexDescription;
-
-    NSMutableSet *indexedObjects = [NSMutableSet new];
-    NSMutableDictionary *objectSetsByKey = [NSMutableDictionary new];
-    BCOIndexer indexer = indexDescription.indexer;
-    for (id value in objects) {
-        id key = indexer(value);
-        if (key != nil) {
-#pragma message "TODO: take isUnique into account"
-            NSMutableSet *objectSet = objectSetsByKey[key];
-            if (objectSet == nil) {
-                objectSet = [NSMutableSet new];
-                objectSetsByKey[key] = objectSet;
-            }
-            [objectSet addObject:value];
-            [indexedObjects addObject:value];
-        }
-    }
-    _indexedObjects = indexedObjects;
-    _objectSetsByKey = objectSetsByKey;
-
-    return self;
-}
-
-
-
--(id)objectSetForKey:(id)key
-{
-    return self.objectSetsByKey[key];
-}
-
-@end
-
-
-
-
-
-#pragma mark - BCOObjectStore
 @interface BCOObjectStore ()
 
-@property(readonly) NSDictionary *storeIndexesByIndexName;
+@property(readonly) NSDictionary *indexesByIndexName;
 
 @end
 
@@ -87,31 +31,31 @@
     _indexDescriptions = [indexDescriptions copy];
 
     //Build an index for each description
-    NSMutableDictionary *storeIndexesByIndexName = [NSMutableDictionary new];
+    NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
     [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
         //Create and store the index
-        BCOObjectStoreIndex *storeIndex = [[BCOObjectStoreIndex alloc] initWithObjects:objects indexDescription:indexDescription];
-        storeIndexesByIndexName[indexName] = storeIndex;
+        BCOIndex *storeIndex = [[BCOIndex alloc] initWithObjects:objects indexDescription:indexDescription];
+        indexesByIndexName[indexName] = storeIndex;
     }];
-    _storeIndexesByIndexName = storeIndexesByIndexName;
+    _indexesByIndexName = indexesByIndexName;
 
     return self;
 }
 
 
 
--(NSSet *)objectsForIndexName:(NSString *)indexName
+-(NSSet *)objectsForKeys:(NSArray *)keys inIndexNamed:(NSString *)indexName
 {
-    BCOObjectStoreIndex *index = self.storeIndexesByIndexName[indexName];
-    return [index indexedObjects];
-}
+    BCOIndex *index = self.indexesByIndexName[indexName];
+    if (index == nil) return [NSSet set];
 
+    NSMutableSet *allObjects = [NSMutableSet new];
+    for (id key in keys) {
+        NSSet *objects = [index objectsForKey:key];
+        [allObjects unionSet:objects];
+    }
 
-
--(NSSet *)objectsForIndexName:(NSString *)indexName key:(id)key
-{
-   BCOObjectStoreIndex *index = self.storeIndexesByIndexName[indexName];
-    return [index objectSetForKey:key];
+    return allObjects;
 }
 
 @end

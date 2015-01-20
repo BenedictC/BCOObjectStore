@@ -10,6 +10,7 @@
 
 #import "BCOObjectStoreCoordinatorSnapshot.h"
 #import "BCOIndexDescription.h"
+
 @protocol BCOOCallbackToken;
 
 

@@ -12,7 +12,7 @@
 
 @implementation BCOIndexDescription
 
--(instancetype)initWithIndexer:(BCOIndexer)indexer isUnique:(BOOL)isUnique
+-(instancetype)initWithIndexer:(BCOIndexer)indexer
 {
     NSParameterAssert(indexer);
 
@@ -20,7 +20,6 @@
     if (self == nil) return nil;
 
     _indexer = indexer;
-    _unique = isUnique;
 
     return self;
 }

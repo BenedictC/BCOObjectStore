@@ -27,35 +27,36 @@
 
 
 
--(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors
+-(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors
 {
-    return [self fetchObjectsForIndexName:indexName matchingPredicate:predicate sortDescriptors:sortDescriptors fromStores:nil];
+    //Figure out which stores to search
+    NSArray *stores = self.storesByName.allValues;
+
+    //Grab matching object from the stores
+    NSMutableSet *objects = [NSMutableSet new];
+    for (BCOObjectStore *store in stores) {
+        NSSet *matchingObjects = (predicate == nil) ? store.objects : [store.objects filteredSetUsingPredicate:predicate];
+        [objects unionSet:matchingObjects];
+    }
+
+    return (sortDescriptors.count > 0) ? [objects sortedArrayUsingDescriptors:sortDescriptors] : [objects allObjects];
 }
 
 
 
--(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors fromStores:(NSArray *)storesNames
+-(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors
 {
     //Figure out which stores to search
-    NSArray *stores = (storesNames == nil || storesNames.count == 0) ? self.storesByName.allValues : ({
-        NSMutableArray *stores = [NSMutableArray new];
-        for (NSString *storeName in storesNames) {
-            BCOObjectStore *store = self.storesByName[storeName];
-            if (store != nil) [stores addObject:store];
-        }
-        stores;
-    });
+    NSArray *stores = self.storesByName.allValues;
 
     //Grab all potential matches from the stores
     NSMutableSet *objects = [NSMutableSet new];
     for (BCOObjectStore *store in stores) {
-        NSSet *subObjects = [store objectsForIndexName:indexName];
+        NSSet *subObjects = [store objectsForKeys:keys inIndexNamed:indexName];
+        
         if (subObjects == nil) continue;
-        [objects unionSet:subObjects];
-    }
 
-    if (predicate != nil) {
-        [objects filterUsingPredicate:predicate];
+        [objects unionSet:subObjects];
     }
 
     return (sortDescriptors.count > 0) ? [objects sortedArrayUsingDescriptors:sortDescriptors] : [objects allObjects];
