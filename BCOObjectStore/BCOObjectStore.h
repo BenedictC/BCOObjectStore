@@ -12,12 +12,12 @@
 
 @interface BCOObjectStore : NSObject
 
--(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSSet *)indexDescriptions __attribute__((objc_designated_initializer));
+-(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
 
 @property(readonly) NSSet *objects;
-@property(readonly) NSSet *indexDescriptions;
+@property(readonly) NSDictionary *indexDescriptions;
 
--(NSDictionary *)fetchObjectsOfClass:(Class)indexedClass;
--(id)fetchObjectOfClass:(Class)indexedClass uniqueID:(id)uniqueID;
+-(NSSet *)objectsForIndexName:(NSString *)indexName;
+-(NSSet *)objectsForIndexName:(NSString *)indexName key:(id)key;
 
 @end

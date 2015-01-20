@@ -10,28 +10,17 @@
 
 
 
-@implementation NSObject (BCOIndexDescription)
-
--(NSString *)BCOIndexDescription_defaultUniqueID
-{
-    return [NSString stringWithFormat:@"%p", self];
-}
-
-@end
-
-
-
 @implementation BCOIndexDescription
 
--(instancetype)initWithIndexedClass:(Class)indexedClass valueKeyPath:(NSString *)valueKeyPath
+-(instancetype)initWithIndexer:(BCOIndexer)indexer isUnique:(BOOL)isUnique
 {
-    NSParameterAssert(indexedClass);
+    NSParameterAssert(indexer);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _indexedClass = indexedClass;
-    _valueKeyPath = [valueKeyPath copy] ?: NSStringFromSelector(@selector(BCOIndexDescription_defaultUniqueID));
+    _indexer = indexer;
+    _unique = isUnique;
 
     return self;
 }

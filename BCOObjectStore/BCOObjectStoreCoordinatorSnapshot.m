@@ -27,21 +27,14 @@
 
 
 
--(NSDictionary *)fetchAllObjectsOfClass:(Class)indexedClass
+-(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors
 {
-    return [self fetchAllObjectsOfClass:indexedClass fromStores:nil];
+    return [self fetchObjectsForIndexName:indexName matchingPredicate:predicate sortDescriptors:sortDescriptors fromStores:nil];
 }
 
 
 
--(id)fetchObjectWithPrimaryID:(id)uniqueID class:(id)indexedClass
-{
-    return [self fetchObjectWithPrimaryID:indexedClass class:uniqueID fromStores:nil];
-}
-
-
-
--(NSDictionary *)fetchAllObjectsOfClass:(Class)indexedClass fromStores:(NSArray *)storesNames
+-(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors fromStores:(NSArray *)storesNames
 {
     //Figure out which stores to search
     NSArray *stores = (storesNames == nil || storesNames.count == 0) ? self.storesByName.allValues : ({
@@ -53,39 +46,19 @@
         stores;
     });
 
-    //Search for matches
-    NSMutableDictionary *objectsByUniqueID = [NSMutableDictionary new];
+    //Grab all potential matches from the stores
+    NSMutableSet *objects = [NSMutableSet new];
     for (BCOObjectStore *store in stores) {
-        NSDictionary *subObjects = [store fetchObjectsOfClass:indexedClass];
+        NSSet *subObjects = [store objectsForIndexName:indexName];
         if (subObjects == nil) continue;
-        [objectsByUniqueID addEntriesFromDictionary:subObjects];
+        [objects unionSet:subObjects];
     }
 
-    return objectsByUniqueID;
-}
-
-
-
--(id)fetchObjectWithPrimaryID:(Class)indexedClass class:(id)uniqueID fromStores:(NSArray *)storesNames
-{
-    //Figure out which stores to search
-    NSArray *stores = (storesNames == nil || storesNames.count == 0) ? self.storesByName.allValues : ({
-        NSMutableArray *stores = [NSMutableArray new];
-        for (NSString *storeName in storesNames) {
-            BCOObjectStore *store = self.storesByName[storeName];
-            if (store != nil) [stores addObject:store];
-        }
-        stores;
-    });
-
-    //Search for matches
-    //TODO: Should we check other stores for duplicates/mismatches?
-    for (BCOObjectStore *store in stores) {
-        id object = [store fetchObjectOfClass:indexedClass uniqueID:uniqueID];
-        if (object != nil) return object;
+    if (predicate != nil) {
+        [objects filterUsingPredicate:predicate];
     }
-    
-    return nil;
+
+    return (sortDescriptors.count > 0) ? [objects sortedArrayUsingDescriptors:sortDescriptors] : [objects allObjects];
 }
 
 @end

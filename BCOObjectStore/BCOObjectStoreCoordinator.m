@@ -14,17 +14,9 @@
 
 
 
-#pragma mark - BCOObjectStoreCoordinatorSnapshot
-@interface BCOObjectStoreCoordinatorSnapshot (BCOObjectStoreCoordinatorSnapshot) <BCOObjectStoreCoordinatorSnapshot>
-@end
-
-
-
-
-
 #pragma mark - BCOObjectStoreCoordinatorChangeHandler
 @interface BCOObjectStoreCoordinatorChangeHandler : NSObject <BCOCallbackToken>
-@property(atomic, copy) void(^changeHandler)(id<BCOObjectStoreCoordinatorSnapshot> oldContext, id<BCOObjectStoreCoordinatorSnapshot> newContext);
+@property(atomic, copy) void(^changeHandler)(BCOObjectStoreCoordinatorSnapshot *oldContext, BCOObjectStoreCoordinatorSnapshot *newContext);
 @property(atomic, copy) void(^unregisterHandler)(BCOObjectStoreCoordinatorChangeHandler* unregisteringChangeHandler);
 @end
 
@@ -39,7 +31,7 @@
 
 
 
--(void)invokeChangeHandlerWithOldContext:(id<BCOObjectStoreCoordinatorSnapshot>)oldContext newContext:(id<BCOObjectStoreCoordinatorSnapshot>) newContext
+-(void)invokeChangeHandlerWithOldContext:(BCOObjectStoreCoordinatorSnapshot *)oldContext newContext:(BCOObjectStoreCoordinatorSnapshot *)newContext
 {
     if (self.changeHandler != NULL) self.changeHandler(oldContext, newContext);
 }
@@ -57,7 +49,7 @@
 @property(atomic, readonly) dispatch_queue_t mutationQueue;
 
 //'Mutable' state
-@property(atomic, readonly) NSSet *indexDescriptions;
+@property(atomic, readonly) NSDictionary *indexDescriptions;
 //Declared in the header but as id <BCOObjectStoreCoordinatorSnapshot>
 //@property(atomic, readonly) BCOObjectStoreCoordinatorSnapshot *currentSnapshot;
 @property(atomic, readonly) NSSet *changeHandlers;
@@ -103,7 +95,7 @@
 
     _mutationQueue = queue;
 
-    _indexDescriptions = [NSSet new];
+    _indexDescriptions = [NSDictionary new];
     _snapshot = [[BCOObjectStoreCoordinatorSnapshot alloc] initWithStoresByName:[NSDictionary new]];
     _changeHandlers = [NSSet set];
 
@@ -113,10 +105,10 @@
 
 
 #pragma mark - 'properties'
-typedef void(^Setter)(NSSet *indexDescriptions, BCOObjectStoreCoordinatorSnapshot *snapshot, NSSet *changeHandlers);
+typedef void(^Setter)(NSDictionary *indexDescriptions, BCOObjectStoreCoordinatorSnapshot *snapshot, NSSet *changeHandlers);
 -(void)setState:(void(^)(BCOObjectStoreCoordinator *self, Setter setter))block
 {
-    Setter setter = ^(NSSet *indexDescriptions, BCOObjectStoreCoordinatorSnapshot *snapshot, NSSet *changeHandlers){
+    Setter setter = ^(NSDictionary *indexDescriptions, BCOObjectStoreCoordinatorSnapshot *snapshot, NSSet *changeHandlers){
         _indexDescriptions = [indexDescriptions copy];
         _snapshot = snapshot;
         _changeHandlers = [changeHandlers copy];
@@ -137,15 +129,14 @@ typedef void(^Setter)(NSSet *indexDescriptions, BCOObjectStoreCoordinatorSnapsho
 
 
 #pragma mark - Configuring the store
--(void)addPrimaryIndexForClass:(Class)indexedClass valueKeyPath:(NSString *)valueKeyPath
+-(void)setIndexDescription:(BCOIndexDescription *)indexDescription forName:(NSString *)indexName
 {
-    BCOIndexDescription *indexDescription = [[BCOIndexDescription alloc] initWithIndexedClass:indexedClass valueKeyPath:valueKeyPath];
-    NSMutableSet *indexDescriptions = [NSMutableSet setWithObject:indexDescription];
+    NSMutableDictionary *indexDescriptions = [NSMutableDictionary dictionaryWithObject:indexDescription forKey:indexName];
 
     [self setState:^(BCOObjectStoreCoordinator *self, Setter setter) {
-        [indexDescriptions unionSet:self.indexDescriptions];
+        [indexDescriptions addEntriesFromDictionary:self.indexDescriptions];
 
-        //Re-create all sub graphs with the new object descriptions and re-run the queries
+        //Re-create all stores with the new object descriptions and re-run the queries
         NSMutableDictionary *storesByName = [NSMutableDictionary new];
         [self.snapshot.storesByName enumerateKeysAndObjectsUsingBlock:^(NSString *name, BCOObjectStore *store, BOOL *stop) {
             storesByName[name] = [[BCOObjectStore alloc] initWithObjects:store.objects indexDescriptions:indexDescriptions];
@@ -180,7 +171,7 @@ typedef void(^Setter)(NSSet *indexDescriptions, BCOObjectStoreCoordinatorSnapsho
 
 
 #pragma mark - Accessing objects
--(void)invokeChangeHandlersWithOldContext:(id<BCOObjectStoreCoordinatorSnapshot>)oldContext newContext:(id<BCOObjectStoreCoordinatorSnapshot>)newContext
+-(void)invokeChangeHandlersWithOldContext:(BCOObjectStoreCoordinatorSnapshot *)oldContext newContext:(BCOObjectStoreCoordinatorSnapshot *)newContext
 {
     for (BCOObjectStoreCoordinatorChangeHandler *changeHandler in self.changeHandlers) {
         [changeHandler invokeChangeHandlerWithOldContext:oldContext newContext:newContext];
@@ -189,7 +180,7 @@ typedef void(^Setter)(NSSet *indexDescriptions, BCOObjectStoreCoordinatorSnapsho
 
 
 
--(id<BCOCallbackToken>)registerChangeHandler:(void(^)(id<BCOObjectStoreCoordinatorSnapshot> oldContext, id<BCOObjectStoreCoordinatorSnapshot> newContext))changeHandlerBlock
+-(id<BCOCallbackToken>)registerChangeHandler:(void(^)(BCOObjectStoreCoordinatorSnapshot *oldContext, BCOObjectStoreCoordinatorSnapshot *newContext))changeHandlerBlock
 {
     //Create a new change handler
     BCOObjectStoreCoordinatorChangeHandler *changeHandler = [BCOObjectStoreCoordinatorChangeHandler new];

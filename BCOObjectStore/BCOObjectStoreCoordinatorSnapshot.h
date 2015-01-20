@@ -16,10 +16,7 @@
 
 @property(readonly) NSDictionary *storesByName;
 
--(NSDictionary *)fetchAllObjectsOfClass:(Class)indexedClass;
--(id)fetchObjectWithPrimaryID:(id)uniqueID class:(Class)indexedClass;
-
--(NSDictionary *)fetchAllObjectsOfClass:(Class)indexedClass fromStores:(NSArray *)storeNames;
--(id)fetchObjectWithPrimaryID:(id)primaryID class:(Class)indexedClass fromStores:(NSArray *)storeNames;
+-(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
+-(NSArray *)fetchObjectsForIndexName:(NSString *)indexName matchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors fromStores:(NSArray *)storesNames;
 
 @end

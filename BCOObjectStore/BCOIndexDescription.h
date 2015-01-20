@@ -10,12 +10,15 @@
 
 
 
+typedef id<NSCopying>(^BCOIndexer)(id object);
+
+
+
 @interface BCOIndexDescription : NSObject
 
--(instancetype)initWithIndexedClass:(Class)indexedClass valueKeyPath:(NSString *)valueKeyPath __attribute__((objc_designated_initializer));
+-(instancetype)initWithIndexer:(BCOIndexer)indexer isUnique:(BOOL)isUnique __attribute__((objc_designated_initializer));
 
-@property(nonatomic, copy, readonly) Class indexedClass;
-@property(nonatomic, copy, readonly) NSString *valueKeyPath;
+@property(nonatomic, copy, readonly) BCOIndexer indexer;
+@property(nonatomic, readonly, getter=isUnique) BOOL unique;
 
 @end
-
