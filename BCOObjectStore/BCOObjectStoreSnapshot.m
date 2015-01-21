@@ -12,7 +12,7 @@
 
 
 @interface BCOObjectStoreSnapshot ()
-@property(nonatomic, readonly) NSDictionary *indexesByIndexName;
+@property(nonatomic, readonly) BCOIndex *storeIndex;
 @end
 
 
@@ -27,14 +27,9 @@
     _objects = [objects copy];
     _indexDescriptions = [indexDescriptions copy];
 
-    //Build an index for each description
-    NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
-    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
-        //Create and store the index
-        BCOIndex *storeIndex = [[BCOIndex alloc] initWithObjects:objects indexDescription:indexDescription];
-        indexesByIndexName[indexName] = storeIndex;
-    }];
-    _indexesByIndexName = indexesByIndexName;
+    //Build an index
+    //TODO: Make this more efficent
+    _storeIndex = [[BCOIndex alloc] initWithObjects:objects indexDescriptions:indexDescriptions];
 
     return self;
 }
@@ -43,15 +38,11 @@
 
 -(NSSet *)objectsForKeys:(NSArray *)keys inIndexNamed:(NSString *)indexName
 {
-    BCOIndex *index = self.indexesByIndexName[indexName];
-    if (index == nil) return [NSSet set];
-
     NSMutableSet *allObjects = [NSMutableSet new];
     for (id key in keys) {
-        NSSet *objects = [index objectsForKey:key];
-        [allObjects unionSet:objects];
+        NSSet *objects = [self.storeIndex objectsForKey:key inIndexNamed:indexName];
+        if (objects != nil) [allObjects unionSet:objects];
     }
-
     return allObjects;
 }
 

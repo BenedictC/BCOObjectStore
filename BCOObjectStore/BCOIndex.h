@@ -13,9 +13,10 @@
 
 @interface BCOIndex : NSObject
 
--(instancetype)initWithObjects:(NSSet *)objects indexDescription:(BCOIndexDescription *)indexDescription;
-@property(readonly) BCOIndexDescription *indexDescription;
+-(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions;
 
--(NSSet *)objectsForKey:(id)key;
+@property(readonly) NSDictionary *indexDescriptions;
+
+-(NSSet *)objectsForKey:(id)key inIndexNamed:(NSString *)indexName;
 
 @end

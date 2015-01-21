@@ -11,48 +11,95 @@
 
 
 
+@interface BCOIndexReference : NSObject
+@property(nonatomic) NSString *indexName;
+@property(nonatomic) NSString *key;
+@end
+
+@implementation BCOIndexReference;
+
+@end
+
+
+
 @interface BCOIndex ()
-@property(readonly) NSDictionary *objectsByKey;
+@property(readonly) NSDictionary *indexesByIndexName;
+@property(readonly) NSMapTable *referenceSetsByObject;
 @end
 
 
 
 @implementation BCOIndex
 
--(instancetype)initWithObjects:(NSSet *)objects indexDescription:(BCOIndexDescription *)indexDescription
+-(instancetype)init
+{
+    return [self initWithObjects:[NSSet set] indexDescriptions:[NSDictionary dictionary]];
+}
+
+
+
+-(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions
 {
     NSParameterAssert(objects);
-    NSParameterAssert(indexDescription);
+    NSParameterAssert(indexDescriptions);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _indexDescription = indexDescription;
+    //Store ivars
+    _indexDescriptions = [indexDescriptions copy];
 
-    NSMutableDictionary *objectsByKey = [NSMutableDictionary new];
-    BCOIndexer indexer = indexDescription.indexer;
-    for (id value in objects) {
-        id key = indexer(value);
-        if (key != nil) {
-            NSMutableSet *bucket = objectsByKey[key];
-            if (bucket == nil) {
-                bucket = [NSMutableSet new];
-                objectsByKey[key] = bucket;
+    //Build index
+    NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
+    NSMapTable *referenceSetsByObject = [NSMapTable strongToStrongObjectsMapTable];
+    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
+        //Create and add the index
+        NSMutableDictionary *index = [NSMutableDictionary new];
+        indexesByIndexName[indexName] = index;
+
+        //Add each object to the index
+        BCOIndexer indexer = indexDescription.indexer;
+        for (id object in objects) {
+            id key = indexer(object);
+            if (key == nil) continue;
+
+            //Fetch/create the bucket to store the object in
+            NSMutableSet *objectsBucket = index[key];
+            if (objectsBucket == nil) {
+                objectsBucket = [NSMutableSet new];
+                index[key] = objectsBucket;
             }
 
-            [bucket addObject:value];
+            //Store the object
+            [objectsBucket addObject:object];
+
+            //Create indexReference
+            BCOIndexReference *reference = [BCOIndexReference new];
+            reference.indexName = indexName;
+            reference.key = key;
+
+            NSMutableSet *referenceSet = [referenceSetsByObject objectForKey:object];
+            if (referenceSet == nil) {
+                referenceSet = [NSMutableSet new];
+                [referenceSetsByObject setObject:referenceSet forKey:object];
+            }
+            [referenceSet addObject:reference];
         }
-    }
-    _objectsByKey = objectsByKey;
+    }];
+    _indexesByIndexName = indexesByIndexName;
+    _referenceSetsByObject = referenceSetsByObject;
 
     return self;
 }
 
 
 
--(NSSet *)objectsForKey:(id)key
+-(NSSet *)objectsForKey:(id)key inIndexNamed:(NSString *)indexName
 {
-    NSSet *objects = self.objectsByKey[key];
+    NSDictionary *index = self.indexesByIndexName[indexName];
+
+    NSSet *objects = index[key];
+
     return (objects == nil) ? [NSSet set] : objects;
 }
 
