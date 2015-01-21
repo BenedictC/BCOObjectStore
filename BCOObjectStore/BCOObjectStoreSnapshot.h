@@ -1,5 +1,5 @@
 //
-//  BCOObjectStoreCoordinatorSnapshot.h
+//  BCOObjectStoreSnapshot.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 11/10/2014.
@@ -10,11 +10,12 @@
 
 
 
-@interface BCOObjectStoreCoordinatorSnapshot : NSObject
+@interface BCOObjectStoreSnapshot : NSObject
 
--(instancetype)initWithStoresByName:(NSDictionary *)storesByName __attribute__((objc_designated_initializer));
+-(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
 
-@property(readonly) NSDictionary *storesByName;
+@property(readonly) NSSet *objects;
+@property(readonly) NSDictionary *indexDescriptions;
 
 -(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
 -(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors;
