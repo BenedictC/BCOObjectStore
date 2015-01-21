@@ -11,35 +11,25 @@
 #import "BCOObjectStoreSnapshot.h"
 #import "BCOIndexDescription.h"
 
-@protocol BCOOCallbackToken;
-
 
 
 @interface BCOObjectStore : NSObject
 
-#pragma mark instance life cycle
+// Factories
 +(instancetype)objectStoreWithBackgroundQueue;
 +(instancetype)objectStoreWithMainQueue;
+
+// instance life cycle
 -(instancetype)initWithDispatchQueue:(dispatch_queue_t)queue __attribute__((objc_designated_initializer));
 
-#pragma mark Configuring the stores
--(void)setIndexDescription:(BCOIndexDescription *)indexDescription forName:(NSString *)indexName;
+// Configuring the stores
+-(void)addIndexDescription:(BCOIndexDescription *)indexDescription withName:(NSString *)indexName;
 
-#pragma mark Setting stores content
+// Setting stores content
+//TODO: Can we structure this better for performing updates?
 -(void)setObjects:(NSSet *)objects;
 
-#pragma mark Accessing objects
+// Accessing objects
 @property(atomic, readonly) BCOObjectStoreSnapshot *snapshot;
-//This is method is simply an alternative to KVO on currentSnapshot.
--(id<BCOOCallbackToken>)registerChangeHandler:(void(^)(BCOObjectStoreSnapshot *oldSnapshot, BCOObjectStoreSnapshot *newSnapshot))changeHandler;
 
 @end
-
-
-
-
-@protocol BCOCallbackToken <NSObject>
--(void)unregister;
-@end
-
-

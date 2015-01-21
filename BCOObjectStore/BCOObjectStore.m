@@ -13,45 +13,10 @@
 
 
 
-#pragma mark - BCOObjectStoreChangeHandler
-@interface BCOObjectStoreChangeHandler : NSObject <BCOCallbackToken>
-@property(atomic, copy) void(^changeHandler)(BCOObjectStoreSnapshot *oldContext, BCOObjectStoreSnapshot *newContext);
-@property(atomic, copy) void(^unregisterHandler)(BCOObjectStoreChangeHandler* unregisteringChangeHandler);
-@end
-
-
-
-@implementation BCOObjectStoreChangeHandler
-
--(void)unregister
-{
-    if (self.unregisterHandler != NULL) self.unregisterHandler(self);
-}
-
-
-
--(void)invokeChangeHandlerWithOldContext:(BCOObjectStoreSnapshot *)oldContext newContext:(BCOObjectStoreSnapshot *)newContext
-{
-    if (self.changeHandler != NULL) self.changeHandler(oldContext, newContext);
-}
-
-@end
-
-
-
-
-
 #pragma mark - BCOObjectStore
 @interface BCOObjectStore ()
 
-//Init state
 @property(atomic, readonly) dispatch_queue_t mutationQueue;
-
-//'Mutable' state
-@property(atomic, readonly) NSDictionary *indexDescriptions;
-//Declared in the header but as id <BCOObjectStoreSnapshot>
-//@property(atomic, readonly) BCOObjectStoreSnapshot *currentSnapshot;
-@property(atomic, readonly) NSSet *changeHandlers;
 
 @end
 
@@ -93,10 +58,7 @@
     if (self == nil) return nil;
 
     _mutationQueue = queue;
-
-    _indexDescriptions = [NSDictionary new];
     _snapshot = [[BCOObjectStoreSnapshot alloc] initWithObjects:[NSSet set] indexDescriptions:[NSDictionary dictionary]];
-    _changeHandlers = [NSSet set];
 
     return self;
 }
@@ -104,13 +66,11 @@
 
 
 #pragma mark - 'properties'
-typedef void(^Setter)(NSDictionary *indexDescriptions, BCOObjectStoreSnapshot *snapshot, NSSet *changeHandlers);
--(void)setState:(void(^)(BCOObjectStore *self, Setter setter))block
+typedef void(^Setter)(BCOObjectStoreSnapshot *snapshot);
+-(void)setSnapshot:(void(^)(BCOObjectStore *self, Setter setter))block
 {
-    Setter setter = ^(NSDictionary *indexDescriptions, BCOObjectStoreSnapshot *snapshot, NSSet *changeHandlers){
-        _indexDescriptions = [indexDescriptions copy];
+    Setter setter = ^(BCOObjectStoreSnapshot *snapshot){
         _snapshot = snapshot;
-        _changeHandlers = [changeHandlers copy];
     };
 
     BOOL shouldUseQueue = self.mutationQueue != NULL;
@@ -128,20 +88,17 @@ typedef void(^Setter)(NSDictionary *indexDescriptions, BCOObjectStoreSnapshot *s
 
 
 #pragma mark - Configuring the store
--(void)setIndexDescription:(BCOIndexDescription *)indexDescription forName:(NSString *)indexName
+-(void)addIndexDescription:(BCOIndexDescription *)indexDescription withName:(NSString *)indexName
 {
-    NSMutableDictionary *indexDescriptions = [NSMutableDictionary dictionaryWithObject:indexDescription forKey:indexName];
-
-    [self setState:^(BCOObjectStore *self, Setter setter) {
-        [indexDescriptions addEntriesFromDictionary:self.indexDescriptions];
-
-        //Re-create all stores with the new object descriptions and re-run the queries
+    [self setSnapshot:^(BCOObjectStore *self, Setter setter) {
         BCOObjectStoreSnapshot *oldSnapshot = self.snapshot;
+        NSMutableDictionary *indexDescriptions = [NSMutableDictionary dictionaryWithObject:indexDescription forKey:indexName];
+        [indexDescriptions addEntriesFromDictionary:oldSnapshot.indexDescriptions];
+
+        //TODO: Create a method on BCOObjectStoreSnapshot that copies the existing indexes and only runs the new one
         BCOObjectStoreSnapshot *newSnapshot = [[BCOObjectStoreSnapshot alloc] initWithObjects:oldSnapshot.objects indexDescriptions:indexDescriptions];
 
-        setter(indexDescriptions, newSnapshot, self.changeHandlers);
-
-        [self invokeChangeHandlersWithOldContext:oldSnapshot newContext:newSnapshot];
+        setter(newSnapshot);
     }];
 }
 
@@ -150,57 +107,11 @@ typedef void(^Setter)(NSDictionary *indexDescriptions, BCOObjectStoreSnapshot *s
 #pragma mark - Setting stores content
 -(void)setObjects:(NSSet *)objects
 {
-    [self setState:^(BCOObjectStore *self, Setter setter) {
+    [self setSnapshot:^(BCOObjectStore *self, Setter setter) {
         BCOObjectStoreSnapshot *oldSnapshot = self.snapshot;
-        BCOObjectStoreSnapshot *newSnapshot = [[BCOObjectStoreSnapshot alloc] initWithObjects:objects indexDescriptions:oldSnapshot.indexDescriptions];
+        BCOObjectStoreSnapshot *newSnapshot = [oldSnapshot snapshotWithObjects:objects];
 
-        setter(self.indexDescriptions, newSnapshot, self.changeHandlers);
-
-        [self invokeChangeHandlersWithOldContext:oldSnapshot newContext:newSnapshot];
-    }];
-}
-
-
-
-#pragma mark - Accessing objects
--(void)invokeChangeHandlersWithOldContext:(BCOObjectStoreSnapshot *)oldContext newContext:(BCOObjectStoreSnapshot *)newContext
-{
-    for (BCOObjectStoreChangeHandler *changeHandler in self.changeHandlers) {
-        [changeHandler invokeChangeHandlerWithOldContext:oldContext newContext:newContext];
-    }
-}
-
-
-
--(id<BCOCallbackToken>)registerChangeHandler:(void(^)(BCOObjectStoreSnapshot *oldContext, BCOObjectStoreSnapshot *newContext))changeHandlerBlock
-{
-    //Create a new change handler
-    BCOObjectStoreChangeHandler *changeHandler = [BCOObjectStoreChangeHandler new];
-    changeHandler.changeHandler = changeHandlerBlock;
-    __weak typeof(self) weakSelf = self;
-    changeHandler.unregisterHandler = ^(BCOObjectStoreChangeHandler *unregisteringChangeHandler){
-        [weakSelf unregisterChangeHandler:unregisteringChangeHandler];
-    };
-
-    //Store the changeHandler
-    NSMutableSet *changeHandlers = [NSMutableSet setWithObject:changeHandler];
-    [self setState:^(BCOObjectStore *self, Setter setter) {
-        [changeHandlers unionSet:self.changeHandlers];
-
-        setter(self.indexDescriptions, self.snapshot, changeHandlers);
-    }];
-
-    return changeHandler;
-}
-
-
--(void)unregisterChangeHandler:(BCOObjectStoreChangeHandler *)changeHandler
-{
-    [self setState:^(BCOObjectStore *self, Setter setter) {
-        NSMutableSet *changeHandlers = [self.changeHandlers mutableCopy];
-        [changeHandlers removeObject:changeHandler];
-
-        setter(self.indexDescriptions, self.snapshot, changeHandlers);
+        setter(newSnapshot);
     }];
 }
 
