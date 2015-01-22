@@ -329,16 +329,50 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
 
     BOOL didScanOpeningQuote = [scanner scanString:@"'" intoString:NULL];
     if (didScanOpeningQuote) {
-        //TODO: This isn't finished!
-        //We need to handle escaping
         NSMutableString *value = [NSMutableString new];
         NSString *buffer = nil;
 
         while ([scanner scanUpToString:@"'" intoString:&buffer]) {
             [value appendString:buffer];
+
+            //If the sting is a 2 single quotes then it is a literal single quote
+            BOOL isLiteralQuote = [scanner scanString:@"''" intoString:NULL];
+            if (isLiteralQuote) {
+                [value appendString:@"'"];
+                continue;
+            }
+            BOOL isClosingQuote = [scanner scanString:@"'" intoString:NULL];
+            if (isClosingQuote) {
+                *outValue = value;
+                return YES;
+            }
+
+            [NSException raise:NSInvalidArgumentException format:@"Incorrectly terminated string"];
+            return NO;
+        }
+    }
+
+    BOOL didScanOpenCollectionDelimtter = [scanner scanString:@"{" intoString:NULL];
+    if (didScanOpenCollectionDelimtter) {
+        NSMutableSet *set = [NSMutableSet new];
+
+        do {
+            id value = nil;
+            BOOL didScanValue = [self scanValueWithScanner:scanner substitutionVariables:substitutionVariables value:&value];
+            if (!didScanValue) {
+                [NSException raise:NSInvalidArgumentException format:@"Invalid collection. Expected value."];
+                return NO;
+            }
+            [set addObject:value];
+        } while ([scanner scanString:@"," intoString:NULL]);
+
+        BOOL didScanCloseCollectionDelimitter = [scanner scanString:@"}" intoString:NULL];
+        if (!didScanCloseCollectionDelimitter) {
+            [NSException raise:NSInvalidArgumentException format:@"Invalid collection. Expected '}'"];
+            return NO;
         }
 
-        *outValue = value;
+        *outValue = set;
         return YES;
     }
 
@@ -350,7 +384,7 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
 -(BCOOperator)operatorFromString:(NSString *)string
 {
     if ([string isEqualToString:@"="]) return BCOOperatorEqualTo;
-//    if ([string isEqualToString:@"IN"]) return BCOOperatorIn;
+    if ([string isEqualToString:@"IN"]) return BCOOperatorIn;
     if ([string isEqualToString:@"<"]) return BCOOperatorLessThan;
     if ([string isEqualToString:@"<="]) return BCOOperatorLessThanOrEqualTo;
     if ([string isEqualToString:@">"]) return BCOOperatorGreaterThan;
@@ -369,9 +403,13 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
     NSArray *index = self.indexesByIndexName[indexName];
 
     switch (operator) {
-        case BCOOperatorEqualTo:
-            return [self fetchObjectsFromIndex:index withKeyEqualTo:value];
-            break;
+        case BCOOperatorEqualTo: {
+            NSSet *keySet = [NSSet setWithObject:value];
+            return [self fetchObjectsFromIndex:index withKeyInKeySet:keySet];
+        }
+        case BCOOperatorIn: {
+            return [self fetchObjectsFromIndex:index withKeyInKeySet:value];
+        }
 
         default:
             break;
@@ -382,16 +420,22 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
 
 
 
--(NSSet *)fetchObjectsFromIndex:(NSArray *)index withKeyEqualTo:(id)key
+-(NSSet *)fetchObjectsFromIndex:(NSArray *)index withKeyInKeySet:(NSSet *)keySet
 {
-    BCOReferenceIndexEntry *referenceIndexEntry = [[BCOReferenceIndexEntry alloc] initWithKey:key];
-    NSUInteger indexEntryIdx = [index indexOfObject:referenceIndexEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
 
-    if (indexEntryIdx == NSNotFound) return [NSSet set];
+    BCOReferenceIndexEntry *referenceIndexEntry = [[BCOReferenceIndexEntry alloc] initWithKey:nil];
+    NSMutableSet *results = [NSMutableSet new];
 
-    BCOIndexEntry *entry = [index objectAtIndex:indexEntryIdx];
+    for (id key in keySet) {
+        referenceIndexEntry.key = key;
+        NSUInteger indexEntryIdx = [index indexOfObject:referenceIndexEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
+        if (indexEntryIdx == NSNotFound) continue;
 
-    return [entry objects];
+        BCOIndexEntry *entry = [index objectAtIndex:indexEntryIdx];
+        [results unionSet:entry.objects];
+    }
+
+    return results;
 }
 
 @end
