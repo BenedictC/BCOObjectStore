@@ -37,7 +37,11 @@
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects;
 -(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects;
 
+-(NSArray *)executeQuery:(NSString *)query;
+-(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
+
 @end
+
 
 
 @interface BCOObjectStoreSnapshot (Debug)

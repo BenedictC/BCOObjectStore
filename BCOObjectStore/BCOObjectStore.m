@@ -90,6 +90,17 @@ typedef void(^Setter)(BCOObjectStoreSnapshot *snapshot);
 #pragma mark - Configuring the store
 -(void)addIndexDescription:(BCOIndexDescription *)indexDescription withName:(NSString *)indexName
 {
+    NSRange validCharacterRange = ({
+        NSCharacterSet *invalidCharacters = [[NSCharacterSet characterSetWithCharactersInString:@"1234567890_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"] invertedSet];
+        [indexName rangeOfCharacterFromSet:invalidCharacters];
+    });
+
+    BOOL isValidIndexName = (validCharacterRange.location == NSNotFound);
+    if (!isValidIndexName) {
+        [NSException raise:NSInvalidArgumentException format:@"Invalid indexName. indexName must be at least 1 letter long and can only include letters (case-insensitive), numbers and underscore."];
+        return;
+    }
+
     [self setSnapshot:^(BCOObjectStore *self, Setter setter) {
         BCOObjectStoreSnapshot *oldSnapshot = self.snapshot;
         NSMutableDictionary *indexDescriptions = [NSMutableDictionary dictionaryWithObject:indexDescription forKey:indexName];

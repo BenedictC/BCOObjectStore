@@ -8,14 +8,14 @@
 
 #import "BCOObjectStoreSnapshot.h"
 #import "BCOIndexDescription.h"
-#import "BCOIndexReference.h"
+#import "BCOIndexEntryReference.h"
 #import "BCOIndexEntry.h"
 
 
 
 @interface BCOObjectStoreSnapshot ()
 @property(readonly) NSDictionary *indexesByIndexName;
-@property(readonly) NSMapTable *indexReferencesByObject;
+@property(readonly) NSMapTable *indexEntryReferencesByObject;
 @end
 
 
@@ -43,17 +43,17 @@
     _indexDescriptions = [indexDescriptions copy];
 
     //Build the indexReference table
-    NSMapTable *indexReferencesByObject = [NSMapTable strongToStrongObjectsMapTable];
+    NSMapTable *indexEntryReferencesByObject = [NSMapTable strongToStrongObjectsMapTable];
     for (id object in objects) {
         NSMutableSet *indexReferences = [NSMutableSet new];
-        [indexReferencesByObject setObject:indexReferences forKey:object];
+        [indexEntryReferencesByObject setObject:indexReferences forKey:object];
     }
-    _indexReferencesByObject = indexReferencesByObject;
+    _indexEntryReferencesByObject = indexEntryReferencesByObject;
 
     //Build indexes
     NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
     BCOReferenceIndexEntry *referenceEntry = [[BCOReferenceIndexEntry alloc] initWithKey:nil];
-    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
+    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {        
 
         //Create and add the index
         NSMutableArray *index = [NSMutableArray new];
@@ -85,8 +85,8 @@
             [entry.objects addObject:object];
 
             //Add an indexReference to the referencesSet for the entry
-            BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            NSMutableSet *referencesSet = [indexReferencesByObject objectForKey:object];
+            BCOIndexEntryReference *reference = [[BCOIndexEntryReference alloc] initWithIndexName:indexName key:key];
+            NSMutableSet *referencesSet = [indexEntryReferencesByObject objectForKey:object];
             [referencesSet addObject:reference];
         }
     }];
@@ -125,12 +125,12 @@
         }];
         dict;
     });
-    //Perform a deep copy of indexReferencesByObject
-    NSMapTable *newIndexReferencesByObject = ({
+    //Perform a deep copy of indexEntryReferencesByObject
+    NSMapTable *newIndexEntryReferencesByObject = ({
         NSMapTable *table = [NSMapTable strongToStrongObjectsMapTable];
-        NSMapTable *indexReferencesByObject = self.indexReferencesByObject;
-        for (id key in indexReferencesByObject.keyEnumerator) {
-            NSSet *existingReferencesSet = [indexReferencesByObject objectForKey:key];
+        NSMapTable *indexEntryReferencesByObject = self.indexEntryReferencesByObject;
+        for (id key in indexEntryReferencesByObject.keyEnumerator) {
+            NSSet *existingReferencesSet = [indexEntryReferencesByObject objectForKey:key];
             NSMutableSet *newReferencesSet = [existingReferencesSet mutableCopy];
             [table setObject:newReferencesSet forKey:key];
         }
@@ -151,8 +151,8 @@
         [newObjects removeObject:expiredObject];
 
         //...each index by enumerating the objects indexReferences
-        NSSet *references = [newIndexReferencesByObject objectForKey:expiredObject];
-        for (BCOIndexReference *reference in references) {
+        NSSet *references = [newIndexEntryReferencesByObject objectForKey:expiredObject];
+        for (BCOIndexEntryReference *reference in references) {
             NSMutableArray *index = newIndexesByIndexName[reference.indexName];
             referenceIndexEntry.key = reference.key;
             NSUInteger entryIndex = [index indexOfObject:referenceIndexEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
@@ -165,7 +165,7 @@
         }
 
         //...the reference set (this has to happen after removing the object from the indexes)
-        [newIndexReferencesByObject removeObjectForKey:expiredObject];
+        [newIndexEntryReferencesByObject removeObjectForKey:expiredObject];
     }
 
     //Add freshObjects to...
@@ -181,7 +181,7 @@
 
         //... index references
         NSMutableSet *referencesSet = [NSMutableSet new];
-        [newIndexReferencesByObject setObject:referencesSet forKey:freshObject];
+        [newIndexEntryReferencesByObject setObject:referencesSet forKey:freshObject];
 
         //...each index
         [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
@@ -208,7 +208,7 @@
             [entry.objects addObject:freshObject];
 
             //Add an indexReference to the referencesSet for the entry
-            BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
+            BCOIndexEntryReference *reference = [[BCOIndexEntryReference alloc] initWithIndexName:indexName key:key];
             [referencesSet addObject:reference];
         }];
     }
@@ -218,18 +218,180 @@
     snapshot->_indexDescriptions = indexDescriptions;
     snapshot->_objects = newObjects;
     snapshot->_indexesByIndexName = newIndexesByIndexName;
-    snapshot->_indexReferencesByObject = newIndexReferencesByObject;
+    snapshot->_indexEntryReferencesByObject = newIndexEntryReferencesByObject;
 
     return snapshot;
 }
 
 
 
-
 #pragma mark - object access
--(NSArray *)fetchObjectsMatching:(NSString *)matching sortDescriptors:(NSArray *)sortDescriptors
+-(NSArray *)executeQuery:(NSString *)query
 {
+    return [self executeQuery:query subsitutionVariable:nil];
+}
+
+
+typedef NS_ENUM(NSInteger, BCOOperator) {
+    BCOOperatorInvalid = -1,
+
+    BCOOperatorEqualTo,
+    BCOOperatorIn,
+    BCOOperatorLessThan,
+    BCOOperatorLessThanOrEqualTo,
+    BCOOperatorGreaterThan,
+    BCOOperatorGreaterThanOrEqualTo,
+    BCOOperatorNotEqualTo,
+};
+
+
+
+#define MUST(EXPR, ...) ({if (!(EXPR)) {[NSException raise:NSInvalidArgumentException format:__VA_ARGS__]; return nil; } })
+-(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable
+{
+    NSScanner *scanner = [NSScanner scannerWithString:query];
+
+    //A query must start with 'WHERE'
+    MUST([scanner scanString:@"WHERE" intoString:NULL], @"Invalid query. Queries must start with 'WHERE'");
+
+    NSMutableSet *matchingObjects = nil;
+
+    //Scan a clause
+    do {
+        //TODO: Scan for a `predicate` before scanning for indexName
+
+        NSString *indexName = nil;
+        MUST([scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceCharacterSet] intoString:&indexName], @"Expected indexName");
+
+        NSString *operatorString = nil;
+        [scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceCharacterSet] intoString:&operatorString];
+        BCOOperator operator = [self operatorFromString:operatorString];
+        MUST(operator != BCOOperatorInvalid, @"Expected operator");
+
+        id value = nil;
+        MUST([self scanValueWithScanner:scanner substitutionVariables:subsitutionVariable value:&value], @"Expected value");
+
+        NSSet *objects = [self fetchObjectsFromIndex:indexName operator:operator value:value];
+        BOOL isFirstWhereClause = (matchingObjects == nil);
+        if (isFirstWhereClause) {
+            matchingObjects = [objects mutableCopy];
+        } else {
+            [matchingObjects intersectSet:objects];
+        }
+
+        //Because we only allow ANDing at the moment the operations will only ever reduce the number of matches
+        BOOL isEmpty = objects.count == 0;
+        if (isEmpty) return @[];
+
+    } while ([scanner scanString:@"AND" intoString:NULL]); //"Let's go round again"
+
+
+    return [matchingObjects allObjects];
+
+    //TODO:
+    //Scan optional 'ORDERED BY'
+        //If NO scan END OF STRING
+
+    //Scan property name
+
+}
+#undef MUST
+
+
+
+-(BOOL)scanValueWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)substitutionVariables value:(id *)outValue
+{
+    BOOL didScanVariableDelimiter = [scanner scanString:@"$" intoString:NULL];
+    if (didScanVariableDelimiter) {
+        NSCharacterSet *variableNameCharacters = [NSCharacterSet characterSetWithCharactersInString:@"QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_"];
+        NSString *variableName = nil;
+        BOOL didScanVariableName = [scanner scanUpToCharactersFromSet:variableNameCharacters intoString:&variableName];
+        if (!didScanVariableName) {
+            [NSException raise:NSInvalidArgumentException format:@"Invalid variable name"];
+            return NO;
+        }
+
+        id variable = substitutionVariables[variableName];
+        if (variableName == nil) {
+            [NSException raise:NSInvalidArgumentException format:@"Variable '%@' not found", variableName];
+            return NO;
+        }
+        *outValue = variable;
+        return YES;
+    }
+
+    double num = 0;
+    BOOL didScanNumber = [scanner scanDouble:&num];
+    if (didScanNumber) {
+        *outValue = @(num);
+        return YES;
+    }
+
+    BOOL didScanOpeningQuote = [scanner scanString:@"'" intoString:NULL];
+    if (didScanOpeningQuote) {
+        //TODO: This isn't finished!
+        //We need to handle escaping
+        NSMutableString *value = [NSMutableString new];
+        NSString *buffer = nil;
+
+        while ([scanner scanUpToString:@"'" intoString:&buffer]) {
+            [value appendString:buffer];
+        }
+
+        *outValue = value;
+        return YES;
+    }
+
+    return NO;
+}
+
+
+
+-(BCOOperator)operatorFromString:(NSString *)string
+{
+    if ([string isEqualToString:@"="]) return BCOOperatorEqualTo;
+//    if ([string isEqualToString:@"IN"]) return BCOOperatorIn;
+    if ([string isEqualToString:@"<"]) return BCOOperatorLessThan;
+    if ([string isEqualToString:@"<="]) return BCOOperatorLessThanOrEqualTo;
+    if ([string isEqualToString:@">"]) return BCOOperatorGreaterThan;
+    if ([string isEqualToString:@">="]) return BCOOperatorGreaterThanOrEqualTo;
+    if ([string isEqualToString:@"!="]) return BCOOperatorNotEqualTo;
+
+    return BCOOperatorInvalid;
+}
+
+
+
+-(NSSet *)fetchObjectsFromIndex:(NSString *)indexName operator:(BCOOperator)operator value:(id)value
+{
+    NSLog(@"'%@' '%@' '%@'", indexName, @(operator), value);
+
+    NSArray *index = self.indexesByIndexName[indexName];
+
+    switch (operator) {
+        case BCOOperatorEqualTo:
+            return [self fetchObjectsFromIndex:index withKeyEqualTo:value];
+            break;
+
+        default:
+            break;
+    }
+
     return nil;
+}
+
+
+
+-(NSSet *)fetchObjectsFromIndex:(NSArray *)index withKeyEqualTo:(id)key
+{
+    BCOReferenceIndexEntry *referenceIndexEntry = [[BCOReferenceIndexEntry alloc] initWithKey:key];
+    NSUInteger indexEntryIdx = [index indexOfObject:referenceIndexEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
+
+    if (indexEntryIdx == NSNotFound) return [NSSet set];
+
+    BCOIndexEntry *entry = [index objectAtIndex:indexEntryIdx];
+
+    return [entry objects];
 }
 
 @end
