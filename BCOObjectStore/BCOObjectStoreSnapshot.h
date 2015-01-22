@@ -10,6 +10,23 @@
 
 
 
+//@interface BCOObjectStoreSnapshot : NSObject
+//
+//-(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
+//
+//@property(readonly) NSSet *objects;
+//@property(readonly) NSDictionary *indexDescriptions;
+//
+//-(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
+//-(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors;
+//
+//-(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects;
+//-(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects;
+//
+//@end
+
+
+
 @interface BCOObjectStoreSnapshot : NSObject
 
 -(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
@@ -17,10 +34,12 @@
 @property(readonly) NSSet *objects;
 @property(readonly) NSDictionary *indexDescriptions;
 
--(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
--(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors;
-
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects;
 -(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects;
 
+@end
+
+
+@interface BCOObjectStoreSnapshot (Debug)
+-(NSDictionary *)indexesByIndexName;
 @end

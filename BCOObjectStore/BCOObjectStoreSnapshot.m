@@ -8,61 +8,14 @@
 
 #import "BCOObjectStoreSnapshot.h"
 #import "BCOIndexDescription.h"
-
-
-
-@interface BCOIndexReference : NSObject <NSCopying>
-@property(nonatomic, readonly) NSString *indexName;
-@property(nonatomic, readonly) id key;
-@end
-
-
-
-@implementation BCOIndexReference;
-
--(instancetype)initWithIndexName:(NSString *)indexName key:(id)key
-{
-    self = [super init];
-    if (self == nil) return nil;
-
-    _indexName = [indexName copy];
-    _key = key;
-
-    return self;
-}
-
-
-
--(NSUInteger)hash
-{
-    return self.class.hash ^ self.indexName.hash ^ [self.key hash];
-}
-
-
-
--(BOOL)isEqual:(id)object
-{
-    if (self == object) return YES;
-
-    if (![[object class] isEqual:BCOIndexReference.class]) return NO;
-
-    return [object hash] == self.hash;
-}
-
-
-
--(id)copyWithZone:(NSZone *)zone
-{
-    return self;
-}
-
-@end
+#import "BCOIndexReference.h"
+#import "BCOIndexEntry.h"
 
 
 
 @interface BCOObjectStoreSnapshot ()
 @property(readonly) NSDictionary *indexesByIndexName;
-@property(readonly) NSMapTable *referenceSetsByObject;
+@property(readonly) NSMapTable *indexReferencesByObject;
 @end
 
 
@@ -89,42 +42,55 @@
     _objects = [objects copy];
     _indexDescriptions = [indexDescriptions copy];
 
-    //Build index
+    //Build the indexReference table
+    NSMapTable *indexReferencesByObject = [NSMapTable strongToStrongObjectsMapTable];
+    for (id object in objects) {
+        NSMutableSet *indexReferences = [NSMutableSet new];
+        [indexReferencesByObject setObject:indexReferences forKey:object];
+    }
+    _indexReferencesByObject = indexReferencesByObject;
+
+    //Build indexes
     NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
-    NSMapTable *referenceSetsByObject = [NSMapTable strongToStrongObjectsMapTable];
+    BCOReferenceIndexEntry *referenceEntry = [[BCOReferenceIndexEntry alloc] initWithKey:nil];
     [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
+
         //Create and add the index
-        NSMutableDictionary *index = [NSMutableDictionary new];
+        NSMutableArray *index = [NSMutableArray new];
         indexesByIndexName[indexName] = index;
 
         //Add each object to the index
         BCOIndexer indexer = indexDescription.indexer;
         for (id object in objects) {
+            //Get the key and exit if the object shouldn't be included in this index
             id key = indexer(object);
             if (key == nil) continue;
 
-            //Fetch/create the bucket to store the object in
-            NSMutableSet *objectsBucket = index[key];
-            if (objectsBucket == nil) {
-                objectsBucket = [NSMutableSet new];
-                index[key] = objectsBucket;
-            }
+            //Update the refrenceEntry so it will match the entry for key
+            referenceEntry.key = key;
 
-            //Store the object
-            [objectsBucket addObject:object];
+            //Find the entry in the index (or create if not present)
+            BCOIndexEntry *entry = ^{
+                NSUInteger entryIdx = [index indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
 
-            //Create a reference
+                if (entryIdx != NSNotFound) return (BCOIndexEntry *)[index objectAtIndex:entryIdx];
+
+                BCOIndexEntry *newEntry = [[BCOIndexEntry alloc] initWithKey:key];
+                NSUInteger insertionIdx = [index indexOfObject:newEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+                [index insertObject:newEntry atIndex:insertionIdx];
+                return newEntry;
+            }();
+
+            //Add the object to the entry
+            [entry.objects addObject:object];
+
+            //Add an indexReference to the referencesSet for the entry
             BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            NSMutableSet *referenceSet = [referenceSetsByObject objectForKey:object];
-            if (referenceSet == nil) {
-                referenceSet = [NSMutableSet new];
-                [referenceSetsByObject setObject:referenceSet forKey:object];
-            }
-            [referenceSet addObject:reference];
+            NSMutableSet *referencesSet = [indexReferencesByObject objectForKey:object];
+            [referencesSet addObject:reference];
         }
     }];
     _indexesByIndexName = indexesByIndexName;
-    _referenceSetsByObject = referenceSetsByObject;
 
     return self;
 }
@@ -132,13 +98,13 @@
 
 
 #pragma mark - 'copying'
--(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)allObjects
+-(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects
 {
     NSSet *oldObjects = self.objects;
-    NSMutableSet *freshObjects = [allObjects mutableCopy];
+    NSMutableSet *freshObjects = [newObjects mutableCopy];
     [freshObjects minusSet:oldObjects];
     NSMutableSet *expiredObjects = [oldObjects mutableCopy];
-    [expiredObjects minusSet:allObjects];
+    [expiredObjects minusSet:newObjects];
 
     return [self snapshotByRemovingObjects:expiredObjects addingObjects:freshObjects];
 }
@@ -148,95 +114,111 @@
 -(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects
 {
     NSDictionary *indexDescriptions = self.indexDescriptions;
+    NSSet *oldObjects = self.objects;
 
-    NSMutableSet *newObjects = [self.objects mutableCopy];
-    //Note that it's not safe to modify the objectsSets!
+    NSMutableSet *newObjects = [oldObjects mutableCopy];
+    //Perfrom a deep copy of the indexes
     NSMutableDictionary *newIndexesByIndexName = ({
         NSMutableDictionary *dict = [NSMutableDictionary new];
-        [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-            dict[key] = [obj mutableCopy];
+        [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, NSArray *index, BOOL *stop) {
+            dict[indexName] = [index mutableCopy];
         }];
         dict;
     });
-    NSMapTable *newReferenceSetsByObject = [self.referenceSetsByObject copy];
+    //Perform a deep copy of indexReferencesByObject
+    NSMapTable *newIndexReferencesByObject = ({
+        NSMapTable *table = [NSMapTable strongToStrongObjectsMapTable];
+        NSMapTable *indexReferencesByObject = self.indexReferencesByObject;
+        for (id key in indexReferencesByObject.keyEnumerator) {
+            NSSet *existingReferencesSet = [indexReferencesByObject objectForKey:key];
+            NSMutableSet *newReferencesSet = [existingReferencesSet mutableCopy];
+            [table setObject:newReferencesSet forKey:key];
+        }
+        table;
+    });
+
+    BCOReferenceIndexEntry *referenceIndexEntry = [BCOReferenceIndexEntry new];
 
     //Remove expired objects from...
-    NSMutableDictionary *objectsSetsToRemoveByIndexReference = [NSMutableDictionary new];
-    for (id expiredObject in expiredObjects) {
-        //...each index (by looking up each reference)
-        NSSet *references = [newReferenceSetsByObject objectForKey:expiredObject];
-        for (BCOIndexReference *reference in references) {
-
-            //Get victims
-            NSMutableSet *victims = objectsSetsToRemoveByIndexReference[reference];
-            if (victims == nil) {
-                victims = [NSMutableSet new];
-                objectsSetsToRemoveByIndexReference[reference] = victims;
-            }
-            [victims addObject:expiredObject];
+    for (id nonCanonicalExpiredObject in expiredObjects) {
+        id expiredObject = [oldObjects member:nonCanonicalExpiredObject];
+        if (expiredObject == nil) {
+            NSLog(@"Attempting to remove an object not in the store");
+            continue;
         }
-        //...the reference set
-        [newReferenceSetsByObject removeObjectForKey:expiredObject];
 
         //.. all objects
         [newObjects removeObject:expiredObject];
-    }
 
-    //TODO: Describe what's happening
-    [objectsSetsToRemoveByIndexReference enumerateKeysAndObjectsUsingBlock:^(BCOIndexReference *reference, NSSet *victims, BOOL *stop) {
-        NSMutableDictionary *index = newIndexesByIndexName[reference.indexName];
-        NSSet *oldObjectsSet = index[reference.key];
-        NSMutableSet *newObjectsSet = [oldObjectsSet mutableCopy];
-        [newObjectsSet minusSet:victims];
-        index[reference.key] = newObjectsSet;
-    }];
-
-
-    //Add freshObjects to all objects
-    [newObjects unionSet:freshObjects];
-    //Add freshObjects to each index
-    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
-
-        NSMutableDictionary *freshIndex = [NSMutableDictionary new];
-        BCOIndexer indexer = indexDescription.indexer;
-        for (id freshObject in freshObjects) {
-            //Generate a key
-            id key = indexer(freshObject);
-            if (key == nil) continue;
-
-            //Create the new objectsSet
-            NSMutableSet *objectsSet = freshIndex[key];
-            if (objectsSet == nil) {
-                objectsSet = [NSMutableSet new];
-                freshIndex[key] = objectsSet;
+        //...each index by enumerating the objects indexReferences
+        NSSet *references = [newIndexReferencesByObject objectForKey:expiredObject];
+        for (BCOIndexReference *reference in references) {
+            NSMutableArray *index = newIndexesByIndexName[reference.indexName];
+            referenceIndexEntry.key = reference.key;
+            NSUInteger entryIndex = [index indexOfObject:referenceIndexEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
+            BCOIndexEntry *entry = [index objectAtIndex:entryIndex];
+            [entry.objects removeObject:expiredObject];
+            BOOL shouldRemoveEmptyEntry = entry.objects.count == 0;
+            if (shouldRemoveEmptyEntry) {
+                [index removeObjectAtIndex:entryIndex];
             }
-            [objectsSet addObject:freshObject];
-
-            //Add the object to the referencesSet
-            BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            NSSet *existingReferencesSet = [newReferenceSetsByObject objectForKey:freshObject];
-            NSSet *newReferencesSet = (existingReferencesSet == nil) ? [NSSet setWithObject:reference] : [existingReferencesSet setByAddingObject:reference];
-            [newReferenceSetsByObject setObject:newReferencesSet forKey:freshObject];
         }
 
-        //Make a copy of the index...
-        NSMutableDictionary *newIndex = [newIndexesByIndexName[indexName] mutableCopy];
-        newIndexesByIndexName[indexName] = newIndex;
+        //...the reference set (this has to happen after removing the object from the indexes)
+        [newIndexReferencesByObject removeObjectForKey:expiredObject];
+    }
 
-        //..and merge in the freshIndex
-        [freshIndex enumerateKeysAndObjectsUsingBlock:^(id key, NSMutableSet *freshObjectsSet, BOOL *stop) {
-            NSSet *existingObjectsSet = newIndex[key];
-            if (existingObjectsSet != nil) [freshObjectsSet unionSet:existingObjectsSet];
-            newIndex[key] = freshObjectsSet;
+    //Add freshObjects to...
+    for (id freshObject in freshObjects) {
+        id existingObject = [oldObjects member:freshObject];
+        if (existingObject != nil) {
+            NSLog(@"Store already contains object");
+            continue;
+        }
+
+        //...all objects
+        [newObjects addObject:freshObject];
+
+        //... index references
+        NSMutableSet *referencesSet = [NSMutableSet new];
+        [newIndexReferencesByObject setObject:referencesSet forKey:freshObject];
+
+        //...each index
+        [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
+            NSMutableArray *index = newIndexesByIndexName[indexName];
+            BCOIndexer indexer = indexDescription.indexer;
+            //Generate a key
+            id key = indexer(freshObject);
+            //Get the key and exit if the object shouldn't be included in this index
+            if (key == nil) return;
+
+            //Find the entry in the index (or create if not present)
+            referenceIndexEntry.key = key;
+            BCOIndexEntry *entry = ^{
+                NSUInteger entryIdx = [index indexOfObject:referenceIndexEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
+
+                if (entryIdx != NSNotFound) return (BCOIndexEntry *)[index objectAtIndex:entryIdx];
+
+                BCOIndexEntry *newEntry = [[BCOIndexEntry alloc] initWithKey:key];
+                NSUInteger insertionIdx = [index indexOfObject:newEntry inSortedRange:NSMakeRange(0, index.count) options:NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+                [index insertObject:newEntry atIndex:insertionIdx];
+                return newEntry;
+            }();
+            //Add the object to the index entry
+            [entry.objects addObject:freshObject];
+
+            //Add an indexReference to the referencesSet for the entry
+            BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
+            [referencesSet addObject:reference];
         }];
-    }];
+    }
 
     //Construct the new snapshot
     BCOObjectStoreSnapshot *snapshot = [[BCOObjectStoreSnapshot alloc] init];
-    snapshot->_objects = newObjects;
     snapshot->_indexDescriptions = indexDescriptions;
+    snapshot->_objects = newObjects;
     snapshot->_indexesByIndexName = newIndexesByIndexName;
-    snapshot->_referenceSetsByObject = newReferenceSetsByObject;
+    snapshot->_indexReferencesByObject = newIndexReferencesByObject;
 
     return snapshot;
 }
@@ -245,43 +227,9 @@
 
 
 #pragma mark - object access
--(NSSet *)objectsForKeys:(NSArray *)keys inIndexNamed:(NSString *)indexName
+-(NSArray *)fetchObjectsMatching:(NSString *)matching sortDescriptors:(NSArray *)sortDescriptors
 {
-    NSMutableSet *allObjects = [NSMutableSet new];
-    for (id key in keys) {
-        NSSet *objects = [self objectsForKey:key inIndexNamed:indexName];
-        if (objects != nil) [allObjects unionSet:objects];
-    }
-    return allObjects;
-}
-
-
-
--(NSSet *)objectsForKey:(id)key inIndexNamed:(NSString *)indexName
-{
-    NSDictionary *index = self.indexesByIndexName[indexName];
-
-    NSSet *objects = index[key];
-
-    return (objects == nil) ? [NSSet set] : objects;
-}
-
-
-
--(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors
-{
-    NSSet *matchingObjects = (predicate == nil) ? self.objects : [self.objects filteredSetUsingPredicate:predicate];
-
-    return (sortDescriptors.count > 0) ? [matchingObjects sortedArrayUsingDescriptors:sortDescriptors] : [matchingObjects allObjects];
-}
-
-
-
--(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors
-{
-    NSSet *matchingObjects = [self objectsForKeys:keys inIndexNamed:indexName];
-    
-    return (sortDescriptors.count > 0) ? [matchingObjects sortedArrayUsingDescriptors:sortDescriptors] : [matchingObjects allObjects];
+    return nil;
 }
 
 @end

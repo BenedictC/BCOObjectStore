@@ -10,6 +10,12 @@
 
 
 
+@protocol BCOComparable <NSObject>
+- (NSComparisonResult)compare:(NSString *)aString;
+@end
+
+
+
 typedef id<NSCopying>(^BCOIndexer)(id object);
 
 
