@@ -173,25 +173,43 @@
 
 -(NSSet *)objectsLessThanKey:(id)key
 {
-    return [NSSet set];
-    //TODO:
-//    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
-//    NSArray *objects = self.indexObjects;
-//    NSUInteger index = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
-//
-//    if (index == ) {
-//        <#statements#>
-//    }
-//    if (outIndex != NULL) *outIndex = index;
-//    return entry;
+#pragma message "TODO: This needs to handle keys that are out side of array bounds"
+    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
+    NSArray *objects = self.indexedObjects;
+    //Index will 
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+
+    NSMutableSet *matches = [NSMutableSet set];
+    for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanKey; i++) {
+        BCOIndexEntry *entry = [objects objectAtIndex:i];
+        [matches unionSet:entry.objects];
+    }
+
+    return matches;
 }
 
 
 
 -(NSSet *)objectsLessThanOrEqualToKey:(id)key
 {
-    //TODO:
-    return [NSSet set];
+#pragma message "TODO: This needs to handle keys that are out side of array bounds"
+    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
+    NSArray *objects = self.indexedObjects;
+    //Index will
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+
+    NSMutableSet *matches = [NSMutableSet set];
+    for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanKey; i++) {
+        BCOIndexEntry *entry = [objects objectAtIndex:i];
+        [matches unionSet:entry.objects];
+    }
+
+    BCOIndexEntry *possibleExactMatch = objects[indexOfFirstObjectEqualToOrGreaterThanKey];
+    if ([possibleExactMatch compare:referenceEntry] == NSOrderedSame) {
+        [matches unionSet:possibleExactMatch.objects];
+    }
+
+    return matches;
 }
 
 
@@ -214,8 +232,14 @@
 
 -(NSSet *)objectsForKeysNotEqualToKey:(id)key
 {
-    //TODO:    
-    return [NSSet set];
+    NSMutableSet *matches = [NSMutableSet new];
+    for (BCOIndexEntry *entry in self.indexedObjects) {
+        if ([entry.key compare:key]) continue;
+
+        [matches unionSet:entry.objects];
+    }
+
+    return matches;
 }
 
 @end
