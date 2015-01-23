@@ -1,6 +1,6 @@
 //
 //  BCOObjectStoreSnapshot+Query.h
-//  Pods
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 23/01/2015.
 //

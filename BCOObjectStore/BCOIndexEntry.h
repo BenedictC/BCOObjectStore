@@ -1,6 +1,6 @@
 //
 //  BCOIndexEntry.h
-//  Pods
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
 //
