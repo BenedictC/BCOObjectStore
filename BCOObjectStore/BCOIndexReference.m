@@ -1,16 +1,16 @@
 //
-//  BCOIndexEntryReference.m
+//  BCOIndexReference.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
 //
 //
 
-#import "BCOIndexEntryReference.h"
+#import "BCOIndexReference.h"
 
 
 
-@implementation BCOIndexEntryReference;
+@implementation BCOIndexReference;
 
 -(instancetype)initWithIndexName:(NSString *)indexName key:(id)key
 {
@@ -36,7 +36,7 @@
 {
     if (self == object) return YES;
 
-    if (![[object class] isEqual:BCOIndexEntryReference.class]) return NO;
+    if (![[object class] isEqual:BCOIndexReference.class]) return NO;
 
     return [object hash] == self.hash;
 }

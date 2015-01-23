@@ -16,13 +16,15 @@ NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOI
 
 
 
+@interface BCOIndexEntry ()
+@property(nonatomic) id key;
+@end
+
+
 
 @implementation BCOIndexEntry
-{
-@protected
-    id _key;
-}
 
+#pragma mark - instance life cylce
 -(instancetype)initWithKey:(id)key
 {
     self = [super init];
@@ -55,11 +57,5 @@ NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOI
 
 
 
-@implementation BCOReferenceIndexEntry
-
--(void)setKey:(id)key
-{
-    _key = key;
-}
-
+@implementation BCOIndexReferenceEntry
 @end

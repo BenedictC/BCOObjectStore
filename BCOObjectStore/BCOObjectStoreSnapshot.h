@@ -42,8 +42,3 @@
 
 @end
 
-
-
-@interface BCOObjectStoreSnapshot (Debug)
--(NSDictionary *)indexesByIndexName;
-@end

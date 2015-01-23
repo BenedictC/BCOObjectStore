@@ -1,5 +1,5 @@
 //
-//  BCOIndexEntryReference.h
+//  BCOIndexReference.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
@@ -10,7 +10,7 @@
 
 
 
-@interface BCOIndexEntryReference : NSObject <NSCopying>
+@interface BCOIndexReference : NSObject <NSCopying>
 
 -(instancetype)initWithIndexName:(NSString *)indexName key:(id)key;
 

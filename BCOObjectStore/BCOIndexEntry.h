@@ -19,10 +19,9 @@
 
 
 
-@interface BCOReferenceIndexEntry : BCOIndexEntry
--(void)setKey:(id)key;
+@interface BCOIndexReferenceEntry : BCOIndexEntry
+@property(nonatomic) id key;
 @end
-
 
 
 
