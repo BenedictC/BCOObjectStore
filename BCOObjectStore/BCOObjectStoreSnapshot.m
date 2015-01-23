@@ -17,6 +17,38 @@
 
 
 
+@interface BCOObjectKey : NSObject
+@property(nonatomic, readonly) id object;
+@end
+
+
+@implementation BCOObjectKey
+
+-(instancetype)initWithObject:(id)object
+{
+    self = [super init];
+    if (self == nil) return nil;
+    _object = object;
+    return self;
+}
+
+
+
+-(NSComparisonResult)compare:(BCOObjectKey *)otherKey
+{
+    uintptr_t obj = (uintptr_t)_object;
+    uintptr_t otherObj = (uintptr_t)otherKey->_object;
+
+    if (otherObj > obj) return NSOrderedAscending;
+    if (otherObj < obj) return NSOrderedDescending;
+
+    return NSOrderedSame;
+}
+
+@end
+
+
+
 @interface BCOObjectStoreSnapshot ()
 @property(readonly) NSDictionary *indexesByIndexName;
 @property(readonly) BCOIndex *indexReferencesByObjectAddress;
@@ -68,8 +100,8 @@
 
             //Add an indexReference to the referencesSet for the entry
             BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            NSNumber *indeksReferencesKey = @((uintptr_t)object);
-            [indexReferencesByObjectAddress addObject:reference forKey:indeksReferencesKey];
+            BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:object];
+            [indexReferencesByObjectAddress addObject:reference forKey:objectKey];
         }
     }];
     _indexesByIndexName = indexesByIndexName;
@@ -84,10 +116,23 @@
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects
 {
     NSSet *oldObjects = self.objects;
+
+#pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
+
+    //Separate the objects into inserts and deletes
     NSMutableSet *freshObjects = [newObjects mutableCopy];
     [freshObjects minusSet:oldObjects];
     NSMutableSet *expiredObjects = [oldObjects mutableCopy];
     [expiredObjects minusSet:newObjects];
+
+    BOOL isRebuildingMoreEfficentThanUpdating = ({
+        long long numberOfRebuildOperations = newObjects.count;
+        long long numberOfUpdateOperations = freshObjects.count + expiredObjects.count;
+        numberOfRebuildOperations < numberOfUpdateOperations;
+    });
+    if (isRebuildingMoreEfficentThanUpdating) {
+        return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexDescriptions:self.indexDescriptions];
+    }
 
     return [self snapshotByRemovingObjects:expiredObjects addingObjects:freshObjects];
 }
@@ -122,15 +167,15 @@
         [newObjects removeObject:expiredObject];
 
         //...each index by enumerating the objects indexReferences
-        id indeksReferencesKey = @((uintptr_t)expiredObject);
-        NSSet *references = [newIndexEntryReferencesByObject objectsForKey:indeksReferencesKey];
+        BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:expiredObject];
+        NSSet *references = [newIndexEntryReferencesByObject objectsForKey:objectKey];
         for (BCOIndexReference *reference in references) {
             BCOIndex *index = newIndexesByIndexName[reference.indexName];
             [index removeObject:expiredObject forKey:reference.key];
         }
 
         //...the reference set (this has to happen after removing the object from the indexes)
-        [newIndexEntryReferencesByObject removeObject:expiredObject forKey:indeksReferencesKey];
+        [newIndexEntryReferencesByObject removeObject:expiredObject forKey:objectKey];
     }
 
     //Add freshObjects to...
@@ -146,7 +191,7 @@
 
 
         //...each index
-        id indeksReferencesKey = @((uintptr_t)freshObject);
+        BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:freshObject];
         [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
             //Generate a key
             id key = indexDescription.indexer(freshObject);
@@ -159,7 +204,7 @@
 
             //Add an indexReference to the referencesSet for the entry
             BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            [newIndexEntryReferencesByObject addObject:reference forKey:indeksReferencesKey];
+            [newIndexEntryReferencesByObject addObject:reference forKey:objectKey];
         }];
     }
 
