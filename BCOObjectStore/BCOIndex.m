@@ -57,7 +57,7 @@
 
 
 #pragma mark - Properties
--(NSArray *)indexObjects
+-(NSArray *)indexedObjects
 {
     return _mutableIndexedObjects;
 }
@@ -81,7 +81,7 @@
 -(BCOIndexEntry *)entryForKey:(id)key index:(NSUInteger *)outIndex
 {
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
-    NSArray *objects = self.indexObjects;
+    NSArray *objects = self.indexedObjects;
     NSUInteger index = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
 
     BCOIndexEntry *entry = (index == NSNotFound) ? nil : [objects objectAtIndex:index];
