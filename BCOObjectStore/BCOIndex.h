@@ -12,13 +12,19 @@
 
 @interface BCOIndex : NSObject <NSCopying>
 
--(NSSet *)objectsForKey:(id)key;
-
+//Entry updating
 -(void)addObject:(id)object forKey:(id)key;
-
 -(void)removeObject:(id)object forKey:(id)key;
 
-//-(NSArray *)objectsInRange...
-//-(NSArray *)objectsForKeys:(NSSet *)keys;
+
+
+//Object Access
+-(NSSet *)objectsForKey:(id)key;
+-(NSSet *)objectsForKeysInSet:(NSSet *)keys;
+-(NSSet *)objectsLessThanKey:(id)key;
+-(NSSet *)objectsLessThanOrEqualToKey:(id)key;
+-(NSSet *)objectsGreaterThanKey:(id)key;
+-(NSSet *)objectsGreaterThanOrEqualToKey:(id)key;
+-(NSSet *)objectsForKeysNotEqualToKey:(id)key;
 
 @end

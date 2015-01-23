@@ -27,87 +27,160 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
 
 @implementation BCOObjectStoreSnapshot (Query)
 
-#define MUST(EXPR, ...) ({if (!(EXPR)) {[NSException raise:NSInvalidArgumentException format:__VA_ARGS__]; return nil; } })
 -(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable objects:(NSSet *)objects indexes:(NSDictionary *)indexes
 {
     NSScanner *scanner = [NSScanner scannerWithString:query];
 
     //A query must start with 'WHERE'
-    MUST([scanner scanString:@"WHERE" intoString:NULL], @"Invalid query. Queries must start with 'WHERE'");
+    BOOL didScanWHEREDelimitter = [scanner scanString:@"WHERE" intoString:NULL];
+    if (!didScanWHEREDelimitter) {
+        [NSException raise:NSInvalidArgumentException format:@"Invalid query. Queries must start with 'WHERE'"];
+        return nil;
+    }
 
+    //Scan and fetch objcts
     NSMutableSet *matchingObjects = nil;
-
-    //Scan a clause
     do {
-        //TODO: Scan for a `predicate` before scanning for indexName
+        NSPredicate *predicate = [self scanPredicateWithScanner:scanner substitutionVariables:subsitutionVariable];
+        if (predicate != nil) {
+            NSSet *objectsToFilter = (matchingObjects == nil) ? self.objects : matchingObjects;
+            NSSet *filteredObjects = [objectsToFilter filteredSetUsingPredicate:predicate];
 
-        NSString *indexName = nil;
-        MUST([scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceCharacterSet] intoString:&indexName], @"Expected indexName");
-
-        NSString *operatorString = nil;
-        [scanner scanUpToCharactersFromSet:[NSCharacterSet whitespaceCharacterSet] intoString:&operatorString];
-        BCOOperator operator = [self operatorFromString:operatorString];
-        MUST(operator != BCOOperatorInvalid, @"Expected operator");
-
-        id value = nil;
-        MUST([self scanValueWithScanner:scanner substitutionVariables:subsitutionVariable value:&value], @"Expected value");
-
-        NSSet *objects = [self fetchObjectsFromIndex:indexName operator:operator value:value indexes:indexes];
-        BOOL isFirstWhereClause = (matchingObjects == nil);
-        if (isFirstWhereClause) {
-            matchingObjects = [objects mutableCopy];
-        } else {
-            [matchingObjects intersectSet:objects];
+            BOOL isFirstWhereClause = matchingObjects == nil;
+            if (isFirstWhereClause) {
+                matchingObjects = [filteredObjects mutableCopy];
+            } else {
+                [matchingObjects intersectSet:filteredObjects];
+            }
+            continue;
         }
 
-        //Because we only allow ANDing at the moment the operations will only ever reduce the number of matches
+        NSString *indexName = [self scanIdentifierWithScanner:scanner];
+        if (indexName == nil) {
+            [NSException raise:NSInvalidArgumentException format:@"Expected index name."];
+            return nil;
+        }
+
+        BCOOperator operator = [self scanOperatorWithScanner:scanner];
+        if (operator == BCOOperatorInvalid) {
+            [NSException raise:NSInvalidArgumentException format:@"Expected operator."];
+            return nil;
+        }
+
+        id value = [self scanValueWithScanner:scanner substitutionVariables:subsitutionVariable];
+        if (value == nil) {
+            [NSException raise:NSInvalidArgumentException format:@"Expected value."];
+            return nil;
+        }
+
+        //Get the matches
+        BOOL isFirstWhereClause = (matchingObjects == nil);
+        if (isFirstWhereClause) {
+            NSSet *objects = [self fetchObjectsFromIndex:indexName operator:operator value:value indexes:indexes];
+            matchingObjects = [objects mutableCopy];
+            continue;
+        }
+
+        //Because we currently only allow ANDing the operations will only ever reduce the number of matches so we can bail early
+        //(We could return now, but we don't so that the query is completely parsed thus finding any errors in in.)
         BOOL isEmpty = objects.count == 0;
-        if (isEmpty) return @[];
+        if (isEmpty) continue;
+
+        //Narrow the results
+        [matchingObjects intersectSet:objects];
 
     } while ([scanner scanString:@"AND" intoString:NULL]); //"Let's go round again"
 
 
-    return [matchingObjects allObjects];
-
-    //TODO:
     //Scan optional 'ORDERED BY'
-    //If NO scan END OF STRING
+    NSMutableArray *sortDescriptors = [NSMutableArray new];
+    BOOL didScanORDEREDBYDelimitter = [scanner scanString:@"ORDERED BY" intoString:NULL];
+    if (didScanORDEREDBYDelimitter) {
+        do {
+            //Attempt to scan a sort descriptor variable
+            id sortDescriptor = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+            if ([sortDescriptor isKindOfClass:NSSortDescriptor.class]) {
+                [sortDescriptors addObject:sortDescriptor];
+                continue;
+            } else  if (sortDescriptor != nil) {
+                //sortDescriptor is not of the expected class
+                [NSException raise:NSInvalidArgumentException format:@"Expected NSSortDescriptor for varible."];
+                return nil;
+            }
 
-    //Scan property name
+            //else scan a property name...
+            NSString *key = [self scanIdentifierWithScanner:scanner];
+            if (key == nil) {
+                [NSException raise:NSInvalidArgumentException format:@"Expected sort key."];
+                return nil;
+            }
+            //...followed by an optional sort direction
+            BOOL ascending = YES;
+            if ([scanner scanString:@"DESC" intoString:NULL]) {
+                ascending = NO;
+            } else {
+                //Consume a  trailing ASC. We don't need to set it because the default is YES
+                [scanner scanString:@"ASC" intoString:NULL];
+            }
+            //...and create a sort descriptor
+            [sortDescriptors addObject:[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
 
-}
-#undef MUST
-
-
-
--(BOOL)scanValueWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)substitutionVariables value:(id *)outValue
-{
-    BOOL didScanVariableDelimiter = [scanner scanString:@"$" intoString:NULL];
-    if (didScanVariableDelimiter) {
-        NSCharacterSet *variableNameCharacters = [NSCharacterSet characterSetWithCharactersInString:@"QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_"];
-        NSString *variableName = nil;
-        BOOL didScanVariableName = [scanner scanUpToCharactersFromSet:variableNameCharacters intoString:&variableName];
-        if (!didScanVariableName) {
-            [NSException raise:NSInvalidArgumentException format:@"Invalid variable name"];
-            return NO;
-        }
-
-        id variable = substitutionVariables[variableName];
-        if (variableName == nil) {
-            [NSException raise:NSInvalidArgumentException format:@"Variable '%@' not found", variableName];
-            return NO;
-        }
-        *outValue = variable;
-        return YES;
+        } while ([scanner scanString:@"," intoString:NULL]);
     }
 
+    //Check that there's no junk at the end of the query
+    [scanner scanCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:NULL];
+    if (!scanner.isAtEnd) {
+        [NSException raise:NSInvalidArgumentException format:@"Junk found at end of query."];
+        return nil;
+    }
+
+    //Sort and go!
+    NSArray *sortedObjects = [matchingObjects sortedArrayUsingDescriptors:sortDescriptors];
+    return sortedObjects;
+}
+
+
+
+-(NSPredicate *)scanPredicateWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanPredicateOpeningDelimitter = [scanner scanString:@"`" intoString:NULL];
+    if (!didScanPredicateOpeningDelimitter) return nil;
+
+    NSString *predicateFormat = nil;
+    BOOL didScanPredicate = [scanner scanUpToString:@"`" intoString:&predicateFormat];
+    if (!didScanPredicate) {
+        [NSException raise:NSInvalidArgumentException format:@"Expected predicate string."];
+        return nil;
+    }
+
+    BOOL didScanPredicateClosingDelimitter = [scanner scanString:@"`" intoString:nil];
+    if (!didScanPredicateClosingDelimitter) {
+        [NSException raise:NSInvalidArgumentException format:@"Expected end of predicate."];
+        return nil;
+    }
+
+    return [[NSPredicate predicateWithFormat:predicateFormat] predicateWithSubstitutionVariables:subsitutionVariable];
+}
+
+
+
+-(id)scanValueWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)substitutionVariables
+{
+    //Variable
+    id variable = [self scanVariableWithScanner:scanner substitutionVariables:substitutionVariables];
+    if (variable != nil) {
+        return variable;
+    }
+
+    //Number
     double num = 0;
     BOOL didScanNumber = [scanner scanDouble:&num];
     if (didScanNumber) {
-        *outValue = @(num);
-        return YES;
+        return @(num);
     }
 
+    //String
     BOOL didScanOpeningQuote = [scanner scanString:@"'" intoString:NULL];
     if (didScanOpeningQuote) {
         NSMutableString *value = [NSMutableString new];
@@ -124,8 +197,7 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
             }
             BOOL isClosingQuote = [scanner scanString:@"'" intoString:NULL];
             if (isClosingQuote) {
-                *outValue = value;
-                return YES;
+                return value;
             }
 
             [NSException raise:NSInvalidArgumentException format:@"Incorrectly terminated string"];
@@ -133,16 +205,16 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
         }
     }
 
+    //Collection
     BOOL didScanOpenCollectionDelimtter = [scanner scanString:@"{" intoString:NULL];
     if (didScanOpenCollectionDelimtter) {
         NSMutableSet *set = [NSMutableSet new];
 
         do {
-            id value = nil;
-            BOOL didScanValue = [self scanValueWithScanner:scanner substitutionVariables:substitutionVariables value:&value];
-            if (!didScanValue) {
+            id value = [self scanValueWithScanner:scanner substitutionVariables:substitutionVariables];
+            if (value == nil) {
                 [NSException raise:NSInvalidArgumentException format:@"Invalid collection. Expected value."];
-                return NO;
+                return nil;
             }
             [set addObject:value];
         } while ([scanner scanString:@"," intoString:NULL]);
@@ -150,27 +222,72 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
         BOOL didScanCloseCollectionDelimitter = [scanner scanString:@"}" intoString:NULL];
         if (!didScanCloseCollectionDelimitter) {
             [NSException raise:NSInvalidArgumentException format:@"Invalid collection. Expected '}'"];
-            return NO;
+            return nil;
         }
 
-        *outValue = set;
-        return YES;
+        return set;
     }
 
-    return NO;
+    return nil;
 }
 
 
 
--(BCOOperator)operatorFromString:(NSString *)string
+-(id)scanVariableWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)substitutionVariables
 {
-    if ([string isEqualToString:@"="]) return BCOOperatorEqualTo;
-    if ([string isEqualToString:@"IN"]) return BCOOperatorIn;
-    if ([string isEqualToString:@"<"]) return BCOOperatorLessThan;
-    if ([string isEqualToString:@"<="]) return BCOOperatorLessThanOrEqualTo;
-    if ([string isEqualToString:@">"]) return BCOOperatorGreaterThan;
-    if ([string isEqualToString:@">="]) return BCOOperatorGreaterThanOrEqualTo;
-    if ([string isEqualToString:@"!="]) return BCOOperatorNotEqualTo;
+    BOOL didScanVariableDelimiter = [scanner scanString:@"$" intoString:NULL];
+    if (!didScanVariableDelimiter) return nil;
+
+    //Scan the varaible name
+    NSString *identifier = [self scanIdentifierWithScanner:scanner];
+    if (identifier == nil) {
+        [NSException raise:NSInvalidArgumentException format:@"Invalid variable name"];
+        return NO;
+    }
+
+    //Look up the value
+    id variable = substitutionVariables[identifier];
+    if (variable == nil) {
+        [NSException raise:NSInvalidArgumentException format:@"Variable '%@' not found", identifier];
+        return NO;
+    }
+
+    return variable;
+}
+
+
+
+-(NSString *)scanIdentifierWithScanner:(NSScanner *)scanner
+{
+    static NSCharacterSet *variableNameCharacters = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        variableNameCharacters = [NSCharacterSet characterSetWithCharactersInString:@"QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890_"];
+    });
+
+    NSString *variableName = nil;
+    [scanner scanCharactersFromSet:variableNameCharacters intoString:&variableName];
+
+    return variableName;
+}
+
+
+
+-(BCOOperator)scanOperatorWithScanner:(NSScanner *)scanner
+{
+    if ([scanner scanString:@"=" intoString:NULL])  return BCOOperatorEqualTo;
+    if ([scanner scanString:@"!=" intoString:NULL]) return BCOOperatorNotEqualTo;
+
+    if ([scanner scanString:@"IN" intoString:NULL]) return BCOOperatorIn;
+    if ([scanner scanString:@"in" intoString:NULL]) return BCOOperatorIn;
+
+    //Note that the orde of these scans is significant
+    if ([scanner scanString:@"<=" intoString:NULL]) return BCOOperatorLessThanOrEqualTo;
+    if ([scanner scanString:@"<" intoString:NULL])  return BCOOperatorLessThan;
+
+    //Note that the orde of these scans is significant
+    if ([scanner scanString:@">=" intoString:NULL]) return BCOOperatorGreaterThanOrEqualTo;
+    if ([scanner scanString:@">" intoString:NULL])  return BCOOperatorGreaterThan;
 
     return BCOOperatorInvalid;
 }
@@ -179,38 +296,28 @@ typedef NS_ENUM(NSInteger, BCOOperator) {
 
 -(NSSet *)fetchObjectsFromIndex:(NSString *)indexName operator:(BCOOperator)operator value:(id)value indexes:(NSDictionary *)indexes
 {
-    NSLog(@"'%@' '%@' '%@'", indexName, @(operator), value);
-
-    BCOIndex *indeks = indexes[indexName];
+    BCOIndex *index = indexes[indexName];
 
     switch (operator) {
-        case BCOOperatorEqualTo: {
-            NSSet *keySet = [NSSet setWithObject:value];
-            return [self fetchObjectsFromIndex:indeks withKeyInKeySet:keySet];
-        }
-        case BCOOperatorIn: {
-            return [self fetchObjectsFromIndex:indeks withKeyInKeySet:value];
-        }
-
-        default:
+        case BCOOperatorEqualTo:
+            return [index objectsForKey:value];
+        case BCOOperatorIn:
+            return [index objectsForKeysInSet:value];
+        case BCOOperatorLessThan:
+            return [index objectsLessThanKey:value];
+        case BCOOperatorLessThanOrEqualTo:
+            return [index objectsLessThanOrEqualToKey:value];
+        case BCOOperatorGreaterThan:
+            return [index objectsGreaterThanKey:value];
+        case BCOOperatorGreaterThanOrEqualTo:
+            return [index objectsGreaterThanOrEqualToKey:value];
+        case BCOOperatorNotEqualTo:
+            return [index objectsForKeysNotEqualToKey:value];
+        case BCOOperatorInvalid:
             break;
     }
 
     return nil;
-}
-
-
-
--(NSSet *)fetchObjectsFromIndex:(BCOIndex *)indeks withKeyInKeySet:(NSSet *)keySet
-{
-    NSMutableSet *results = [NSMutableSet new];
-    
-    for (id key in keySet) {
-        NSSet *objects = [indeks objectsForKey:key];
-        [results unionSet:objects];
-    }
-    
-    return results;
 }
 
 @end

@@ -56,7 +56,7 @@
 
 
 
-#pragma mark - properties
+#pragma mark - Properties
 -(NSArray *)indexObjects
 {
     return _mutableIndexedObjects;
@@ -77,15 +77,7 @@
 
 
 
-#pragma mark - object access
--(NSSet *)objectsForKey:(id)key
-{
-    BCOIndexEntry *entry = [self entryForKey:key index:NULL];
-    return entry.objects;
-}
-
-
-
+#pragma mark - Entry Access
 -(BCOIndexEntry *)entryForKey:(id)key index:(NSUInteger *)outIndex
 {
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
@@ -100,6 +92,7 @@
 
 
 
+#pragma mark - Entry Updating
 -(BCOIndexEntry *)mutableEntryForKey:(id)key index:(NSUInteger *)outIndex
 {
     NSUInteger index = NSNotFound;
@@ -152,6 +145,77 @@
     if (entry.objects.count == 0) {
         [self.mutableIndexedObjects removeObjectAtIndex:index];
     }
+}
+
+
+
+#pragma mark - Object Access
+-(NSSet *)objectsForKey:(id)key
+{
+    BCOIndexEntry *entry = [self entryForKey:key index:NULL];
+    return entry.objects;
+}
+
+
+
+-(NSSet *)objectsForKeysInSet:(NSSet *)keys
+{
+    NSMutableSet *objects = [NSMutableSet new];
+    for (id key in keys) {
+        BCOIndexEntry *entry = [self entryForKey:key index:NULL];
+        [objects unionSet:entry.objects];
+    }
+
+    return objects;
+}
+
+
+
+-(NSSet *)objectsLessThanKey:(id)key
+{
+    return [NSSet set];
+    //TODO:
+//    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
+//    NSArray *objects = self.indexObjects;
+//    NSUInteger index = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+//
+//    if (index == ) {
+//        <#statements#>
+//    }
+//    if (outIndex != NULL) *outIndex = index;
+//    return entry;
+}
+
+
+
+-(NSSet *)objectsLessThanOrEqualToKey:(id)key
+{
+    //TODO:
+    return [NSSet set];
+}
+
+
+
+-(NSSet *)objectsGreaterThanKey:(id)key
+{
+    //TODO:
+    return [NSSet set];
+}
+
+
+
+-(NSSet *)objectsGreaterThanOrEqualToKey:(id)key
+{
+    //TODO:
+    return [NSSet set];
+}
+
+
+
+-(NSSet *)objectsForKeysNotEqualToKey:(id)key
+{
+    //TODO:    
+    return [NSSet set];
 }
 
 @end
