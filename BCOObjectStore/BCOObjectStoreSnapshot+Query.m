@@ -21,30 +21,30 @@
     BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
 
     //Filter
-    NSMutableSet *allMatchedLookUpTokens = nil;
+    NSMutableSet *allMatchedRecords = nil;
     for (BCOWhereClauseExpression *expression in query.whereClauseExpressions) {
 
         //Fetch the objects for the individual WHERE clause
-        NSSet *tokens = (allMatchedLookUpTokens == nil) ? storage.allTokens : allMatchedLookUpTokens;
-        NSSet *matchedTokens = [self evaluateWHEREClauseExpression:expression tokens:tokens storage:storage indexes:indexes];
+        NSSet *potentialRecords = (allMatchedRecords == nil) ? [NSSet setWithArray:storage.allStorageRecords] : allMatchedRecords;
+        NSSet *matchedRecords = [self evaluateWHEREClauseExpression:expression tokens:potentialRecords storage:storage indexes:indexes];
 
         //Intersect with the existing objects
-        if (allMatchedLookUpTokens == nil) {
-            allMatchedLookUpTokens = [matchedTokens mutableCopy];
+        if (allMatchedRecords == nil) {
+            allMatchedRecords = [matchedRecords mutableCopy];
         } else {
-            [allMatchedLookUpTokens intersectSet:matchedTokens];
+            [allMatchedRecords intersectSet:matchedRecords];
         }
 
         //Because we only allow ANDing of WHERE clauses we can bail as soon as there are 0 matches.
-        if (allMatchedLookUpTokens.count == 0) {
+        if (allMatchedRecords.count == 0) {
             return @[];
         }
     }
 
-    //Convert tokens to objects
+    //Convert records to objects
     NSMutableArray *objects = [NSMutableArray new];
-    for (BCOObjectStorageLookUpToken *token in allMatchedLookUpTokens) {
-        id object = [storage objectForLookUpToken:token];
+    for (BCOStorageRecord *record in allMatchedRecords) {
+        id object = [storage objectForStorageRecord:record];
         [objects addObject:object];
     }
 
@@ -55,7 +55,7 @@
 
 
 #pragma mark - Object fetching
--(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)tokens storage:(BCOInMemoryObjectStorage *)storage indexes:(NSDictionary *)indexes
+-(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)records storage:(BCOInMemoryObjectStorage *)storage indexes:(NSDictionary *)indexes
 {
     switch (expression.operator) {
 
@@ -98,10 +98,10 @@
         {
             NSPredicate *predicate = expression.value;
             NSMutableSet *filteredObjects = [NSMutableSet new];
-            for (id token in tokens) {
-                id object = [storage objectForLookUpToken:token];
+            for (BCOStorageRecord *record in records) {
+                id object = [storage objectForStorageRecord:record];
                 BOOL didMatch = [predicate evaluateWithObject:object];
-                if (didMatch) [filteredObjects addObject:token];
+                if (didMatch) [filteredObjects addObject:record];
             }
             return filteredObjects;
         }

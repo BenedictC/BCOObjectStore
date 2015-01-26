@@ -7,31 +7,25 @@
 //
 
 #import <Foundation/Foundation.h>
-
-
-
-@interface BCOObjectStorageLookUpToken : NSObject
-@end
-
-
-
-extern NSComparisonResult (^ const BCOObjectStorageLookUpTokenComparator)(BCOObjectStorageLookUpToken *entry1, BCOObjectStorageLookUpToken *entry2);
+@class BCOStorageRecord;
 
 
 
 @interface BCOInMemoryObjectStorage : NSObject <NSCopying>
 
+//Instance life cycle
 +(BCOInMemoryObjectStorage *)objectStorageWithObjects:(NSSet *)objects;
 
--(BCOObjectStorageLookUpToken *)addObject:(id)object;
--(void)removeObject:(id)object;
+//Content updating
+-(BCOStorageRecord *)addObject:(id)object;
+-(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;
 
--(id)objectForLookUpToken:(BCOObjectStorageLookUpToken *)lookUpToken;
--(BCOObjectStorageLookUpToken *)lookupTokenForObject:(id)object;
+//Random content access
+-(id)objectForStorageRecord:(BCOStorageRecord *)storageRecord;
+-(BCOStorageRecord *)storageRecordForObject:(id)object;
 
--(void)removeObjectForLookUpToken:(BCOObjectStorageLookUpToken *)object;
-
--(NSSet *)allObjects;
--(NSSet *)allTokens;
+//Enumerated content access
+-(NSArray *)allStorageRecords;
+-(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block;
 
 @end

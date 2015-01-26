@@ -7,79 +7,14 @@
 //
 
 #import "BCOInMemoryObjectStorage.h"
-
-
-
-@interface BCOObjectStorageLookUpToken () <NSCopying>
-@property(nonatomic, readonly) id object;
-@end
-
-
-
-@implementation BCOObjectStorageLookUpToken
-
-#pragma mark - instance life cycle
--(instancetype)initWithObject:(id)object
-{
-    self = [super init];
-    if (self == nil) return nil;
-    _object = object;
-    return self;
-}
-
-
-
--(id)copyWithZone:(NSZone *)zone
-{
-    return self;
-}
-
-
-
-#pragma mark - equality
--(NSComparisonResult)compare:(BCOObjectStorageLookUpToken *)otherKey
-{
-    uintptr_t obj = (uintptr_t)_object;
-    uintptr_t otherObj = (uintptr_t)otherKey->_object;
-
-    if (otherObj > obj) return NSOrderedAscending;
-    if (otherObj < obj) return NSOrderedDescending;
-
-    return NSOrderedSame;
-}
-
-
-
--(BOOL)isEqual:(id)object
-{
-    if (![object isKindOfClass:BCOObjectStorageLookUpToken.class]) return NO;
-
-    BCOObjectStorageLookUpToken *otherToken = object;
-
-    return [self.object isEqual:otherToken.object];
-}
-
-
-
--(NSUInteger)hash
-{
-    return [self.object hash];
-}
-
-@end
-
-
-
-NSComparisonResult (^ const BCOObjectStorageLookUpTokenComparator)(BCOObjectStorageLookUpToken *entry1, BCOObjectStorageLookUpToken *entry2) = ^NSComparisonResult(BCOObjectStorageLookUpToken *entry1, BCOObjectStorageLookUpToken *entry2) {
-    return [entry1 compare:entry2];
-};
-
-
+#import "BCOStorageRecord.h"
 
 
 
 @interface BCOInMemoryObjectStorage ()
-@property(nonatomic, readonly) NSMutableDictionary *objectsByTokens;
+
+@property(nonatomic, readonly) NSMutableDictionary *mutableObjectsByStorageRecords;
+
 @end
 
 
@@ -89,32 +24,33 @@ NSComparisonResult (^ const BCOObjectStorageLookUpTokenComparator)(BCOObjectStor
 #pragma mark - instance life cycle
 +(BCOInMemoryObjectStorage *)objectStorageWithObjects:(NSSet *)objects
 {
-    NSMutableDictionary *objectsByToken = [NSMutableDictionary new];
+    NSMutableDictionary *objectsByRecords = [NSMutableDictionary new];
     for (id object in objects) {
-        BCOObjectStorageLookUpToken *token = [[BCOObjectStorageLookUpToken alloc] initWithObject:object];
-        objectsByToken[token] = object;
+        BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+        objectsByRecords[record] = object;
     }
 
-    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByTokens:objectsByToken];
+    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByStorageRecords:objectsByRecords];
 }
 
 
 
 -(instancetype)init
 {
-    return [self initWithObjectsByTokens:@{}];
+    return [self initWithObjectsByStorageRecords:[NSMutableDictionary new]];
 }
 
 
 
--(instancetype)initWithObjectsByTokens:(NSDictionary *)objectsByTokens
+-(instancetype)initWithObjectsByStorageRecords:(NSMutableDictionary *)objectsByStorageRecords
 {
-    NSParameterAssert(objectsByTokens);
+    //BCOInMemoryObjectStorage assumes ownership of objectsByStorageRecords
+    NSParameterAssert(objectsByStorageRecords);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _objectsByTokens = [objectsByTokens mutableCopy];
+    _mutableObjectsByStorageRecords = objectsByStorageRecords;
 
     return self;
 }
@@ -123,64 +59,71 @@ NSComparisonResult (^ const BCOObjectStorageLookUpTokenComparator)(BCOObjectStor
 
 -(id)copyWithZone:(NSZone *)zone
 {
-    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByTokens:self.objectsByTokens];
+    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByStorageRecords:[_mutableObjectsByStorageRecords mutableCopy]];
+}
+
+
+
+#pragma mark - properties
+-(NSDictionary *)objectsByStorageRecords
+{
+    return _mutableObjectsByStorageRecords;
 }
 
 
 
 #pragma mark - content managment
--(BCOObjectStorageLookUpToken *)addObject:(id)object
+-(BCOStorageRecord *)addObject:(id)object
 {
-    BCOObjectStorageLookUpToken *token = [[BCOObjectStorageLookUpToken alloc] initWithObject:object];
-    _objectsByTokens[token] = object;
-    return token;
+    BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+    self.mutableObjectsByStorageRecords[record] = object;
+    return record;
 }
 
 
 
--(void)removeObject:(id)object
+-(id)objectForStorageRecord:(BCOStorageRecord *)record
 {
-    BCOObjectStorageLookUpToken *token = [self lookupTokenForObject:object];
-    [_objectsByTokens removeObjectForKey:token];
+    return self.objectsByStorageRecords[record];
 }
 
 
 
--(id)objectForLookUpToken:(BCOObjectStorageLookUpToken *)token
+-(BCOStorageRecord *)storageRecordForObject:(id)object
 {
-    return _objectsByTokens[token];
+    BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+
+    id canonicalObject = self.objectsByStorageRecords[record];
+
+    return (canonicalObject == nil) ? nil : record;
 }
 
 
 
--(BCOObjectStorageLookUpToken *)lookupTokenForObject:(id)object
+-(void)removeObjectForStorageRecord:(BCOStorageRecord *)record
 {
-    BCOObjectStorageLookUpToken *token = [[BCOObjectStorageLookUpToken alloc] initWithObject:object];
-
-    id canonicalObject = _objectsByTokens[token];
-
-    return (canonicalObject == nil) ? nil : token;
+    [self.mutableObjectsByStorageRecords removeObjectForKey:record];
 }
 
 
 
--(void)removeObjectForLookUpToken:(BCOObjectStorageLookUpToken *)lookUpToken
+-(NSArray *)allObjects
 {
-    [_objectsByTokens removeObjectForKey:lookUpToken];
+    return self.objectsByStorageRecords.allValues;
 }
 
 
 
--(NSSet *)allObjects
+-(NSArray *)allStorageRecords
 {
-    return [NSSet setWithArray:self.objectsByTokens.allValues];
+    return self.objectsByStorageRecords.allKeys;
 }
 
 
 
--(NSSet *)allTokens
+-(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block
 {
-    return [NSSet setWithArray:self.objectsByTokens.allKeys];
+    [self.objectsByStorageRecords enumerateKeysAndObjectsUsingBlock:block];
 }
 
 @end
