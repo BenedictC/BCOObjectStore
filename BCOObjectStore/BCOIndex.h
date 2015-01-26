@@ -12,6 +12,10 @@
 
 @interface BCOIndex : NSObject <NSCopying>
 
+-(instancetype)initWithComparator:(NSComparator)comparator;
+
+@property(nonatomic, readonly) NSComparator comparator;
+
 //Entry updating
 -(void)addObject:(id)object forKey:(id)key;
 -(void)removeObject:(id)object forKey:(id)key;

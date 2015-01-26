@@ -10,20 +10,15 @@
 
 
 
-@protocol BCOComparable <NSObject>
-- (NSComparisonResult)compare:(NSString *)aString;
-@end
-
-
-
-typedef id<NSCopying>(^BCOIndexer)(id object);
+typedef id(^BCIndexKeyGenerator)(id object);
 
 
 
 @interface BCOIndexDescription : NSObject
 
--(instancetype)initWithIndexer:(BCOIndexer)indexer __attribute__((objc_designated_initializer));
+-(instancetype)initWithIndexKeyGenerator:(BCIndexKeyGenerator)indexer keyComparator:(NSComparator)keyComparator __attribute__((objc_designated_initializer));
 
-@property(nonatomic, copy, readonly) BCOIndexer indexer;
+@property(nonatomic, copy, readonly) BCIndexKeyGenerator indexKeyGenerator;
+@property(nonatomic, copy, readonly) NSComparator keyComparator;
 
 @end

@@ -12,14 +12,16 @@
 
 @implementation BCOIndexDescription
 
--(instancetype)initWithIndexer:(BCOIndexer)indexer
+-(instancetype)initWithIndexKeyGenerator:(BCIndexKeyGenerator)indexer keyComparator:(NSComparator)comparator
 {
     NSParameterAssert(indexer);
+    NSParameterAssert(comparator);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _indexer = indexer;
+    _indexKeyGenerator = indexer;
+    _keyComparator = comparator;
 
     return self;
 }

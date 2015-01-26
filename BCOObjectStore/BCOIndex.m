@@ -15,6 +15,9 @@
 {
     NSMutableArray *_mutableIndexedObjects;
 }
+
+-(instancetype)initWithObjects:(NSMutableArray *)objects ownsObjects:(BOOL)ownsObjects comparator:(NSComparator)comparator __attribute__((objc_designated_initializer));
+
 @property(nonatomic, readonly) BOOL ownsIndexedObjects;
 @property(nonatomic, readonly) NSMutableArray *mutableIndexedObjects;
 @property(nonatomic, readonly) NSMutableSet *ownedIndexEntries;
@@ -28,13 +31,22 @@
 #pragma mark - instance life cycle
 -(instancetype)init
 {
-    return [self initWithObjects:[NSMutableArray new] ownsObjects:YES];
+    return [self initWithObjects:nil ownsObjects:NO comparator:NULL];
 }
 
 
 
--(instancetype)initWithObjects:(NSMutableArray *)objects ownsObjects:(BOOL)ownsObjects
+-(instancetype)initWithComparator:(NSComparator)comparator
 {
+    return [self initWithObjects:[NSMutableArray new] ownsObjects:YES comparator:comparator];
+}
+
+
+
+-(instancetype)initWithObjects:(NSMutableArray *)objects ownsObjects:(BOOL)ownsObjects comparator:(NSComparator)comparator
+{
+    NSParameterAssert(comparator);
+
     self = [super init];
     if (self == nil) return nil;
 
@@ -42,6 +54,8 @@
     _ownsIndexedObjects = ownsObjects;
 
     _ownedIndexEntries = [NSMutableSet new];
+
+    _comparator = comparator;
 
     return self;
 }
@@ -51,7 +65,7 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    return [[BCOIndex alloc] initWithObjects:_mutableIndexedObjects ownsObjects:NO];
+    return [[BCOIndex alloc] initWithObjects:_mutableIndexedObjects ownsObjects:NO comparator:_comparator];
 }
 
 
@@ -82,7 +96,7 @@
 {
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
     NSArray *objects = self.indexedObjects;
-    NSUInteger index = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual usingComparator:BCOIndexEntryComparator];
+    NSUInteger index = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual usingComparator:self.comparator];
 
     BCOIndexEntry *entry = (index == NSNotFound) ? nil : [objects objectAtIndex:index];
 
@@ -119,7 +133,7 @@
     [self.ownedIndexEntries addObject:newEntry];
 
     NSMutableArray *objects = self.mutableIndexedObjects;
-    NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+    NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.comparator];
     [objects insertObject:newEntry atIndex:insertionIndex];
 
     if (outIndex != NULL) *outIndex = insertionIndex;
@@ -177,7 +191,7 @@
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
     NSArray *objects = self.indexedObjects;
     //Index will 
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.comparator];
 
     NSMutableSet *matches = [NSMutableSet set];
     for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanKey; i++) {
@@ -196,7 +210,7 @@
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
     NSArray *objects = self.indexedObjects;
     //Index will
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:BCOIndexEntryComparator];
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [objects indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.comparator];
 
     NSMutableSet *matches = [NSMutableSet set];
     for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanKey; i++) {
