@@ -8,7 +8,7 @@
 
 #import "BCOObjectStoreSnapshot.h"
 #import "BCOIndexDescription.h"
-
+#import "BCOInMemoryObjectStorage.h"
 
 #import "BCOIndex.h"
 #import "BCOIndexReference.h"
@@ -17,46 +17,10 @@
 
 
 
-@interface BCOObjectKey : NSObject
-@property(nonatomic, readonly) id object;
-@end
-
-
-@implementation BCOObjectKey
-
--(instancetype)initWithObject:(id)object
-{
-    self = [super init];
-    if (self == nil) return nil;
-    _object = object;
-    return self;
-}
-
-
-
--(NSComparisonResult)compare:(BCOObjectKey *)otherKey
-{
-    uintptr_t obj = (uintptr_t)_object;
-    uintptr_t otherObj = (uintptr_t)otherKey->_object;
-
-    if (otherObj > obj) return NSOrderedAscending;
-    if (otherObj < obj) return NSOrderedDescending;
-
-    return NSOrderedSame;
-}
-
-@end
-
-
-
-NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObjectKey *entry2) = ^NSComparisonResult(BCOObjectKey *entry1, BCOObjectKey *entry2) {
-    return [entry1 compare:entry2];
-};
-
-
-
-
 @interface BCOObjectStoreSnapshot ()
+
+@property(readonly) NSDictionary *indexDescriptions;
+@property(nonatomic, readonly) BCOInMemoryObjectStorage *objectStorage;
 
 //currently: objectKey:indexReferences
 //currently: indexKey:objectsSet
@@ -74,6 +38,13 @@ NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObj
 @implementation BCOObjectStoreSnapshot
 
 #pragma mark - instance life cycle
++(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions
+{
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:objects indexDescriptions:indexDescriptions];
+}
+
+
+
 -(instancetype)init
 {
     return [self initWithObjects:[NSSet set] indexDescriptions:[NSDictionary dictionary]];
@@ -90,37 +61,42 @@ NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObj
     if (self == nil) return nil;
 
     //Store ivars
-    _objects = [objects copy];
+    _objectStorage = [BCOInMemoryObjectStorage new];
     _indexDescriptions = [indexDescriptions copy];
-
-    //Build the indexReference table
-    BCOIndex *indexReferencesByObjectKey = [[BCOIndex alloc] initWithComparator:BCOObjectKeyComparator];
 
     //Build indexes
     NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
-    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {        
-
+    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
         //Create and add the index
         BCOIndex *index = [[BCOIndex alloc] initWithComparator:indexDescription.keyComparator];
         indexesByIndexName[indexName] = index;
-
-        //Add each object to the index
-        BCIndexKeyGenerator indexer = indexDescription.indexKeyGenerator;
-        for (id object in objects) {
-            //Get the key and exit if the object shouldn't be included in this index
-            id key = indexer(object);
-            if (key == nil) continue;
-
-            [index addObject:object forKey:key];
-
-            //Add an indexReference to the referencesSet for the entry
-            BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:object];
-            [indexReferencesByObjectKey addObject:reference forKey:objectKey];
-        }
     }];
+
+    //Keep track of which indexes contain each object
+    BCOIndex *indexReferencesByLookUpToken = [[BCOIndex alloc] initWithComparator:BCOObjectStorageLookUpTokenComparator];
+
+    //Add each object to each index
+    for (id object in objects) {
+        //Insert the object into the storage
+        BCOObjectStorageLookUpToken *token = [_objectStorage addObject:object];
+
+        [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
+            //Get the key and exit if the object shouldn't be included in this index
+            id key = indexDescription.indexKeyGenerator(object);
+            if (key == nil) return;
+
+            //Get the index and dd the token to it
+            BCOIndex *index = indexesByIndexName[indexName];
+            [index addObject:token forKey:key];
+
+            //Add an indexReference to the referencesSet for the token
+            BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
+            [_indexReferencesByObjectKey addObject:reference forKey:token];
+        }];
+    }
+
     _indexesByIndexName = indexesByIndexName;
-    _indexReferencesByObjectKey = indexReferencesByObjectKey;
+    _indexReferencesByObjectKey = indexReferencesByLookUpToken;
 
     return self;
 }
@@ -130,41 +106,40 @@ NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObj
 #pragma mark - 'copying'
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects
 {
-    NSSet *oldObjects = self.objects;
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexDescriptions:self.indexDescriptions];
 
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
-
-    //Separate the objects into inserts and deletes
-    NSMutableSet *freshObjects = [newObjects mutableCopy];
-    [freshObjects minusSet:oldObjects];
-    NSMutableSet *expiredObjects = [oldObjects mutableCopy];
-    [expiredObjects minusSet:newObjects];
-
-    BOOL isRebuildingMoreEfficentThanUpdating = ({
-        long long numberOfRebuildOperations = newObjects.count;
-        long long numberOfUpdateOperations = freshObjects.count + expiredObjects.count;
-        numberOfRebuildOperations < numberOfUpdateOperations;
-    });
-    if (isRebuildingMoreEfficentThanUpdating) {
-        return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexDescriptions:self.indexDescriptions];
-    }
-
-    return [self snapshotByInsertingObjects:freshObjects deletingObjects:expiredObjects];
+//    NSSet *oldObjects = self.objectStorage.objects;
+//
+//    //Separate the objects into inserts and deletes
+//    NSMutableSet *freshObjects = [newObjects mutableCopy];
+//    [freshObjects minusSet:oldObjects];
+//    NSMutableSet *expiredObjects = [oldObjects mutableCopy];
+//    [expiredObjects minusSet:newObjects];
+//
+//    BOOL isRebuildingMoreEfficentThanUpdating = ({
+//        long long numberOfRebuildOperations = newObjects.count;
+//        long long numberOfUpdateOperations = freshObjects.count + expiredObjects.count;
+//        numberOfRebuildOperations < numberOfUpdateOperations;
+//    });
+//    if (isRebuildingMoreEfficentThanUpdating) {
+//        return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexDescriptions:self.indexDescriptions];
+//    }
+//
+//    return [self snapshotByInsertingObjects:freshObjects deletingObjects:expiredObjects];
 }
 
 
 
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects
 {
-    //TODO: Optimize creation method
-
-
+#pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
     NSDictionary *indexDescriptions = self.indexDescriptions;
-    NSSet *oldObjects = self.objects;
+    BCOInMemoryObjectStorage *oldStorage = self.objectStorage;
+    BCOInMemoryObjectStorage *newStorage = oldStorage.copy;
 
-    NSMutableSet *newObjects = [oldObjects mutableCopy];
     //Perfrom a deep copy of the indexes
-    BCOIndex *newIndexEntryReferencesByObject = [self.indexReferencesByObjectKey copy];
+    BCOIndex *newIndexEntryReferencesByToken = [self.indexReferencesByObjectKey copy];
     NSMutableDictionary *newIndexesByIndexName = ({
         NSMutableDictionary *dict = [NSMutableDictionary new];
         [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
@@ -174,42 +149,40 @@ NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObj
     });
 
     //Remove expired objects from...
-    for (id nonCanonicalExpiredObject in expiredObjects) {
-        id expiredObject = [oldObjects member:nonCanonicalExpiredObject];
-        if (expiredObject == nil) {
+    for (id expiredObject in expiredObjects) {
+        BCOObjectStorageLookUpToken *token = [newStorage lookupTokenForObject:expiredObject];
+        if (token == nil) {
             NSLog(@"Attempting to remove an object not in the store");
             continue;
         }
 
-        //.. all objects
-        [newObjects removeObject:expiredObject];
+        //... storage
+        [newStorage removeObject:expiredObject];
 
-        //...each index by enumerating the objects indexReferences
-        BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:expiredObject];
-        NSSet *references = [newIndexEntryReferencesByObject objectsForKey:objectKey];
+        //...each index by enumerating the indexRefrenences
+        NSSet *references = [newIndexEntryReferencesByToken objectsForKey:token];
         for (BCOIndexReference *reference in references) {
             BCOIndex *index = newIndexesByIndexName[reference.indexName];
-            [index removeObject:expiredObject forKey:reference.key];
+            [index removeObject:token forKey:reference.key];
+
+            //...the reference set (this has to happen after removing the object from the indexes)
+            [newIndexEntryReferencesByToken removeObject:reference forKey:token];
         }
 
-        //...the reference set (this has to happen after removing the object from the indexes)
-        [newIndexEntryReferencesByObject removeObject:expiredObject forKey:objectKey];
     }
 
     //Add freshObjects to...
     for (id freshObject in freshObjects) {
-        id existingObject = [oldObjects member:freshObject];
-        if (existingObject != nil) {
+        BCOObjectStorageLookUpToken *existingToken = [newStorage lookupTokenForObject:freshObject];
+        if (existingToken != nil) {
             NSLog(@"Store already contains object");
             continue;
         }
 
         //...all objects
-        [newObjects addObject:freshObject];
-
+        BCOObjectStorageLookUpToken *token = [newStorage addObject:freshObject];
 
         //...each index
-        BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:freshObject];
         [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
             //Generate a key
             id key = indexDescription.indexKeyGenerator(freshObject);
@@ -217,23 +190,32 @@ NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObj
             if (key == nil) return;
 
             //Add the object to the index entry
-            BCOIndex *indeks = newIndexesByIndexName[indexName];
-            [indeks addObject:freshObject forKey:key];
+            BCOIndex *index = newIndexesByIndexName[indexName];
+            [index addObject:token forKey:key];
 
             //Add an indexReference to the referencesSet for the entry
             BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
-            [newIndexEntryReferencesByObject addObject:reference forKey:objectKey];
+            [newIndexEntryReferencesByToken addObject:reference forKey:token];
         }];
     }
 
     //Construct the new snapshot
     BCOObjectStoreSnapshot *snapshot = [[BCOObjectStoreSnapshot alloc] init];
     snapshot->_indexDescriptions = indexDescriptions;
-    snapshot->_objects = newObjects;
+    snapshot->_objectStorage = newStorage;
     snapshot->_indexesByIndexName = newIndexesByIndexName;
-    snapshot->_indexReferencesByObjectKey = newIndexEntryReferencesByObject;
+    snapshot->_indexReferencesByObjectKey = newIndexEntryReferencesByToken;
 
     return snapshot;
+}
+
+
+
+-(BCOObjectStoreSnapshot *)snapshotByAddingIndexDescription:(BCOIndexDescription *)indexDescription withIndexName:(NSString *)indexName
+{
+    NSMutableDictionary *indexDescriptions = [self.indexDescriptions mutableCopy];
+    indexDescriptions[indexName] = indexDescription;
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:self.objectStorage.allObjects indexDescriptions:indexDescriptions];
 }
 
 
@@ -241,14 +223,14 @@ NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObj
 #pragma mark - object access
 -(NSArray *)executeQuery:(NSString *)query
 {
-    return [self executeQuery:query subsitutionVariable:nil objects:self.objects indexes:self.indexesByIndexName];
+    return [self executeQuery:query subsitutionVariable:nil objectStorage:self.objectStorage indexes:self.indexesByIndexName];
 }
 
 
 
 -(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable
 {
-    return [self executeQuery:query subsitutionVariable:subsitutionVariable objects:self.objects indexes:self.indexesByIndexName];
+    return [self executeQuery:query subsitutionVariable:subsitutionVariable objectStorage:self.objectStorage indexes:self.indexesByIndexName];
 }
 
 @end

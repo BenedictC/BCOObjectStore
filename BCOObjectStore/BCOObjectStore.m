@@ -58,7 +58,7 @@
     if (self == nil) return nil;
 
     _mutationQueue = queue;
-    _snapshot = [[BCOObjectStoreSnapshot alloc] initWithObjects:[NSSet set] indexDescriptions:[NSDictionary dictionary]];
+    _snapshot = [BCOObjectStoreSnapshot new];
 
     return self;
 }
@@ -110,10 +110,7 @@
     }
 
     [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
-        NSMutableDictionary *indexDescriptions = [NSMutableDictionary dictionaryWithObject:indexDescription forKey:indexName];
-        [indexDescriptions addEntriesFromDictionary:oldSnapshot.indexDescriptions];
-        //TODO: Should we create a method for creating a new snapshot by adding an index?
-        return  [[BCOObjectStoreSnapshot alloc] initWithObjects:oldSnapshot.objects indexDescriptions:indexDescriptions];
+        return  [oldSnapshot snapshotByAddingIndexDescription:indexDescription withIndexName:indexName];
     }];
 }
 

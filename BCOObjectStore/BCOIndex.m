@@ -167,7 +167,7 @@
 -(NSSet *)objectsForKey:(id)key
 {
     BCOIndexEntry *entry = [self entryForKey:key index:NULL];
-    return entry.objects;
+    return [entry.objects copy];
 }
 
 

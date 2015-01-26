@@ -7,36 +7,19 @@
 //
 
 #import <Foundation/Foundation.h>
-
-
-
-//@interface BCOObjectStoreSnapshot : NSObject
-//
-//-(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
-//
-//@property(readonly) NSSet *objects;
-//@property(readonly) NSDictionary *indexDescriptions;
-//
-//-(NSArray *)fetchObjectsMatchingPredicate:(NSPredicate *)predicate sortDescriptors:(NSArray *)sortDescriptors;
-//-(NSArray *)fetchObjectsFromIndexNamed:(NSString *)indexName withKeyInArray:(NSArray *)keys sortDescriptors:(NSArray *)sortDescriptors;
-//
-//-(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects;
-//-(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects;
-//
-//@end
+@class BCOIndexDescription;
 
 
 
 @interface BCOObjectStoreSnapshot : NSObject
 
--(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions __attribute__((objc_designated_initializer));
-
-@property(readonly) NSSet *objects;
-@property(readonly) NSDictionary *indexDescriptions;
-
+//Snapshot creation
++(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions;
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects;
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects;
+-(BCOObjectStoreSnapshot *)snapshotByAddingIndexDescription:(BCOIndexDescription *)indexDescription withIndexName:(NSString *)indexName;
 
+//Querying
 -(NSArray *)executeQuery:(NSString *)query;
 -(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
 
