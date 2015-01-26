@@ -13,6 +13,10 @@
 
 
 
+typedef void (^BCOUpdateCompletionHandler)(NSSet *insertedObjects, NSSet *deletedObjects);
+
+
+
 @interface BCOObjectStore : NSObject
 
 // Factories
@@ -26,8 +30,8 @@
 -(void)addIndexDescription:(BCOIndexDescription *)indexDescription withName:(NSString *)indexName;
 
 // Setting stores content
-//TODO: Can we structure this better for performing updates?
--(void)setObjects:(NSSet *)objects;
+-(void)setObjectsUsingBlock:(NSSet *(^)(BCOObjectStoreSnapshot *currentSnapshot))setObjectsBlock;
+-(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOUpdateCompletionHandler updateCompletionHandler))updateBlock;
 
 // Accessing objects
 @property(atomic, readonly) BCOObjectStoreSnapshot *snapshot;

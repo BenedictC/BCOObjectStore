@@ -66,21 +66,29 @@
 
 
 #pragma mark - 'properties'
-typedef void(^Setter)(BCOObjectStoreSnapshot *snapshot);
--(void)setSnapshot:(void(^)(BCOObjectStore *self, Setter setter))block
+-(void)setSnapshot:(BCOObjectStoreSnapshot *(^)(BCOObjectStoreSnapshot *oldSnapshot))block
 {
-    Setter setter = ^(BCOObjectStoreSnapshot *snapshot){
-        _snapshot = snapshot;
+    typedef NS_ENUM(NSUInteger, SyncMode){
+        SyncModeQueue,
+        SyncModeCurrentThread,
     };
 
-    BOOL shouldUseQueue = self.mutationQueue != NULL;
-    if (shouldUseQueue) {
-        dispatch_sync(self.mutationQueue, ^{
-            block(self, setter);
-        });
-    } else { //Block which ever thread we're being called on.
-        @synchronized(self) {
-            block(self, setter);
+    SyncMode mode = (self.mutationQueue == NULL) ? SyncModeCurrentThread : SyncModeQueue;
+
+    switch (mode) {
+        case SyncModeQueue:
+        {
+            dispatch_async(self.mutationQueue, ^{
+                _snapshot = block(self.snapshot);
+            });
+            break;
+        }
+        case SyncModeCurrentThread:
+        {
+            @synchronized(self) {
+                _snapshot = block(self.snapshot);
+            }
+            break;
         }
     }
 }
@@ -101,28 +109,35 @@ typedef void(^Setter)(BCOObjectStoreSnapshot *snapshot);
         return;
     }
 
-    [self setSnapshot:^(BCOObjectStore *self, Setter setter) {
-        BCOObjectStoreSnapshot *oldSnapshot = self.snapshot;
+    [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
         NSMutableDictionary *indexDescriptions = [NSMutableDictionary dictionaryWithObject:indexDescription forKey:indexName];
         [indexDescriptions addEntriesFromDictionary:oldSnapshot.indexDescriptions];
-
-        //TODO: Create a method on BCOObjectStoreSnapshot that copies the existing indexes and only runs the new one
-        BCOObjectStoreSnapshot *newSnapshot = [[BCOObjectStoreSnapshot alloc] initWithObjects:oldSnapshot.objects indexDescriptions:indexDescriptions];
-
-        setter(newSnapshot);
+        //TODO: Should we create a method for creating a new snapshot by adding an index?
+        return  [[BCOObjectStoreSnapshot alloc] initWithObjects:oldSnapshot.objects indexDescriptions:indexDescriptions];
     }];
 }
 
 
 
 #pragma mark - Setting stores content
--(void)setObjects:(NSSet *)objects
+-(void)setObjectsUsingBlock:(NSSet *(^)(BCOObjectStoreSnapshot *currentSnapshot))setObjectsBlock
 {
-    [self setSnapshot:^(BCOObjectStore *self, Setter setter) {
-        BCOObjectStoreSnapshot *oldSnapshot = self.snapshot;
-        BCOObjectStoreSnapshot *newSnapshot = [oldSnapshot snapshotWithObjects:objects];
+    [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
+        NSSet *objects = setObjectsBlock(oldSnapshot);
+        return [oldSnapshot snapshotWithObjects:objects];
+    }];
+}
 
-        setter(newSnapshot);
+
+
+-(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOUpdateCompletionHandler updateCompletionHandler))updateBlock
+{
+    [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
+        __block BCOObjectStoreSnapshot *newSnapshot = nil;
+        updateBlock(oldSnapshot, ^(NSSet *insertedObjects, NSSet *deletedObjects){
+            newSnapshot = [oldSnapshot snapshotByInsertingObjects:insertedObjects deletingObjects:deletedObjects];
+        });
+        return newSnapshot;
     }];
 }
 
