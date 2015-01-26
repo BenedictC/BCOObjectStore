@@ -34,8 +34,8 @@
 @property(readonly) NSSet *objects;
 @property(readonly) NSDictionary *indexDescriptions;
 
--(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects;
--(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects;
+-(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects;
+-(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects;
 
 -(NSArray *)executeQuery:(NSString *)query;
 -(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;

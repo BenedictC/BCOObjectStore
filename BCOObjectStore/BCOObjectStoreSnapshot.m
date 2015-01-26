@@ -49,9 +49,24 @@
 
 
 
+NSComparisonResult (^ const BCOObjectKeyComparator)(BCOObjectKey *entry1, BCOObjectKey *entry2) = ^NSComparisonResult(BCOObjectKey *entry1, BCOObjectKey *entry2) {
+    return [entry1 compare:entry2];
+};
+
+
+
+
 @interface BCOObjectStoreSnapshot ()
+
+//currently: objectKey:indexReferences
+//currently: indexKey:objectsSet
+
+//better:    object -> uuid         uuid:indexReference      uuid -> object (this will allow the objects to be searched without being present)
+//better:    indexKey:uuidsSet
+@property(readonly) BCOIndex *indexReferencesByObjectKey;
+
+
 @property(readonly) NSDictionary *indexesByIndexName;
-@property(readonly) BCOIndex *indexReferencesByObjectAddress;
 @end
 
 
@@ -79,18 +94,18 @@
     _indexDescriptions = [indexDescriptions copy];
 
     //Build the indexReference table
-    BCOIndex *indexReferencesByObjectAddress = [BCOIndex new];
+    BCOIndex *indexReferencesByObjectKey = [[BCOIndex alloc] initWithComparator:BCOObjectKeyComparator];
 
     //Build indexes
     NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
     [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {        
 
         //Create and add the index
-        BCOIndex *index = [BCOIndex new];
+        BCOIndex *index = [[BCOIndex alloc] initWithComparator:indexDescription.keyComparator];
         indexesByIndexName[indexName] = index;
 
         //Add each object to the index
-        BCOIndexer indexer = indexDescription.indexer;
+        BCIndexKeyGenerator indexer = indexDescription.indexKeyGenerator;
         for (id object in objects) {
             //Get the key and exit if the object shouldn't be included in this index
             id key = indexer(object);
@@ -101,11 +116,11 @@
             //Add an indexReference to the referencesSet for the entry
             BCOIndexReference *reference = [[BCOIndexReference alloc] initWithIndexName:indexName key:key];
             BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:object];
-            [indexReferencesByObjectAddress addObject:reference forKey:objectKey];
+            [indexReferencesByObjectKey addObject:reference forKey:objectKey];
         }
     }];
     _indexesByIndexName = indexesByIndexName;
-    _indexReferencesByObjectAddress = indexReferencesByObjectAddress;
+    _indexReferencesByObjectKey = indexReferencesByObjectKey;
 
     return self;
 }
@@ -134,19 +149,22 @@
         return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexDescriptions:self.indexDescriptions];
     }
 
-    return [self snapshotByRemovingObjects:expiredObjects addingObjects:freshObjects];
+    return [self snapshotByInsertingObjects:freshObjects deletingObjects:expiredObjects];
 }
 
 
 
--(BCOObjectStoreSnapshot *)snapshotByRemovingObjects:(NSSet *)expiredObjects addingObjects:(NSSet *)freshObjects
+-(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects
 {
+    //TODO: Optimize creation method
+
+
     NSDictionary *indexDescriptions = self.indexDescriptions;
     NSSet *oldObjects = self.objects;
 
     NSMutableSet *newObjects = [oldObjects mutableCopy];
     //Perfrom a deep copy of the indexes
-    BCOIndex *newIndexEntryReferencesByObject = [self.indexReferencesByObjectAddress copy];
+    BCOIndex *newIndexEntryReferencesByObject = [self.indexReferencesByObjectKey copy];
     NSMutableDictionary *newIndexesByIndexName = ({
         NSMutableDictionary *dict = [NSMutableDictionary new];
         [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
@@ -194,7 +212,7 @@
         BCOObjectKey *objectKey = [[BCOObjectKey alloc] initWithObject:freshObject];
         [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
             //Generate a key
-            id key = indexDescription.indexer(freshObject);
+            id key = indexDescription.indexKeyGenerator(freshObject);
             //Get the key and exit if the object shouldn't be included in this index
             if (key == nil) return;
 
@@ -213,7 +231,7 @@
     snapshot->_indexDescriptions = indexDescriptions;
     snapshot->_objects = newObjects;
     snapshot->_indexesByIndexName = newIndexesByIndexName;
-    snapshot->_indexReferencesByObjectAddress = newIndexEntryReferencesByObject;
+    snapshot->_indexReferencesByObjectKey = newIndexEntryReferencesByObject;
 
     return snapshot;
 }
