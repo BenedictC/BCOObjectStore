@@ -9,13 +9,13 @@
 #import "BCOObjectStoreSnapshot+Query.h"
 #import "BCOIndex.h"
 #import "BCOQuery.h"
-#import "BCOInMemoryObjectStorage.h"
+#import "BCOObjectStorageContainer.h"
 
 
 
 @implementation BCOObjectStoreSnapshot (Query)
 
--(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOInMemoryObjectStorage *)storage indexes:(NSDictionary *)indexes
+-(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes
 {
     //Create the query
     BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
@@ -55,7 +55,7 @@
 
 
 #pragma mark - Object fetching
--(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)records storage:(BCOInMemoryObjectStorage *)storage indexes:(NSDictionary *)indexes
+-(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)records storage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes
 {
     switch (expression.operator) {
 

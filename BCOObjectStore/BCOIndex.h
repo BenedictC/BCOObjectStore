@@ -13,9 +13,9 @@
 
 @interface BCOIndex : NSObject <NSCopying>
 
--(instancetype)initWithIndexDefinition:(BCOIndexDescription *)definition;
+-(instancetype)initWithIndexDescription:(BCOIndexDescription *)indexDescription;
 
-@property(nonatomic, readonly) BCOIndexDescription *definition;
+@property(nonatomic, readonly) BCOIndexDescription *indexDescription;
 
 //Entry updating
 -(void)addObject:(id)object forKey:(id)key;

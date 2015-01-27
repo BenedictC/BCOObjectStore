@@ -10,7 +10,7 @@
 
 #import "BCOObjectStoreSnapshot+Query.h"
 #import "BCOIndexDescription.h"
-#import "BCOInMemoryObjectStorage.h"
+#import "BCOObjectStorageContainer.h"
 #import "BCOStorageRecord.h"
 #import "BCOIndexReferencesLookUpTable.h"
 #import "BCOIndex.h"
@@ -20,14 +20,14 @@
 @interface BCOObjectStoreSnapshot ()
 
 //Storage
-@property(nonatomic, readonly) BCOInMemoryObjectStorage *objectStorage;
+@property(nonatomic, readonly) BCOObjectStorageContainer *objectStorage;
 //Indexes
 @property(readonly) NSDictionary *indexesByIndexName;
 //Storage->Indexes
 @property(readonly) BCOIndexReferencesLookUpTable *indexReferencesByStorageRecords;
 
 //The snap shot assumes ownership of these object so is able to modify them without copying them.
--(instancetype)initWithObjectStorage:(BCOInMemoryObjectStorage *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOIndexReferencesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOIndexReferencesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
 @end
 
 
@@ -54,7 +54,7 @@
     NSParameterAssert(objects);
 
     //Create storage
-    BCOInMemoryObjectStorage *storage = [BCOInMemoryObjectStorage new];
+    BCOObjectStorageContainer *storage = [BCOObjectStorageContainer new];
     for (id object in objects) {
         [storage addObject:object];
     }
@@ -64,7 +64,7 @@
 
 
 
--(instancetype)initWithObjectStorage:(BCOInMemoryObjectStorage *)storage indexDescriptions:(NSDictionary *)indexDescriptions
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexDescriptions:(NSDictionary *)indexDescriptions
 {
     NSParameterAssert(storage);
     NSParameterAssert(indexDescriptions);
@@ -73,7 +73,7 @@
     NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
     [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
         //Create and add the index
-        BCOIndex *index = [[BCOIndex alloc] initWithIndexDefinition:indexDescription];
+        BCOIndex *index = [[BCOIndex alloc] initWithIndexDescription:indexDescription];
         indexesByIndexName[indexName] = index;
     }];
 
@@ -101,7 +101,7 @@
 
 
 
--(instancetype)initWithObjectStorage:(BCOInMemoryObjectStorage *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOIndexReferencesLookUpTable *)lookupTable
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOIndexReferencesLookUpTable *)lookupTable
 {
     self = [super init];
     if (self == nil) return nil;
@@ -114,13 +114,29 @@
 }
 
 
+#pragma mark - archiving
+-(NSData *)snapshotArchive
+{
+    return [self.objectStorage dataRepresentation];
+}
+
+
+
++(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation indexDescriptions:(NSDictionary *)indexDescriptions
+{
+    BCOObjectStorageContainer *storage = [BCOObjectStorageContainer objectStorageWithData:representation];    
+
+    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storage indexDescriptions:indexDescriptions];
+}
+
+
 
 #pragma mark - properties
 -(NSDictionary *)indexDescriptions
 {
     NSMutableDictionary *indexDescriptions = [NSMutableDictionary new];
     [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-        indexDescriptions[indexName] = index.definition;
+        indexDescriptions[indexName] = index.indexDescription;
     }];
 
     return indexDescriptions;
@@ -141,7 +157,7 @@
 {
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
     //Copy state
-    BCOInMemoryObjectStorage *newStorage = [self.objectStorage copy];
+    BCOObjectStorageContainer *newStorage = [self.objectStorage copy];
     BCOIndexReferencesLookUpTable *newIndexReferencesByStorageRecords = [self.indexReferencesByStorageRecords copy];
     NSMutableDictionary *newIndexesByIndexName = ({ //Perfrom a deep copy of the indexes
         NSMutableDictionary *dict = [NSMutableDictionary new];
@@ -186,7 +202,7 @@
         //...each index
         [newIndexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
             //Generate a key
-            id key = index.definition.indexKeyGenerator(freshObject);
+            id key = index.indexDescription.indexKeyGenerator(freshObject);
             //Get the key and exit if the object shouldn't be included in this index
             if (key == nil) return;
 

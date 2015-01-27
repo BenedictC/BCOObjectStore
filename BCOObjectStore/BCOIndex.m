@@ -14,7 +14,7 @@
 
 @interface BCOIndex ()
 
--(instancetype)initWithIndexEntries:(NSMutableArray *)objects indexDefinition:(BCOIndexDescription *)definition __attribute__((objc_designated_initializer));
+-(instancetype)initWithIndexEntries:(NSMutableArray *)objects indexDescription:(BCOIndexDescription *)indexDescription __attribute__((objc_designated_initializer));
 
 @property(nonatomic, readonly) NSMutableArray *mutableIndexEntries;
 
@@ -27,28 +27,28 @@
 #pragma mark - instance life cycle
 -(instancetype)init
 {
-    return [self initWithIndexEntries:nil indexDefinition:nil];
+    return [self initWithIndexEntries:nil indexDescription:nil];
 }
 
 
 
--(instancetype)initWithIndexDefinition:(BCOIndexDescription *)definition
+-(instancetype)initWithIndexDescription:(BCOIndexDescription *)indexDescription
 {
-    return [self initWithIndexEntries:[NSMutableArray new] indexDefinition:definition];
+    return [self initWithIndexEntries:[NSMutableArray new] indexDescription:indexDescription];
 }
 
 
 
--(instancetype)initWithIndexEntries:(NSMutableArray *)indexEntries indexDefinition:(BCOIndexDescription *)definition
+-(instancetype)initWithIndexEntries:(NSMutableArray *)indexEntries indexDescription:(BCOIndexDescription *)indexDescription
 {
     //BCOIndex assumes ownership of indexEntries and will modify it
-    NSParameterAssert(definition);
+    NSParameterAssert(indexDescription);
 
     self = [super init];
     if (self == nil) return nil;
 
     _mutableIndexEntries = indexEntries;
-    _definition = definition;
+    _indexDescription = indexDescription;
 
     return self;
 }
@@ -64,7 +64,7 @@
         [entries addObject:[entry copy]];
     }
 
-    return [[BCOIndex alloc] initWithIndexEntries:entries indexDefinition:self.definition];
+    return [[BCOIndex alloc] initWithIndexEntries:entries indexDescription:self.indexDescription];
 }
 
 
@@ -74,7 +74,7 @@
 {
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
     NSArray *entries = self.mutableIndexEntries;
-    NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.definition.keyComparator];
+    NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.indexDescription.keyComparator];
 
     BCOIndexEntry *entry = (index == NSNotFound) ? nil : [entries objectAtIndex:index];
 
@@ -95,7 +95,7 @@
     BCOIndexEntry *newEntry = [[BCOIndexEntry alloc] initWithKey:key];
 
     NSMutableArray *objects = self.mutableIndexEntries;
-    NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.definition.keyComparator];
+    NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
     [objects insertObject:newEntry atIndex:insertionIndex];
 
     if (outIndex != NULL) *outIndex = insertionIndex;
@@ -153,7 +153,7 @@
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
     NSArray *entries = self.mutableIndexEntries;
     //Index will 
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.definition.keyComparator];
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
 
     NSMutableSet *matches = [NSMutableSet set];
     for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanKey; i++) {
@@ -172,7 +172,7 @@
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
     NSArray *entries = self.mutableIndexEntries;
     //Index will
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.definition.keyComparator];
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
 
     NSMutableSet *matches = [NSMutableSet set];
     for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanKey; i++) {

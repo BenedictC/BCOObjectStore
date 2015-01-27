@@ -1,6 +1,6 @@
 //
-//  BCOInMemoryObjectStorage.h
-//  Pods
+//  BCOObjectStorageContainer.h
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
@@ -11,12 +11,12 @@
 
 
 
-@interface BCOInMemoryObjectStorage : NSObject <NSCopying>
+@interface BCOObjectStorageContainer : NSObject <NSCopying>
 
 //Instance life cycle
-+(BCOInMemoryObjectStorage *)objectStorageWithObjects:(NSSet *)objects;
++(BCOObjectStorageContainer *)objectStorageWithObjects:(NSSet *)objects;
 
-+(BCOInMemoryObjectStorage *)objectStorageWithData:(NSData *)data;
++(BCOObjectStorageContainer *)objectStorageWithData:(NSData *)data;
 
 -(NSData *)dataRepresentation;
 

@@ -46,6 +46,7 @@
 {
     BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithIndexDescriptions:self.mutableIndexDescriptions];
     copy.dispatchQueue = self.dispatchQueue;
+    copy.initialSnapshotArchive = self.initialSnapshotArchive;
 
     return copy;
 }

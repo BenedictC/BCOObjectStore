@@ -1,17 +1,17 @@
 //
-//  BCOInMemoryObjectStorage.m
-//  Pods
+//  BCOObjectStorageContainer.m
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
 //
 
-#import "BCOInMemoryObjectStorage.h"
+#import "BCOObjectStorageContainer.h"
 #import "BCOStorageRecord.h"
 
 
 
-@interface BCOInMemoryObjectStorage ()
+@interface BCOObjectStorageContainer ()
 
 @property(nonatomic, readonly) NSMutableDictionary *mutableObjectsByStorageRecords;
 
@@ -19,10 +19,10 @@
 
 
 
-@implementation BCOInMemoryObjectStorage
+@implementation BCOObjectStorageContainer
 
 #pragma mark - instance life cycle
-+(BCOInMemoryObjectStorage *)objectStorageWithObjects:(NSSet *)objects
++(BCOObjectStorageContainer *)objectStorageWithObjects:(NSSet *)objects
 {
     NSMutableDictionary *objectsByRecords = [NSMutableDictionary new];
     for (id object in objects) {
@@ -30,21 +30,28 @@
         objectsByRecords[record] = object;
     }
 
-    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByStorageRecords:objectsByRecords];
+    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:objectsByRecords];
 }
 
 
 
-+(BCOInMemoryObjectStorage *)objectStorageWithData:(NSData *)data
++(BCOObjectStorageContainer *)objectStorageWithData:(NSData *)data
 {
+    if (data == nil) {
+        return [BCOObjectStorageContainer new];
+    }
+
     NSArray *objects = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+
+    NSAssert(objects != nil, @"Failed to un-archive objects.");
+
     NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
     for (id object in objects) {
         BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
         objectsByStorageRecords[record] = object;
     }
 
-    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByStorageRecords:objectsByStorageRecords];
+    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:objectsByStorageRecords];
 }
 
 
@@ -73,7 +80,7 @@
 
 -(id)copyWithZone:(NSZone *)zone
 {
-    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByStorageRecords:[_mutableObjectsByStorageRecords mutableCopy]];
+    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:[_mutableObjectsByStorageRecords mutableCopy]];
 }
 
 

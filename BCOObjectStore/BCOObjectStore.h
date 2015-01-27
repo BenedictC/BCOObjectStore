@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 #import "BCOObjectStoreConfiguration.h"
-#import "BCOObjectStoreSnapshot.h"
+#import "BCOObjectStoreSnapshotProtocol.h"
 
 
 
@@ -25,17 +25,21 @@ typedef void (^BCOObjectStoreUpdateObjectsCompletionHandler)(NSSet *insertedObje
 -(instancetype)initWithConfiguration:(BCOObjectStoreConfiguration *)configuration __attribute__((objc_designated_initializer));
 -(BCOObjectStoreConfiguration *)configuration;
 
-// Setting stores content
--(void)setObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler))setObjectsBlock;
--(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreUpdateObjectsCompletionHandler completionHandler))updateBlock;
-
-// Accessing objects
-@property(atomic, readonly) BCOObjectStoreSnapshot *snapshot;
+// Setting the stores' content
+-(void)setObjectsUsingBlock:(void(^)(id<BCOObjectStoreSnapshot> currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler))setObjectsBlock;
+-(void)updateObjectsUsingBlock:(void(^)(id<BCOObjectStoreSnapshot> currentSnapshot, BCOObjectStoreUpdateObjectsCompletionHandler completionHandler))updateBlock;
 
 @end
 
 
 
-@interface BCOObjectStore (Debugging)
--(void)setSnapshot:(BCOObjectStoreSnapshot *(^)(BCOObjectStoreSnapshot *oldSnapshot))block;
+@interface BCOObjectStore (BCOObjectStoreSnapshot)
+
+// Accessing objects
+-(NSArray *)executeQuery:(NSString *)query;
+-(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
+
+//Archiving
+-(NSData *)snapshotArchive;
+
 @end

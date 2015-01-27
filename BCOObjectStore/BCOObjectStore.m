@@ -15,8 +15,11 @@
 
 #pragma mark - BCOObjectStore
 @interface BCOObjectStore ()
+{
+    BCOObjectStoreConfiguration *_configuration;
+}
 
-@property(nonatomic, readonly) BCOObjectStoreConfiguration *configuration;
+@property(atomic, readonly) BCOObjectStoreSnapshot *snapshot;
 
 @end
 
@@ -39,7 +42,7 @@
     if (self == nil) return nil;
 
     _configuration = [configuration copy];
-    _snapshot = [BCOObjectStoreSnapshot new];
+    _snapshot = [BCOObjectStoreSnapshot snapshotFromSnapshotArchive:configuration.initialSnapshotArchive indexDescriptions:configuration.indexDescriptions];
 
     return self;
 }
@@ -47,6 +50,13 @@
 
 
 #pragma mark - 'properties'
+-(BCOObjectStoreConfiguration *)configuration
+{
+    return [_configuration copy];
+}
+
+
+
 -(void)setSnapshot:(BCOObjectStoreSnapshot *(^)(BCOObjectStoreSnapshot *oldSnapshot))block
 {
     typedef NS_ENUM(NSUInteger, SyncMode){
@@ -80,7 +90,7 @@
 
 
 #pragma mark - Setting stores content
--(void)setObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler))setObjectsBlock
+-(void)setObjectsUsingBlock:(void(^)(id<BCOObjectStoreSnapshot> currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler))setObjectsBlock
 {
     [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
         __block BCOObjectStoreSnapshot *newSnapshot = nil;
@@ -93,7 +103,7 @@
 
 
 
--(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreUpdateObjectsCompletionHandler updateCompletionHandler))updateBlock
+-(void)updateObjectsUsingBlock:(void(^)(id<BCOObjectStoreSnapshot> currentSnapshot, BCOObjectStoreUpdateObjectsCompletionHandler updateCompletionHandler))updateBlock
 {
     [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
         __block BCOObjectStoreSnapshot *newSnapshot = nil;
@@ -102,6 +112,28 @@
         });
         return newSnapshot;
     }];
+}
+
+
+
+#pragma mark - BCOObjectStoreSnapshotProtocol
+-(NSArray *)executeQuery:(NSString *)query
+{
+    return [self.snapshot executeQuery:query];
+}
+
+
+
+-(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
+{
+    return [self.snapshot executeQuery:query subsitutionVariable:subsitutionVariable];
+}
+
+
+
+-(NSData *)snapshotArchive
+{
+    return self.snapshot.snapshotArchive;
 }
 
 @end
