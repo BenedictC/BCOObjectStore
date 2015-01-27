@@ -129,15 +129,6 @@
 
 
 #pragma mark - 'copying'
--(BCOObjectStoreSnapshot *)snapshotByAddingIndexDescription:(BCOIndexDescription *)indexDescription withIndexName:(NSString *)indexName
-{
-    NSMutableDictionary *indexDescriptions = [self.indexDescriptions mutableCopy];
-    indexDescriptions[indexName] = indexDescription;
-    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:self.objectStorage indexDescriptions:indexDescriptions];
-}
-
-
-
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects
 {
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
