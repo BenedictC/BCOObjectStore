@@ -27,11 +27,21 @@ NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOI
 #pragma mark - instance life cylce
 -(instancetype)initWithKey:(id)key
 {
+    return [self initWithKey:key objects:[NSSet set]];
+}
+
+
+
+-(instancetype)initWithKey:(id)key objects:(NSSet *)objects
+{
+    NSParameterAssert(key);
+    NSParameterAssert(objects);
+
     self = [super init];
     if (self == nil) return nil;
 
-    _objects = [NSMutableSet set];
     _key = key;
+    _objects = [objects mutableCopy];
 
     return self;
 }
@@ -47,10 +57,7 @@ NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOI
 
 -(id)copyWithZone:(NSZone *)zone
 {
-    BCOIndexEntry *entry = [[BCOIndexEntry alloc] initWithKey:self.key];
-    [entry.objects unionSet:self.objects];
-
-    return entry;
+    return [[BCOIndexEntry alloc] initWithKey:self.key objects:self.objects];
 }
 
 @end
