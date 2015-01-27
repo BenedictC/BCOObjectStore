@@ -12,8 +12,10 @@
 
 
 @interface BCOObjectStorageContainer ()
-
-@property(nonatomic, readonly) NSMutableDictionary *mutableObjectsByStorageRecords;
+{
+    NSMutableDictionary *_mutableObjectsByStorageRecords;
+    NSDictionary *_objectsByStorageRecords;
+}
 
 @end
 
@@ -63,24 +65,27 @@
 
 
 
--(instancetype)initWithObjectsByStorageRecords:(NSMutableDictionary *)objectsByStorageRecords
+-(instancetype)initWithObjectsByStorageRecords:(NSDictionary *)objectsByStorageRecords
 {
-    //BCOInMemoryObjectStorage assumes ownership of objectsByStorageRecords
     NSParameterAssert(objectsByStorageRecords);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _mutableObjectsByStorageRecords = objectsByStorageRecords;
+    _objectsByStorageRecords = objectsByStorageRecords;
 
     return self;
 }
 
 
 
+#pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:[_mutableObjectsByStorageRecords mutableCopy]];
+    //Don't share an object that we're allowed to write to
+    NSDictionary *shareableObjectsByStorageRecords = ([self isObjectsByStorageRecordsDirty]) ? [self.objectsByStorageRecords copy] : self.objectsByStorageRecords;
+
+    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:shareableObjectsByStorageRecords];
 }
 
 
@@ -88,7 +93,7 @@
 #pragma mark - properties
 -(NSData *)dataRepresentation
 {
-    NSArray *objects = self.mutableObjectsByStorageRecords.allValues;
+    NSArray *objects = self.objectsByStorageRecords.allValues;
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:objects];
 
     return data;
@@ -96,8 +101,27 @@
 
 
 
+-(BOOL)isObjectsByStorageRecordsDirty
+{
+    return _mutableObjectsByStorageRecords != nil;
+}
+
+
+
 -(NSDictionary *)objectsByStorageRecords
 {
+    return ([self isObjectsByStorageRecordsDirty]) ? _mutableObjectsByStorageRecords : _objectsByStorageRecords;
+}
+
+
+
+-(NSMutableDictionary *)mutableObjectsByStorageRecords
+{
+    if (_mutableObjectsByStorageRecords != nil) return _mutableObjectsByStorageRecords;
+
+    _mutableObjectsByStorageRecords = [_objectsByStorageRecords mutableCopy];
+    _objectsByStorageRecords = nil;
+
     return _mutableObjectsByStorageRecords;
 }
 

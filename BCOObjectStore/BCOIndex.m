@@ -66,7 +66,7 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    if ([self isIndexEntriesDirty]) {
+    if (![self isIndexEntriesDirty]) {
         return [[BCOIndex alloc] initWithIndexEntries:self.indexEntries indexDescription:self.indexDescription];
     }
 
