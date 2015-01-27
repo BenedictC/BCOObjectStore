@@ -8,17 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-
-
-typedef id(^BCIndexKeyGenerator)(id object);
+#import "BCOKeyGenerator.h"
 
 
 
 @interface BCOIndexDescription : NSObject
 
--(instancetype)initWithIndexKeyGenerator:(BCIndexKeyGenerator)indexer keyComparator:(NSComparator)keyComparator __attribute__((objc_designated_initializer));
+-(instancetype)initWithIndexKeyGenerator:(BCOKeyGenerator)indexer keyComparator:(NSComparator)keyComparator __attribute__((objc_designated_initializer));
 
-@property(nonatomic, copy, readonly) BCIndexKeyGenerator indexKeyGenerator;
+@property(nonatomic, copy, readonly) BCOKeyGenerator indexKeyGenerator;
 @property(nonatomic, copy, readonly) NSComparator keyComparator;
 
 @end

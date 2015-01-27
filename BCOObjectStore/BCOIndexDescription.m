@@ -12,7 +12,7 @@
 
 @implementation BCOIndexDescription
 
--(instancetype)initWithIndexKeyGenerator:(BCIndexKeyGenerator)indexer keyComparator:(NSComparator)comparator
+-(instancetype)initWithIndexKeyGenerator:(BCOKeyGenerator)indexer keyComparator:(NSComparator)comparator
 {
     NSParameterAssert(indexer);
     NSParameterAssert(comparator);
