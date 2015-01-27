@@ -16,6 +16,10 @@
 //Instance life cycle
 +(BCOInMemoryObjectStorage *)objectStorageWithObjects:(NSSet *)objects;
 
++(BCOInMemoryObjectStorage *)objectStorageWithData:(NSData *)data;
+
+-(NSData *)dataRepresentation;
+
 //Content updating
 -(BCOStorageRecord *)addObject:(id)object;
 -(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;

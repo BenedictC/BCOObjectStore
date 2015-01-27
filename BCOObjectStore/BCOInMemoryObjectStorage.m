@@ -35,6 +35,20 @@
 
 
 
++(BCOInMemoryObjectStorage *)objectStorageWithData:(NSData *)data
+{
+    NSArray *objects = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+    NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
+    for (id object in objects) {
+        BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+        objectsByStorageRecords[record] = object;
+    }
+
+    return [[BCOInMemoryObjectStorage alloc] initWithObjectsByStorageRecords:objectsByStorageRecords];
+}
+
+
+
 -(instancetype)init
 {
     return [self initWithObjectsByStorageRecords:[NSMutableDictionary new]];
@@ -65,6 +79,16 @@
 
 
 #pragma mark - properties
+-(NSData *)dataRepresentation
+{
+    NSArray *objects = self.mutableObjectsByStorageRecords.allValues;
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:objects];
+
+    return data;
+}
+
+
+
 -(NSDictionary *)objectsByStorageRecords
 {
     return _mutableObjectsByStorageRecords;
