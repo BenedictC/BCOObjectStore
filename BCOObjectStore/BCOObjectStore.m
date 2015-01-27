@@ -57,6 +57,14 @@
 
 
 
+-(id<BCOObjectStoreSnapshot>)currentSnapshot
+{
+    //setSnapshot: calls will/didChangeValueForKey:
+    return self.snapshot;
+}
+
+
+
 -(void)setSnapshot:(BCOObjectStoreSnapshot *(^)(BCOObjectStoreSnapshot *oldSnapshot))block
 {
     typedef NS_ENUM(NSUInteger, SyncMode){
@@ -73,14 +81,18 @@
             //We have to use dispatch_barrier_async instead of dispatch_async because the dispatch queue may be
             //concurrent which could lead to problems.
             dispatch_barrier_async(queue, ^{
+                [self willChangeValueForKey:@"currentSnapshot"];
                 _snapshot = block(self.snapshot);
+                [self didChangeValueForKey:@"currentSnapshot"];
             });
             break;
         }
         case SyncModeCurrentThread:
         {
             @synchronized(self) {
+                [self willChangeValueForKey:@"currentSnapshot"];
                 _snapshot = block(self.snapshot);
+                [self didChangeValueForKey:@"currentSnapshot"];
             }
             break;
         }
