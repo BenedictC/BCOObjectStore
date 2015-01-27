@@ -16,7 +16,7 @@
 #pragma mark - BCOObjectStore
 @interface BCOObjectStore ()
 
-@property(atomic, readonly) dispatch_queue_t mutationQueue;
+@property(nonatomic, readonly) BCOObjectStoreConfiguration *configuration;
 
 @end
 
@@ -25,39 +25,20 @@
 @implementation BCOObjectStore
 
 #pragma mark - instance life cycle
-+(instancetype)objectStoreWithBackgroundQueue
-{
-    id instance = [self alloc];
-    NSString *label = [NSString stringWithFormat:@"%p - %@: mutation queue", instance, NSStringFromClass(self)];
-    dispatch_queue_t queue = dispatch_queue_create(label.UTF8String, 0);
-
-    return [[self alloc] initWithDispatchQueue:queue];
-}
-
-
-
-+(instancetype)objectStoreWithMainQueue
-{
-    dispatch_queue_t queue = dispatch_get_main_queue();
-
-    return [[self alloc] initWithDispatchQueue:queue];
-}
-
-
-
 -(instancetype)init
 {
-    return [self initWithDispatchQueue:NULL];
+    return [self initWithConfiguration:nil];
 }
 
 
-
--(instancetype)initWithDispatchQueue:(dispatch_queue_t)queue
+-(instancetype)initWithConfiguration:(BCOObjectStoreConfiguration *)configuration
 {
+    NSParameterAssert(configuration);
+
     self = [super init];
     if (self == nil) return nil;
 
-    _mutationQueue = queue;
+    _configuration = [configuration copy];
     _snapshot = [BCOObjectStoreSnapshot new];
 
     return self;
@@ -73,12 +54,15 @@
         SyncModeCurrentThread,
     };
 
-    SyncMode mode = (self.mutationQueue == NULL) ? SyncModeCurrentThread : SyncModeQueue;
+    dispatch_queue_t queue = self.configuration.dispatchQueue;
+    SyncMode mode = (queue == NULL) ? SyncModeCurrentThread : SyncModeQueue;
 
     switch (mode) {
         case SyncModeQueue:
         {
-            dispatch_async(self.mutationQueue, ^{
+            //We have to use dispatch_barrier_async instead of dispatch_async because the dispatch queue may be
+            //concurrent which could lead to problems.
+            dispatch_barrier_async(queue, ^{
                 _snapshot = block(self.snapshot);
             });
             break;
@@ -95,39 +79,21 @@
 
 
 
-#pragma mark - Configuring the store
--(void)addIndexDescription:(BCOIndexDescription *)indexDescription withName:(NSString *)indexName
-{
-    NSRange validCharacterRange = ({
-        NSCharacterSet *invalidCharacters = [[NSCharacterSet characterSetWithCharactersInString:@"1234567890_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"] invertedSet];
-        [indexName rangeOfCharacterFromSet:invalidCharacters];
-    });
-
-    BOOL isValidIndexName = (validCharacterRange.location == NSNotFound);
-    if (!isValidIndexName) {
-        [NSException raise:NSInvalidArgumentException format:@"Invalid indexName. indexName must be at least 1 letter long and can only include letters (case-insensitive), numbers and underscore."];
-        return;
-    }
-
-    [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
-        return  [oldSnapshot snapshotByAddingIndexDescription:indexDescription withIndexName:indexName];
-    }];
-}
-
-
-
 #pragma mark - Setting stores content
--(void)setObjectsUsingBlock:(NSSet *(^)(BCOObjectStoreSnapshot *currentSnapshot))setObjectsBlock
+-(void)setObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler))setObjectsBlock
 {
     [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
-        NSSet *objects = setObjectsBlock(oldSnapshot);
-        return [oldSnapshot snapshotWithObjects:objects];
+        __block BCOObjectStoreSnapshot *newSnapshot = nil;
+        setObjectsBlock(oldSnapshot, ^(NSSet *objects){
+            newSnapshot = [oldSnapshot snapshotWithObjects:objects];
+        });
+        return newSnapshot;
     }];
 }
 
 
 
--(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOUpdateCompletionHandler updateCompletionHandler))updateBlock
+-(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreUpdateObjectsCompletionHandler updateCompletionHandler))updateBlock
 {
     [self setSnapshot:^(BCOObjectStoreSnapshot *oldSnapshot) {
         __block BCOObjectStoreSnapshot *newSnapshot = nil;

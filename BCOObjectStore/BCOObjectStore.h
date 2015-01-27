@@ -8,32 +8,34 @@
 
 #import <Foundation/Foundation.h>
 
+#import "BCOObjectStoreConfiguration.h"
 #import "BCOObjectStoreSnapshot.h"
-#import "BCOIndexDescription.h"
 
 
 
-typedef void (^BCOUpdateCompletionHandler)(NSSet *insertedObjects, NSSet *deletedObjects);
+//Object setters
+typedef void (^BCOObjectStoreSetObjectsCompletionHandler)(NSSet *objects);
+typedef void (^BCOObjectStoreUpdateObjectsCompletionHandler)(NSSet *insertedObjects, NSSet *deletedObjects);
 
 
 
 @interface BCOObjectStore : NSObject
 
-// Factories
-+(instancetype)objectStoreWithBackgroundQueue;
-+(instancetype)objectStoreWithMainQueue;
-
-// instance life cycle
--(instancetype)initWithDispatchQueue:(dispatch_queue_t)queue __attribute__((objc_designated_initializer));
-
-// Configuring the stores
--(void)addIndexDescription:(BCOIndexDescription *)indexDescription withName:(NSString *)indexName;
+// Instance life cycle
+-(instancetype)initWithConfiguration:(BCOObjectStoreConfiguration *)configuration __attribute__((objc_designated_initializer));
+-(BCOObjectStoreConfiguration *)configuration;
 
 // Setting stores content
--(void)setObjectsUsingBlock:(NSSet *(^)(BCOObjectStoreSnapshot *currentSnapshot))setObjectsBlock;
--(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOUpdateCompletionHandler updateCompletionHandler))updateBlock;
+-(void)setObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler))setObjectsBlock;
+-(void)updateObjectsUsingBlock:(void(^)(BCOObjectStoreSnapshot *currentSnapshot, BCOObjectStoreUpdateObjectsCompletionHandler completionHandler))updateBlock;
 
 // Accessing objects
 @property(atomic, readonly) BCOObjectStoreSnapshot *snapshot;
 
+@end
+
+
+
+@interface BCOObjectStore (Debugging)
+-(void)setSnapshot:(BCOObjectStoreSnapshot *(^)(BCOObjectStoreSnapshot *oldSnapshot))block;
 @end
