@@ -10,12 +10,6 @@
 
 
 
-NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOIndexEntry *entry2) = ^NSComparisonResult(BCOIndexEntry *entry1, BCOIndexEntry *entry2) {
-    return [entry1 compare:entry2];
-};
-
-
-
 @interface BCOIndexEntry ()
 @property(nonatomic) id key;
 @end
@@ -25,23 +19,27 @@ NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOI
 @implementation BCOIndexEntry
 
 #pragma mark - instance life cylce
--(instancetype)initWithKey:(id)key
+-(instancetype)init
 {
-    return [self initWithKey:key objects:[NSSet set]];
+    return [self initWithKey:nil objects:nil];
 }
-
 
 
 -(instancetype)initWithKey:(id)key objects:(NSSet *)objects
 {
+    return [self initWithKey:key objects:objects shouldCopyObjects:YES];
+}
+
+
+-(instancetype)initWithKey:(id)key objects:(NSSet *)objects shouldCopyObjects:(BOOL)shouldCopyObjects
+{
     NSParameterAssert(key);
-    NSParameterAssert(objects);
 
     self = [super init];
     if (self == nil) return nil;
 
     _key = key;
-    _objects = [objects mutableCopy];
+    _objects = (shouldCopyObjects) ? [objects copy] : objects;
 
     return self;
 }
@@ -57,12 +55,25 @@ NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOI
 
 -(id)copyWithZone:(NSZone *)zone
 {
-    return [[BCOIndexEntry alloc] initWithKey:self.key objects:self.objects];
+    return ([self.class isEqual:BCOIndexEntry.class]) ? self : [[BCOIndexEntry alloc] initWithKey:self.key objects:self.objects];
+}
+
+
+
+-(id)mutableCopyWithZone:(NSZone *)zone
+{
+    return [[BCOMutableIndexEntry alloc] initWithKey:self.key objects:self.objects];
 }
 
 @end
 
 
 
-@implementation BCOIndexReferenceEntry
+@implementation BCOMutableIndexEntry
+
+-(instancetype)initWithKey:(id)key objects:(NSSet *)objects
+{
+    return [super initWithKey:key objects:[objects mutableCopy] shouldCopyObjects:NO];
+}
+
 @end

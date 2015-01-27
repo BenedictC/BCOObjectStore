@@ -115,7 +115,7 @@
 #pragma mark - Entry Access
 -(BCOIndexEntry *)entryForKey:(id)key index:(NSUInteger *)outIndex
 {
-    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
+    BCOMutableIndexEntry *referenceEntry = [[BCOMutableIndexEntry alloc] initWithKey:key objects:nil];
     NSArray *entries = self.indexEntries;
     NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.indexDescription.keyComparator];
 
@@ -128,15 +128,15 @@
 
 
 #pragma mark - Entry Updating
--(BCOIndexEntry *)mutableEntryForKey:(id)key index:(NSUInteger *)outIndex
+-(BCOMutableIndexEntry *)mutableEntryForKey:(id)key index:(NSUInteger *)outIndex
 {
     NSUInteger index = NSNotFound;
-    BCOIndexEntry *entry = [self entryForKey:key index:&index];
+    id entry = [self entryForKey:key index:&index];
 
     BOOL isNewEntry = entry == nil;
     if (isNewEntry) {
         //It's a new entry so own it and insert it into the array
-        BCOIndexEntry *newEntry = [[BCOIndexEntry alloc] initWithKey:key];
+        BCOMutableIndexEntry *newEntry = [[BCOMutableIndexEntry alloc] initWithKey:key objects:[NSSet new]];
 
         [self.dirtyIndexEntries addObject:newEntry];
 
@@ -152,7 +152,7 @@
     if (isAlreadyDirty) return entry;
 
     //We need to claim the entry
-    BCOIndexEntry *claimedEntry = [entry copy];
+    BCOMutableIndexEntry *claimedEntry = [entry mutableCopy];
     [self.dirtyIndexEntries addObject:claimedEntry];
     [self.mutableIndexEntries replaceObjectAtIndex:index withObject:claimedEntry];
 
@@ -163,7 +163,7 @@
 
 -(void)addObject:(id)object forKey:(id)key
 {
-    BCOIndexEntry *entry = [self mutableEntryForKey:key index:NULL];
+    BCOMutableIndexEntry *entry = [self mutableEntryForKey:key index:NULL];
     [entry.objects addObject:object];
 }
 
@@ -172,7 +172,7 @@
 -(void)removeObject:(id)object forKey:(id)key
 {
     NSUInteger index = NSNotFound;
-    BCOIndexEntry *entry = [self mutableEntryForKey:key index:&index];
+    BCOMutableIndexEntry *entry = [self mutableEntryForKey:key index:&index];
     [entry.objects removeObject:object];
 
     if (entry.objects.count == 0) {
@@ -207,7 +207,7 @@
 -(NSSet *)objectsLessThanKey:(id)key
 {
 #pragma message "TODO: This needs to handle keys that are out side of array bounds"
-    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
+    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithKey:key objects:nil];
     NSArray *entries = self.indexEntries;
     //Index will 
     NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
@@ -226,7 +226,7 @@
 -(NSSet *)objectsLessThanOrEqualToKey:(id)key
 {
 #pragma message "TODO: This needs to handle keys that are out side of array bounds"
-    BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
+    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithKey:key objects:nil];
     NSArray *entries = self.indexEntries;
     //Index will
     NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];

@@ -10,19 +10,19 @@
 
 
 
-@interface BCOIndexEntry : NSObject <NSCopying>
-@property(nonatomic, readonly) NSMutableSet *objects;
+@interface BCOIndexEntry : NSObject <NSCopying, NSMutableCopying>
+
+-(instancetype)initWithKey:(id)key objects:(NSSet *)objects;
 @property(nonatomic, readonly) id key;
+@property(nonatomic, readonly) NSSet *objects;
+
 -(NSComparisonResult)compare:(BCOIndexEntry *)otherEntry;
--(instancetype)initWithKey:(id)key;
+
 @end
 
 
 
-@interface BCOIndexReferenceEntry : BCOIndexEntry
+@interface BCOMutableIndexEntry : BCOIndexEntry
 @property(nonatomic) id key;
+@property(nonatomic, readonly) NSMutableSet *objects;
 @end
-
-
-
-extern NSComparisonResult (^ const BCOIndexEntryComparator)(BCOIndexEntry *entry1, BCOIndexEntry *entry2);
