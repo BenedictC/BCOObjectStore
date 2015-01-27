@@ -196,7 +196,7 @@
             }
 
             [NSException raise:NSInvalidArgumentException format:@"Incorrectly terminated string"];
-            return NO;
+            return nil;
         }
     }
 
@@ -237,14 +237,14 @@
     NSString *identifier = [self scanIdentifierWithScanner:scanner];
     if (identifier == nil) {
         [NSException raise:NSInvalidArgumentException format:@"Invalid variable name"];
-        return NO;
+        return nil;
     }
 
     //Look up the value
     id variable = substitutionVariables[identifier];
     if (variable == nil) {
         [NSException raise:NSInvalidArgumentException format:@"Variable '%@' not found", identifier];
-        return NO;
+        return nil;
     }
 
     return variable;
