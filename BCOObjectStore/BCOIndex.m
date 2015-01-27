@@ -13,10 +13,14 @@
 
 
 @interface BCOIndex ()
+{
+    NSMutableArray *_mutableIndexEntries;
+    NSArray *_indexEntries;
+}
 
--(instancetype)initWithIndexEntries:(NSMutableArray *)objects indexDescription:(BCOIndexDescription *)indexDescription __attribute__((objc_designated_initializer));
+-(instancetype)initWithIndexEntries:(NSArray *)objects indexDescription:(BCOIndexDescription *)indexDescription __attribute__((objc_designated_initializer));
 
-@property(nonatomic, readonly) NSMutableArray *mutableIndexEntries;
+@property(nonatomic, readonly) NSMutableSet *dirtyIndexEntries;
 
 @end
 
@@ -39,7 +43,7 @@
 
 
 
--(instancetype)initWithIndexEntries:(NSMutableArray *)indexEntries indexDescription:(BCOIndexDescription *)indexDescription
+-(instancetype)initWithIndexEntries:(NSArray *)indexEntries indexDescription:(BCOIndexDescription *)indexDescription
 {
     //BCOIndex assumes ownership of indexEntries and will modify it
     NSParameterAssert(indexDescription);
@@ -47,8 +51,12 @@
     self = [super init];
     if (self == nil) return nil;
 
-    _mutableIndexEntries = indexEntries;
+    _indexEntries = indexEntries;
+    _mutableIndexEntries = nil; //We only create this if we need to and it's lazily created in the getter
     _indexDescription = indexDescription;
+
+    _dirtyIndexEntries = [NSMutableSet new];
+
 
     return self;
 }
@@ -58,13 +66,48 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    //Deep copy entries
-    NSMutableArray *entries = [NSMutableArray new];
-    for (BCOIndexEntry *entry in self.mutableIndexEntries) {
-        [entries addObject:[entry copy]];
+    if ([self isIndexEntriesDirty]) {
+        return [[BCOIndex alloc] initWithIndexEntries:self.indexEntries indexDescription:self.indexDescription];
     }
 
-    return [[BCOIndex alloc] initWithIndexEntries:entries indexDescription:self.indexDescription];
+    //Deep copy and replace dirty entries with a copy
+    NSMutableArray *copy = [NSMutableArray new];
+    NSSet *dirtyEntries = self.dirtyIndexEntries;
+
+    for (BCOIndexEntry *entry in self.mutableIndexEntries) {
+        BOOL mustCopy = [dirtyEntries containsObject:entry];
+        BCOIndexEntry *shareableEntry = (mustCopy) ? [entry copy] : entry;
+        [copy addObject:shareableEntry];
+    }
+
+    return [[BCOIndex alloc] initWithIndexEntries:copy indexDescription:self.indexDescription];
+}
+
+
+
+#pragma mark - properties
+-(NSArray *)indexEntries
+{
+    return ([self isIndexEntriesDirty]) ? _mutableIndexEntries : _indexEntries;
+}
+
+
+
+-(NSMutableArray *)mutableIndexEntries
+{
+    if (_mutableIndexEntries == nil) {
+        _mutableIndexEntries = [_indexEntries mutableCopy];
+        _indexEntries = nil; //We should never touch this now so we get rid of it.
+    }
+
+    return _mutableIndexEntries;
+}
+
+
+
+-(BOOL)isIndexEntriesDirty
+{
+    return (_mutableIndexEntries != nil);
 }
 
 
@@ -73,7 +116,7 @@
 -(BCOIndexEntry *)entryForKey:(id)key index:(NSUInteger *)outIndex
 {
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
-    NSArray *entries = self.mutableIndexEntries;
+    NSArray *entries = self.indexEntries;
     NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.indexDescription.keyComparator];
 
     BCOIndexEntry *entry = (index == NSNotFound) ? nil : [entries objectAtIndex:index];
@@ -89,17 +132,31 @@
 {
     NSUInteger index = NSNotFound;
     BCOIndexEntry *entry = [self entryForKey:key index:&index];
-    if (entry != nil) return entry;
 
-    //It's a new entry so own it and insert it into the array
-    BCOIndexEntry *newEntry = [[BCOIndexEntry alloc] initWithKey:key];
+    BOOL isNewEntry = entry == nil;
+    if (isNewEntry) {
+        //It's a new entry so own it and insert it into the array
+        BCOIndexEntry *newEntry = [[BCOIndexEntry alloc] initWithKey:key];
 
-    NSMutableArray *objects = self.mutableIndexEntries;
-    NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
-    [objects insertObject:newEntry atIndex:insertionIndex];
+        [self.dirtyIndexEntries addObject:newEntry];
 
-    if (outIndex != NULL) *outIndex = insertionIndex;
-    return newEntry;
+        NSMutableArray *objects = self.mutableIndexEntries;
+        NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
+        [objects insertObject:newEntry atIndex:insertionIndex];
+
+        if (outIndex != NULL) *outIndex = insertionIndex;
+        return newEntry;
+    }
+
+    BOOL isAlreadyDirty = (entry != nil) && [self.dirtyIndexEntries containsObject:entry];
+    if (isAlreadyDirty) return entry;
+
+    //We need to claim the entry
+    BCOIndexEntry *claimedEntry = [entry copy];
+    [self.dirtyIndexEntries addObject:claimedEntry];
+    [self.mutableIndexEntries replaceObjectAtIndex:index withObject:claimedEntry];
+
+     return claimedEntry;
 }
 
 
@@ -151,7 +208,7 @@
 {
 #pragma message "TODO: This needs to handle keys that are out side of array bounds"
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
-    NSArray *entries = self.mutableIndexEntries;
+    NSArray *entries = self.indexEntries;
     //Index will 
     NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
 
@@ -170,7 +227,7 @@
 {
 #pragma message "TODO: This needs to handle keys that are out side of array bounds"
     BCOIndexReferenceEntry *referenceEntry = [[BCOIndexReferenceEntry alloc] initWithKey:key];
-    NSArray *entries = self.mutableIndexEntries;
+    NSArray *entries = self.indexEntries;
     //Index will
     NSUInteger indexOfFirstObjectEqualToOrGreaterThanKey = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.indexDescription.keyComparator];
 
@@ -209,7 +266,7 @@
 -(NSSet *)objectsForKeysNotEqualToKey:(id)key
 {
     NSMutableSet *matches = [NSMutableSet new];
-    for (BCOIndexEntry *entry in self.mutableIndexEntries) {
+    for (BCOIndexEntry *entry in self.indexEntries) {
         if ([entry.key compare:key]) continue;
 
         [matches unionSet:entry.objects];
