@@ -22,16 +22,16 @@
 @implementation BCOIndex
 
 #pragma mark - instance life cycle
--(instancetype)initWithColumnDescriptions:(NSDictionary *)indexColumnDescriptions
+-(instancetype)initWithColumnDescriptions:(NSDictionary *)columnDescriptions
 {
     //Create and add the index
     NSMutableDictionary *mutableIndexesByName = [NSMutableDictionary new];
-    [indexColumnDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOColumnDescription *indexColumnDescription, BOOL *stop) {
-        BCOColumn *newIndex = [[BCOColumn alloc] initWithIndexColumnDescription:indexColumnDescription];
-        mutableIndexesByName[indexName] = newIndex;
+    [columnDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOColumnDescription *columnDescription, BOOL *stop) {
+        BCOColumn *newColumn = [[BCOColumn alloc] initWithColumnDescription:columnDescription];
+        mutableIndexesByName[indexName] = newColumn;
     }];
 
-    return [self initWithColumnDescriptions:indexColumnDescriptions mutableColumnsByName:mutableIndexesByName];
+    return [self initWithColumnDescriptions:columnDescriptions mutableColumnsByName:mutableIndexesByName];
 }
 
 

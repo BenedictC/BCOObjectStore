@@ -14,9 +14,9 @@
 
 @interface BCOColumn : NSObject <NSCopying>
 
--(instancetype)initWithIndexColumnDescription:(BCOColumnDescription *)indexColumnDescription;
+-(instancetype)initWithColumnDescription:(BCOColumnDescription *)columnDescription;
 
-@property(nonatomic, readonly) BCOColumnDescription *indexColumnDescription;
+@property(nonatomic, readonly) BCOColumnDescription *columnDescription;
 
 //Entry Updating
 -(id<BCOColumnValue>)generateColumnValueForObject:(id)object;
