@@ -12,7 +12,7 @@
 #import "BCOIndexDescription.h"
 #import "BCOObjectStorageContainer.h"
 #import "BCOStorageRecord.h"
-#import "BCOIndexReferencesLookUpTable.h"
+#import "BCOStorageRecordToIndexReferencesLookUpTable.h"
 #import "BCOIndex.h"
 
 
@@ -22,12 +22,13 @@
 //Storage
 @property(nonatomic, readonly) BCOObjectStorageContainer *objectStorage;
 //Indexes
+#pragma message "TODO: Create a proper object instead of an NSDictionary"
 @property(readonly) NSDictionary *indexesByIndexName;
 //Storage->Indexes
-@property(readonly) BCOIndexReferencesLookUpTable *indexReferencesByStorageRecords;
+@property(readonly) BCOStorageRecordToIndexReferencesLookUpTable *indexReferencesByStorageRecords;
 
 //The snap shot assumes ownership of these object so is able to modify them without copying them.
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOIndexReferencesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOStorageRecordToIndexReferencesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
 @end
 
 
@@ -78,7 +79,7 @@
     }];
 
     //Keep track of which indexes contain each object
-    BCOIndexReferencesLookUpTable *indexReferencesByStorageRecords = [[BCOIndexReferencesLookUpTable alloc] init];
+    BCOStorageRecordToIndexReferencesLookUpTable *indexReferencesByStorageRecords = [[BCOStorageRecordToIndexReferencesLookUpTable alloc] init];
 
     //Add each object to each index
     [storage enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *storageRecord, id object, BOOL *stop) {
@@ -101,7 +102,7 @@
 
 
 
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOIndexReferencesLookUpTable *)lookupTable
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOStorageRecordToIndexReferencesLookUpTable *)lookupTable
 {
     self = [super init];
     if (self == nil) return nil;
@@ -158,7 +159,7 @@
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
     //Copy state
     BCOObjectStorageContainer *newStorage = [self.objectStorage copy];
-    BCOIndexReferencesLookUpTable *newIndexReferencesByStorageRecords = [self.indexReferencesByStorageRecords copy];
+    BCOStorageRecordToIndexReferencesLookUpTable *newIndexReferencesByStorageRecords = [self.indexReferencesByStorageRecords copy];
     NSMutableDictionary *newIndexesByIndexName = ({ //Perfrom a deep copy of the indexes
         NSMutableDictionary *dict = [NSMutableDictionary new];
         [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
