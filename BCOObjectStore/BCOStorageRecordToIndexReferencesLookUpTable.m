@@ -1,18 +1,18 @@
 //
-//  BCOIndexReferencesLookUpTable.m
-//  Pods
+//  BCOStorageRecordToIndexReferencesLookUpTable.m
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
 //
 
-#import "BCOIndexReferencesLookUpTable.h"
+#import "BCOStorageRecordToIndexReferencesLookUpTable.h"
 #import "BCOIndexReference.h"
 #import "BCOStorageRecord.h"
 
 
 
-@interface BCOIndexReferencesLookUpTable ()
+@interface BCOStorageRecordToIndexReferencesLookUpTable ()
 {
     NSDictionary *_indexReferencesByStorageRecords;
     NSMutableDictionary *_mutableIndexReferencesByStorageRecords;
@@ -24,7 +24,7 @@
 
 
 
-@implementation BCOIndexReferencesLookUpTable
+@implementation BCOStorageRecordToIndexReferencesLookUpTable
 
 #pragma mark - instance life cycle
 -(instancetype)init
@@ -50,7 +50,7 @@
 -(id)copyWithZone:(NSZone *)zone
 {
     if (![self isIndexReferencesByStorageRecordsDirty]) {
-        return [[BCOIndexReferencesLookUpTable alloc] initWithIndexReferencesByStorageRecords:self.indexReferencesByStorageRecords];
+        return [[BCOStorageRecordToIndexReferencesLookUpTable alloc] initWithIndexReferencesByStorageRecords:self.indexReferencesByStorageRecords];
     }
 
     //Perform a deep copy and copy any sets that we have write access to
@@ -63,7 +63,7 @@
         dict[record] = shareableSet;
     }];
 
-    return  [[BCOIndexReferencesLookUpTable alloc] initWithIndexReferencesByStorageRecords:dict];
+    return  [[BCOStorageRecordToIndexReferencesLookUpTable alloc] initWithIndexReferencesByStorageRecords:dict];
 }
 
 

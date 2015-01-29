@@ -1,6 +1,6 @@
 //
-//  BCOIndexReferencesLookUpTable.h
-//  Pods
+//  BCOStorageRecordToIndexReferencesLookUpTable.h
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
@@ -12,11 +12,11 @@
 
 
 
-@interface BCOIndexReferencesLookUpTable : NSObject <NSCopying>
+@interface BCOStorageRecordToIndexReferencesLookUpTable : NSObject <NSCopying>
 
 -(void)addIndexReferenceWithIndexName:(NSString *)indexName indexKey:(NSString *)indexKey forStorageRecord:(BCOStorageRecord *)storageRecord;
--(void)enumerateIndexReferencesForStorageRecord:(BCOStorageRecord *)storageRecord usingBlock:(void(^)(NSString *indexName, NSString *indexKey))block;
-
 -(void)removeIndexReferencesForStorageRecord:(BCOStorageRecord *)storageRecord;
+
+-(void)enumerateIndexReferencesForStorageRecord:(BCOStorageRecord *)storageRecord usingBlock:(void(^)(NSString *indexName, NSString *indexKey))block;
 
 @end
