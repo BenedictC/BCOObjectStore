@@ -1,6 +1,6 @@
 //
 //  BCOQuery.m
-//  Pods
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 25/01/2015.
 //

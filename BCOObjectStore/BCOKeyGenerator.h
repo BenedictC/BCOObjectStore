@@ -1,6 +1,6 @@
 //
 //  BCOKeyGenerator.h
-//  Pods
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 27/01/2015.
 //
