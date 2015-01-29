@@ -2,34 +2,30 @@
 //  BCOIndex.h
 //  BCOObjectStore
 //
-//  Created by Benedict Cohen on 23/01/2015.
+//  Created by Benedict Cohen on 29/01/2015.
 //
 //
 
 #import <Foundation/Foundation.h>
-@class BCOIndexDescription;
+#import "BCOIndexEntry.h"
 
 
 
 @interface BCOIndex : NSObject <NSCopying>
 
--(instancetype)initWithIndexDescription:(BCOIndexDescription *)indexDescription;
+-(instancetype)initWithIndexColumnDescriptions:(NSDictionary *)indexColumnDescriptions;
 
-@property(nonatomic, readonly) BCOIndexDescription *indexDescription;
+@property(nonatomic, readonly) NSDictionary *indexColumnDescriptions;
 
-//Entry updating
--(void)addObject:(id)object forKey:(id)key;
--(void)removeObject:(id)object forKey:(id)key;
+-(BCOIndexEntry *)insertEntryForRecord:(id)record byIndexingObject:(id)object;
+-(void)removeEntry:(BCOIndexEntry *)indexEntry;
 
-
-
-//Object Access
--(NSSet *)objectsForKey:(id)key;
--(NSSet *)objectsForKeysInSet:(NSSet *)keys;
--(NSSet *)objectsLessThanKey:(id)key;
--(NSSet *)objectsLessThanOrEqualToKey:(id)key;
--(NSSet *)objectsGreaterThanKey:(id)key;
--(NSSet *)objectsGreaterThanOrEqualToKey:(id)key;
--(NSSet *)objectsForKeysNotEqualToKey:(id)key;
+-(NSSet *)recordsInColumn:(NSString *)columnName forKey:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forKeysInSet:(NSSet *)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName lessThanKey:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName lessThanOrEqualToKey:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName greaterThanKey:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName greaterThanOrEqualToKey:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToKey:(id)value;
 
 @end

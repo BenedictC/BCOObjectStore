@@ -131,6 +131,13 @@
 -(BCOStorageRecord *)addObject:(id)object
 {
     BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
+
+    BOOL isObjectAlreadyInStore = self.objectsByStorageRecords[record] != nil;
+    if (isObjectAlreadyInStore) {
+        NSLog(@"Store already contains object");
+        return record;
+    }
+
     self.mutableObjectsByStorageRecords[record] = object;
     return record;
 }
@@ -157,6 +164,12 @@
 
 -(void)removeObjectForStorageRecord:(BCOStorageRecord *)record
 {
+    BOOL isObjectInStore = self.objectsByStorageRecords[record] != nil;
+    if (!isObjectInStore) {
+        NSLog(@"Attempting to remove an object not in the store");
+        return;
+    }
+
     [self.mutableObjectsByStorageRecords removeObjectForKey:record];
 }
 

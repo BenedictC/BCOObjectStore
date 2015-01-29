@@ -14,13 +14,13 @@
 @interface BCOObjectStoreSnapshot : NSObject <BCOObjectStoreSnapshot>
 
 //Snapshot creation
-+(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions;
++(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions;
 
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects;
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects;
-+(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation indexDescriptions:(NSDictionary *)indexDescriptions;
++(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions;
 
 //Properties
--(NSDictionary *)indexDescriptions;
+-(NSDictionary *)indexColumnDescriptions;
 
 @end

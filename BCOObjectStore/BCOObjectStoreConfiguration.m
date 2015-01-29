@@ -7,12 +7,12 @@
 //
 
 #import "BCOObjectStoreConfiguration.h"
-#import "BCOIndexDescription.h"
+#import "BCOIndexColumnDescription.h"
 
 
 
 @interface BCOObjectStoreConfiguration ()
-@property(nonatomic, readonly) NSMutableDictionary *mutableIndexDescriptions;
+@property(nonatomic, readonly) NSMutableDictionary *mutableIndexColumnDescriptions;
 @end
 
 
@@ -22,19 +22,19 @@
 #pragma mark - instance life cycle
 -(instancetype) init
 {
-    return [self initWithIndexDescriptions:@{}];
+    return [self initWithIndexColumnDescriptions:@{}];
 }
 
 
 
--(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions
+-(instancetype)initWithIndexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
 {
-    NSParameterAssert(indexDescriptions);
+    NSParameterAssert(indexColumnDescriptions);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _mutableIndexDescriptions = [indexDescriptions mutableCopy];
+    _mutableIndexColumnDescriptions = [indexColumnDescriptions mutableCopy];
 
     return self;
 }
@@ -44,7 +44,7 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithIndexDescriptions:self.mutableIndexDescriptions];
+    BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithIndexColumnDescriptions:self.mutableIndexColumnDescriptions];
     copy.dispatchQueue = self.dispatchQueue;
     copy.initialSnapshotArchive = self.initialSnapshotArchive;
 
@@ -54,23 +54,23 @@
 
 
 #pragma mark - properties
--(NSDictionary *)indexDescriptions
+-(NSDictionary *)indexColumnDescriptions
 {
-    return self.mutableIndexDescriptions;
+    return self.mutableIndexColumnDescriptions;
 }
 
 
 
--(void)addIndexWithName:(NSString *)indexName keyGenerator:(BCOKeyGenerator)keyGenerator keyComparator:(NSComparator)comparator
+-(void)addIndexWithName:(NSString *)indexName keyGenerator:(BCOColumnKeyGenerator)keyGenerator keyComparator:(NSComparator)comparator
 {
-    BCOIndexDescription *description = [[BCOIndexDescription alloc] initWithIndexKeyGenerator:keyGenerator keyComparator:comparator];
+    BCOIndexColumnDescription *description = [[BCOIndexColumnDescription alloc] initWithIndexKeyGenerator:keyGenerator keyComparator:comparator];
 
-    [self addIndexWithName:indexName indexDescription:description];
+    [self addIndexWithName:indexName indexColumnDescription:description];
 }
 
 
 
--(void)addIndexWithName:(NSString *)indexName indexDescription:(BCOIndexDescription *)indexDescription
+-(void)addIndexWithName:(NSString *)indexName indexColumnDescription:(BCOIndexColumnDescription *)indexColumnDescription
 {
     NSRange validCharacterRange = ({
         NSCharacterSet *invalidCharacters = [[NSCharacterSet characterSetWithCharactersInString:@"1234567890_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"] invertedSet];
@@ -83,7 +83,7 @@
         return;
     }
 
-    self.mutableIndexDescriptions[indexName] = indexDescription;
+    self.mutableIndexColumnDescriptions[indexName] = indexColumnDescription;
 }
 
 @end

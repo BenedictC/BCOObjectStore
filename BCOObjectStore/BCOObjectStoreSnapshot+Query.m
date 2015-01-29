@@ -7,15 +7,16 @@
 //
 
 #import "BCOObjectStoreSnapshot+Query.h"
-#import "BCOIndex.h"
+#import "BCOColumn.h"
 #import "BCOQuery.h"
 #import "BCOObjectStorageContainer.h"
+#import "BCOIndex.h"
 
 
 
 @implementation BCOObjectStoreSnapshot (Query)
 
--(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes
+-(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index
 {
     //Create the query
     BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
@@ -25,8 +26,8 @@
     for (BCOWhereClauseExpression *expression in query.whereClauseExpressions) {
 
         //Fetch the objects for the individual WHERE clause
-        NSSet *potentialRecords = (allMatchedRecords == nil) ? [NSSet setWithArray:storage.allStorageRecords] : allMatchedRecords;
-        NSSet *matchedRecords = [self evaluateWHEREClauseExpression:expression tokens:potentialRecords storage:storage indexes:indexes];
+        NSSet *potentialRecords = allMatchedRecords ?: [NSSet setWithArray:storage.allStorageRecords];
+        NSSet *matchedRecords = [self evaluateWHEREClauseExpression:expression tokens:potentialRecords storage:storage index:index];
 
         //Intersect with the existing objects
         if (allMatchedRecords == nil) {
@@ -55,43 +56,36 @@
 
 
 #pragma mark - Object fetching
--(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)records storage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes
+-(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)records storage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index
 {
     switch (expression.operator) {
 
         case BCOQueryOperatorEqualTo: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsForKey:expression.value];
+            return [index recordsInColumn:expression.indexName forKey:expression.value];
         }
 
         case BCOQueryOperatorIn: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsForKeysInSet:expression.value];
+            return [index recordsInColumn:expression.indexName forKeysInSet:expression.value];
         }
 
         case BCOQueryOperatorLessThan: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsLessThanKey:expression.value];
+            return [index recordsInColumn:expression.indexName lessThanKey:expression.value];
         }
 
         case BCOQueryOperatorLessThanOrEqualTo: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsLessThanOrEqualToKey:expression.value];
+            return [index recordsInColumn:expression.indexName lessThanOrEqualToKey:expression.value];
         }
 
         case BCOQueryOperatorGreaterThan: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsGreaterThanKey:expression.value];
+            return [index recordsInColumn:expression.indexName greaterThanKey:expression.value];
         }
 
         case BCOQueryOperatorGreaterThanOrEqualTo: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsGreaterThanOrEqualToKey:expression.value];
+            return [index recordsInColumn:expression.indexName greaterThanOrEqualToKey:expression.value];
         }
 
         case BCOQueryOperatorNotEqualTo: {
-            BCOIndex *index = indexes[expression.indexName];
-            return [index objectsForKeysNotEqualToKey:expression.value];
+            return [index recordsInColumn:expression.indexName forKeysNotEqualToKey:expression.value];
         }
 
         case BCOQueryOperatorPredicate:

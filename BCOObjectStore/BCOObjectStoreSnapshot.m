@@ -9,10 +9,10 @@
 #import "BCOObjectStoreSnapshot.h"
 
 #import "BCOObjectStoreSnapshot+Query.h"
-#import "BCOIndexDescription.h"
+#import "BCOIndexColumnDescription.h"
 #import "BCOObjectStorageContainer.h"
 #import "BCOStorageRecord.h"
-#import "BCOStorageRecordToIndexReferencesLookUpTable.h"
+#import "BCOStorageRecordsToIndexEntriesLookUpTable.h"
 #import "BCOIndex.h"
 
 
@@ -21,14 +21,13 @@
 
 //Storage
 @property(nonatomic, readonly) BCOObjectStorageContainer *objectStorage;
-//Indexes
-#pragma message "TODO: Create a proper object instead of an NSDictionary"
-@property(readonly) NSDictionary *indexesByIndexName;
-//Storage->Indexes
-@property(readonly) BCOStorageRecordToIndexReferencesLookUpTable *indexReferencesByStorageRecords;
+//Index
+@property(readonly) BCOIndex *index;
+//Storage->Index
+@property(readonly) BCOStorageRecordsToIndexEntriesLookUpTable *indexEntriesByStorageRecords;
 
 //The snap shot assumes ownership of these object so is able to modify them without copying them.
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOStorageRecordToIndexReferencesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index indexEntriesLookUpTable:(BCOStorageRecordsToIndexEntriesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
 @end
 
 
@@ -36,21 +35,21 @@
 @implementation BCOObjectStoreSnapshot
 
 #pragma mark - instance life cycle
-+(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions
++(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
 {
-    return [[BCOObjectStoreSnapshot alloc] initWithObjects:objects indexDescriptions:indexDescriptions];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:objects indexColumnDescriptions:indexColumnDescriptions];
 }
 
 
 
 -(instancetype)init
 {
-    return [self initWithObjects:[NSSet set] indexDescriptions:[NSDictionary dictionary]];
+    return [self initWithObjects:[NSSet set] indexColumnDescriptions:[NSDictionary dictionary]];
 }
 
 
 
--(instancetype)initWithObjects:(NSSet *)objects indexDescriptions:(NSDictionary *)indexDescriptions
+-(instancetype)initWithObjects:(NSSet *)objects indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
 {
     NSParameterAssert(objects);
 
@@ -60,56 +59,41 @@
         [storage addObject:object];
     }
 
-    return [self initWithObjectStorage:storage indexDescriptions:indexDescriptions];
+    return [self initWithObjectStorage:storage indexColumnDescriptions:indexColumnDescriptions];
 }
 
 
 
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexDescriptions:(NSDictionary *)indexDescriptions
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
 {
     NSParameterAssert(storage);
-    NSParameterAssert(indexDescriptions);
+    NSParameterAssert(indexColumnDescriptions);
 
-    //Create indexes
-    NSMutableDictionary *indexesByIndexName = [NSMutableDictionary new];
-    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
-        //Create and add the index
-        BCOIndex *index = [[BCOIndex alloc] initWithIndexDescription:indexDescription];
-        indexesByIndexName[indexName] = index;
+    //Create index
+    BCOIndex *index = [[BCOIndex alloc] initWithIndexColumnDescriptions:indexColumnDescriptions];
+    BCOStorageRecordsToIndexEntriesLookUpTable *indexEntriesByStorageRecords = [[BCOStorageRecordsToIndexEntriesLookUpTable alloc] init];
+
+    //Add each object to the index
+    [storage enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *record, id object, BOOL *stop) {
+        BCOIndexEntry *entry = [index insertEntryForRecord:record byIndexingObject:object];
+        //Store the index entry by storage record
+        [indexEntriesByStorageRecords setIndexEntry:entry forStorageRecord:record];
     }];
 
-    //Keep track of which indexes contain each object
-    BCOStorageRecordToIndexReferencesLookUpTable *indexReferencesByStorageRecords = [[BCOStorageRecordToIndexReferencesLookUpTable alloc] init];
-
-    //Add each object to each index
-    [storage enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *storageRecord, id object, BOOL *stop) {
-        [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
-            //Get the key and exit if the object shouldn't be included in this index
-            id key = indexDescription.indexKeyGenerator(object);
-            if (key == nil) return;
-
-            //Get the index and add the token to it
-            BCOIndex *index = indexesByIndexName[indexName];
-            [index addObject:storageRecord forKey:key];
-
-            //Add an indexReference to the referencesSet for the token
-            [indexReferencesByStorageRecords addIndexReferenceWithIndexName:indexName indexKey:key forStorageRecord:storageRecord];
-        }];
-    }];
-
-    return [self initWithObjectStorage:storage indexes:indexesByIndexName indexReferencesLookUpTable:indexReferencesByStorageRecords];
+    return [self initWithObjectStorage:storage index:index indexEntriesLookUpTable:indexEntriesByStorageRecords];
 }
 
 
 
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexes:(NSDictionary *)indexes indexReferencesLookUpTable:(BCOStorageRecordToIndexReferencesLookUpTable *)lookupTable
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index indexEntriesLookUpTable:(BCOStorageRecordsToIndexEntriesLookUpTable *)lookupTable
 {
+    //self assumes ownership of all objects
     self = [super init];
     if (self == nil) return nil;
 
     _objectStorage = storage;
-    _indexesByIndexName = indexes;
-    _indexReferencesByStorageRecords = lookupTable;
+    _index = index;
+    _indexEntriesByStorageRecords = lookupTable;
 
     return self;
 }
@@ -123,24 +107,19 @@
 
 
 
-+(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation indexDescriptions:(NSDictionary *)indexDescriptions
++(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
 {
     BCOObjectStorageContainer *storage = [BCOObjectStorageContainer objectStorageWithData:representation];    
 
-    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storage indexDescriptions:indexDescriptions];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storage indexColumnDescriptions:indexColumnDescriptions];
 }
 
 
 
 #pragma mark - properties
--(NSDictionary *)indexDescriptions
+-(NSDictionary *)indexColumnDescriptions
 {
-    NSMutableDictionary *indexDescriptions = [NSMutableDictionary new];
-    [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-        indexDescriptions[indexName] = index.indexDescription;
-    }];
-
-    return indexDescriptions;
+    return self.index.indexColumnDescriptions;
 }
 
 
@@ -149,7 +128,7 @@
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects
 {
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
-    return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexDescriptions:self.indexDescriptions];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexColumnDescriptions:self.indexColumnDescriptions];
 }
 
 
@@ -159,64 +138,34 @@
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
     //Copy state
     BCOObjectStorageContainer *newStorage = [self.objectStorage copy];
-    BCOStorageRecordToIndexReferencesLookUpTable *newIndexReferencesByStorageRecords = [self.indexReferencesByStorageRecords copy];
-    NSMutableDictionary *newIndexesByIndexName = ({ //Perfrom a deep copy of the indexes
-        NSMutableDictionary *dict = [NSMutableDictionary new];
-        [self.indexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-            dict[indexName] = [index copy];
-        }];
-        dict;
-    });
+    BCOIndex *newIndex = [self.index copy];
+    BCOStorageRecordsToIndexEntriesLookUpTable *newIndexEntriesByStorageRecords = [self.indexEntriesByStorageRecords copy];
 
+    
     //Remove expiredObjects from...
     for (id expiredObject in expiredObjects) {
-        BCOStorageRecord *record = [newStorage storageRecordForObject:expiredObject];
-        if (record == nil) {
-            NSLog(@"Attempting to remove an object not in the store");
-            continue;
-        }
-
         //... storage
+        BCOStorageRecord *record = [newStorage storageRecordForObject:expiredObject];
         [newStorage removeObjectForStorageRecord:record];
-
-        //...each index by enumerating the indexRefrenences
-        [newIndexReferencesByStorageRecords enumerateIndexReferencesForStorageRecord:record usingBlock:^(NSString *indexName, NSString *indexKey) {
-            BCOIndex *index = newIndexesByIndexName[indexName];
-            [index removeObject:record forKey:indexKey];
-        }];
-
+        //...the index by getting the entry
+        BCOIndexEntry *entry = [newIndexEntriesByStorageRecords indexEntryForStorageRecord:record];
+        [newIndex removeEntry:entry];
         //... the lookup table
-        [newIndexReferencesByStorageRecords removeIndexReferencesForStorageRecord:record];
+        [newIndexEntriesByStorageRecords removeIndexEntryForStorageRecord:record];
     }
 
     //Add freshObjects to...
     for (id freshObject in freshObjects) {
-        BCOStorageRecord *existingToken = [newStorage storageRecordForObject:freshObject];
-        if (existingToken != nil) {
-            NSLog(@"Store already contains object");
-            continue;
-        }
-
         //...storage
         BCOStorageRecord *storageRecord = [newStorage addObject:freshObject];
-
-        //...each index
-        [newIndexesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-            //Generate a key
-            id key = index.indexDescription.indexKeyGenerator(freshObject);
-            //Get the key and exit if the object shouldn't be included in this index
-            if (key == nil) return;
-
-            //Add the object to the index entry
-            [index addObject:storageRecord forKey:key];
-
-            //... the lookUp table
-            [newIndexReferencesByStorageRecords addIndexReferenceWithIndexName:indexName indexKey:key forStorageRecord:storageRecord];
-        }];
+        //...index
+        BCOIndexEntry *indexEntry = [newIndex insertEntryForRecord:storageRecord byIndexingObject:freshObject];
+        //... the lookUp table
+        [newIndexEntriesByStorageRecords setIndexEntry:indexEntry forStorageRecord:storageRecord];
     }
 
     //Construct the new snapshot
-    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:newStorage indexes:newIndexesByIndexName indexReferencesLookUpTable:newIndexReferencesByStorageRecords];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:newStorage index:newIndex indexEntriesLookUpTable:newIndexEntriesByStorageRecords];
 }
 
 
@@ -224,14 +173,14 @@
 #pragma mark - object access
 -(NSArray *)executeQuery:(NSString *)query
 {
-    return [self executeQuery:query subsitutionVariable:nil objectStorage:self.objectStorage indexes:self.indexesByIndexName];
+    return [self executeQuery:query subsitutionVariable:nil objectStorage:self.objectStorage index:self.index];
 }
 
 
 
 -(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable
 {
-    return [self executeQuery:query subsitutionVariable:subsitutionVariable objectStorage:self.objectStorage indexes:self.indexesByIndexName];
+    return [self executeQuery:query subsitutionVariable:subsitutionVariable objectStorage:self.objectStorage index:self.index];
 }
 
 @end

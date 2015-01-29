@@ -8,21 +8,15 @@
 
 #import <Foundation/Foundation.h>
 
-
-
-@interface BCOIndexEntry : NSObject <NSCopying, NSMutableCopying>
-
--(instancetype)initWithKey:(id)key objects:(NSSet *)objects;
-@property(nonatomic, readonly) id key;
-@property(nonatomic, readonly) NSSet *objects;
-
--(NSComparisonResult)compare:(BCOIndexEntry *)otherEntry;
-
-@end
+@protocol BCOColumnKey;
 
 
 
-@interface BCOMutableIndexEntry : BCOIndexEntry
-@property(nonatomic) id key;
-@property(nonatomic, readonly) NSMutableSet *objects;
+@interface BCOIndexEntry : NSObject
+
+-(instancetype)initWithRecord:(id)record;
+
+@property(nonatomic, readonly) id record;
+@property(nonatomic, readonly) NSMutableDictionary *keysByColumnName;
+
 @end

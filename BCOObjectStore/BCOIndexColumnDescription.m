@@ -1,18 +1,18 @@
 //
-//  BCOIndexDescription.m
+//  BCOIndexColumnDescription.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 13/10/2014.
 //  Copyright (c) 2014 Benedict Cohen. All rights reserved.
 //
 
-#import "BCOIndexDescription.h"
+#import "BCOIndexColumnDescription.h"
 
 
 
-@implementation BCOIndexDescription
+@implementation BCOIndexColumnDescription
 
--(instancetype)initWithIndexKeyGenerator:(BCOKeyGenerator)indexer keyComparator:(NSComparator)comparator
+-(instancetype)initWithIndexKeyGenerator:(BCOColumnKeyGenerator)indexer keyComparator:(NSComparator)comparator
 {
     NSParameterAssert(indexer);
     NSParameterAssert(comparator);

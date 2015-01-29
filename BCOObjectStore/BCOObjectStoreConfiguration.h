@@ -8,8 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "BCOKeyGenerator.h"
-@class BCOIndexDescription;
+#import "BCOColumnKey.h"
+@class BCOIndexColumnDescription;
 
 
 
@@ -18,10 +18,10 @@
 @property(nonatomic) dispatch_queue_t dispatchQueue;
 @property(nonatomic) NSData *initialSnapshotArchive;
 
--(void)addIndexWithName:(NSString *)indexName keyGenerator:(BCOKeyGenerator)keyGenerator keyComparator:(NSComparator)comparator;
--(void)addIndexWithName:(NSString *)indexName indexDescription:(BCOIndexDescription *)indexDescription;
+-(void)addIndexWithName:(NSString *)indexName keyGenerator:(BCOColumnKeyGenerator)keyGenerator keyComparator:(NSComparator)comparator;
+-(void)addIndexWithName:(NSString *)indexName indexColumnDescription:(BCOIndexColumnDescription *)indexColumnDescription;
 
-@property(nonatomic, readonly) NSDictionary *indexDescriptions;
+@property(nonatomic, readonly) NSDictionary *indexColumnDescriptions;
 
 @end
 
