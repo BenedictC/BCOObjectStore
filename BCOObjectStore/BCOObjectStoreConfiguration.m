@@ -12,7 +12,7 @@
 
 
 @interface BCOObjectStoreConfiguration ()
-@property(nonatomic, readonly) NSMutableDictionary *mutableIndexColumnDescriptions;
+@property(nonatomic, readonly) NSMutableDictionary *mutableColumnDescriptions;
 @end
 
 
@@ -34,7 +34,7 @@
     self = [super init];
     if (self == nil) return nil;
 
-    _mutableIndexColumnDescriptions = [columnDescriptions mutableCopy];
+    _mutableColumnDescriptions = [columnDescriptions mutableCopy];
 
     return self;
 }
@@ -44,7 +44,7 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithColumnDescriptions:self.mutableIndexColumnDescriptions];
+    BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithColumnDescriptions:self.mutableColumnDescriptions];
     copy.dispatchQueue = self.dispatchQueue;
     copy.initialSnapshotArchive = self.initialSnapshotArchive;
 
@@ -54,9 +54,9 @@
 
 
 #pragma mark - properties
--(NSDictionary *)indexColumnDescriptions
+-(NSDictionary *)columnDescriptions
 {
-    return self.mutableIndexColumnDescriptions;
+    return self.mutableColumnDescriptions;
 }
 
 
@@ -83,7 +83,7 @@
         return;
     }
 
-    self.mutableIndexColumnDescriptions[columnName] = columnDescription;
+    self.mutableColumnDescriptions[columnName] = columnDescription;
 }
 
 @end

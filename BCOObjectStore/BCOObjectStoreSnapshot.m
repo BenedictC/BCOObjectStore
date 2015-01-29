@@ -35,21 +35,21 @@
 @implementation BCOObjectStoreSnapshot
 
 #pragma mark - instance life cycle
-+(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
++(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)objects columnDescriptions:(NSDictionary *)columnDescriptions
 {
-    return [[BCOObjectStoreSnapshot alloc] initWithObjects:objects indexColumnDescriptions:indexColumnDescriptions];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:objects columnDescriptions:columnDescriptions];
 }
 
 
 
 -(instancetype)init
 {
-    return [self initWithObjects:[NSSet set] indexColumnDescriptions:[NSDictionary dictionary]];
+    return [self initWithObjects:[NSSet set] columnDescriptions:[NSDictionary dictionary]];
 }
 
 
 
--(instancetype)initWithObjects:(NSSet *)objects indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
+-(instancetype)initWithObjects:(NSSet *)objects columnDescriptions:(NSDictionary *)columnDescriptions
 {
     NSParameterAssert(objects);
 
@@ -59,18 +59,18 @@
         [storage addObject:object];
     }
 
-    return [self initWithObjectStorage:storage indexColumnDescriptions:indexColumnDescriptions];
+    return [self initWithObjectStorage:storage columnDescriptions:columnDescriptions];
 }
 
 
 
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage columnDescriptions:(NSDictionary *)columnDescriptions
 {
     NSParameterAssert(storage);
-    NSParameterAssert(indexColumnDescriptions);
+    NSParameterAssert(columnDescriptions);
 
     //Create index
-    BCOIndex *index = [[BCOIndex alloc] initWithColumnDescriptions:indexColumnDescriptions];
+    BCOIndex *index = [[BCOIndex alloc] initWithColumnDescriptions:columnDescriptions];
     BCOStorageRecordsToIndexEntriesLookUpTable *indexEntriesByStorageRecords = [[BCOStorageRecordsToIndexEntriesLookUpTable alloc] init];
 
     //Add each object to the index
@@ -107,17 +107,17 @@
 
 
 
-+(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation indexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
++(BCOObjectStoreSnapshot *)snapshotFromSnapshotArchive:(NSData *)representation columnDescriptions:(NSDictionary *)columnDescriptions
 {
     BCOObjectStorageContainer *storage = [BCOObjectStorageContainer objectStorageWithData:representation];    
 
-    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storage indexColumnDescriptions:indexColumnDescriptions];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storage columnDescriptions:columnDescriptions];
 }
 
 
 
 #pragma mark - properties
--(NSDictionary *)indexColumnDescriptions
+-(NSDictionary *)columnDescriptions
 {
     return self.index.columnDescriptions;
 }
@@ -128,7 +128,7 @@
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects
 {
 #pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
-    return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects indexColumnDescriptions:self.indexColumnDescriptions];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjects:newObjects columnDescriptions:self.index.columnDescriptions];
 }
 
 

@@ -21,7 +21,7 @@
 -(void)addColumnWithName:(NSString *)columnName columnValueGenerator:(BCOColumnValueGenerator)generator valueComparator:(NSComparator)comparator;
 -(void)addColumnWithName:(NSString *)columnName columnDescription:(BCOColumnDescription *)columnDescription;
 
-@property(nonatomic, readonly) NSDictionary *indexColumnDescriptions;
+@property(nonatomic, readonly) NSDictionary *columnDescriptions;
 
 @end
 

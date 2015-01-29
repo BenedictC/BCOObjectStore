@@ -42,7 +42,7 @@
     if (self == nil) return nil;
 
     _configuration = [configuration copy];
-    _snapshot = [BCOObjectStoreSnapshot snapshotFromSnapshotArchive:configuration.initialSnapshotArchive indexColumnDescriptions:configuration.indexColumnDescriptions];
+    _snapshot = [BCOObjectStoreSnapshot snapshotFromSnapshotArchive:configuration.initialSnapshotArchive columnDescriptions:configuration.columnDescriptions];
 
     return self;
 }
