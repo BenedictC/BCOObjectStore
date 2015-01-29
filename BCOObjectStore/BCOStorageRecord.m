@@ -1,6 +1,6 @@
 //
 //  BCOStorageRecord.m
-//  Pods
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
@@ -11,24 +11,41 @@
 
 
 @interface BCOStorageRecord ()
-@property(nonatomic, readonly) id object;
+@property(nonatomic, readonly) id value;
 @end
 
 
 
 @implementation BCOStorageRecord
 
++(BCOStorageRecord *)storageRecordForObject:(id)object
+{
+    BOOL isSerializable = NO; //TODO:
+    if (isSerializable) {
+#pragma message "TODO: We need to change `object` to be a value that we can reliable derive from `object` so that we can\
+lookup match up an object inserted into the store with on that already exists in the store but only on disk and that hasn't been loaded from disk. \
+This cannot be based on -hash because that may rely on a pointer which will change from on each run. \
+A murmur2(3?) hash of the data represention of the object seems like a good start."
+
+    }
+
+    return [[BCOStorageRecord alloc] initWithValue:object];
+}
+
+
+
 #pragma mark - instance life cycle
--(instancetype)initWithObject:(id)object
+-(instancetype)initWithValue:(id)value
 {
     self = [super init];
     if (self == nil) return nil;
-    _object = object;
+    _value = value;
     return self;
 }
 
 
 
+#pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
     return self;
@@ -37,44 +54,20 @@
 
 
 #pragma mark - equality
--(NSComparisonResult)compare:(BCOStorageRecord *)otherKey
-{
-    uintptr_t obj = (uintptr_t)_object;
-    uintptr_t otherObj = (uintptr_t)otherKey->_object;
-
-    if (otherObj > obj) return NSOrderedAscending;
-    if (otherObj < obj) return NSOrderedDescending;
-
-    return NSOrderedSame;
-}
-
-
-
 -(BOOL)isEqual:(id)object
 {
     if (![object isKindOfClass:BCOStorageRecord.class]) return NO;
 
-    BCOStorageRecord *otherToken = object;
+    BCOStorageRecord *otherRecord = object;
 
-    return [self.object isEqual:otherToken.object];
+    return [self.value isEqual:otherRecord.value];
 }
 
 
 
 -(NSUInteger)hash
 {
-    return [self.object hash];
-}
-
-
-
-+(NSComparator)storageRecordComparator
-{
-    static NSComparisonResult (^ const comparator)(BCOStorageRecord *, BCOStorageRecord *) = ^NSComparisonResult(BCOStorageRecord *record1, BCOStorageRecord *record2) {
-        return [record1 compare:record2];
-    };
-
-    return comparator;
+    return [self.value hash];
 }
 
 @end

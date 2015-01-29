@@ -1,6 +1,6 @@
 //
 //  BCOStorageRecord.h
-//  Pods
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
@@ -12,7 +12,6 @@
 
 @interface BCOStorageRecord : NSObject <NSCopying>
 
--(instancetype)initWithObject:(id)object;
-+(NSComparator)storageRecordComparator;
++(BCOStorageRecord *)storageRecordForObject:(id)object;
 
 @end

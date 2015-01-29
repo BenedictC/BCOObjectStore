@@ -28,7 +28,7 @@
 {
     NSMutableDictionary *objectsByRecords = [NSMutableDictionary new];
     for (id object in objects) {
-        BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+        BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
         objectsByRecords[record] = object;
     }
 
@@ -49,7 +49,7 @@
 
     NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
     for (id object in objects) {
-        BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+        BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
         objectsByStorageRecords[record] = object;
     }
 
@@ -130,7 +130,7 @@
 #pragma mark - content managment
 -(BCOStorageRecord *)addObject:(id)object
 {
-    BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+    BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
     self.mutableObjectsByStorageRecords[record] = object;
     return record;
 }
@@ -146,7 +146,7 @@
 
 -(BCOStorageRecord *)storageRecordForObject:(id)object
 {
-    BCOStorageRecord *record = [[BCOStorageRecord alloc] initWithObject:object];
+    BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
 
     id canonicalObject = self.objectsByStorageRecords[record];
 
