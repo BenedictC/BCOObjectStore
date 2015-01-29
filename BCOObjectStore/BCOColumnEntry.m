@@ -11,7 +11,7 @@
 
 
 @interface BCOColumnEntry ()
-@property(nonatomic) id<BCOColumnKey> key;
+@property(nonatomic) id<BCOColumnValue> value;
 @end
 
 
@@ -21,24 +21,24 @@
 #pragma mark - instance life cylce
 -(instancetype)init
 {
-    return [self initWithKey:nil objects:nil];
+    return [self initWithValue:nil objects:nil];
 }
 
 
--(instancetype)initWithKey:(id)key objects:(NSSet *)objects
+-(instancetype)initWithValue:(id)value objects:(NSSet *)objects
 {
-    return [self initWithKey:key objects:objects shouldCopyObjects:YES];
+    return [self initWithvalue:value objects:objects shouldCopyObjects:YES];
 }
 
 
--(instancetype)initWithKey:(id)key objects:(NSSet *)objects shouldCopyObjects:(BOOL)shouldCopyObjects
+-(instancetype)initWithvalue:(id)value objects:(NSSet *)objects shouldCopyObjects:(BOOL)shouldCopyObjects
 {
-    NSParameterAssert(key);
+    NSParameterAssert(value);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _key = key;
+    _value = value;
     _objects = (shouldCopyObjects) ? [objects copy] : objects;
 
     return self;
@@ -48,21 +48,21 @@
 
 -(NSComparisonResult)compare:(BCOColumnEntry *)otherEntry
 {
-    return [self.key compare:otherEntry.key];
+    return [self.value compare:otherEntry.value];
 }
 
 
 
 -(id)copyWithZone:(NSZone *)zone
 {
-    return ([self.class isEqual:BCOColumnEntry.class]) ? self : [[BCOColumnEntry alloc] initWithKey:self.key objects:self.objects];
+    return ([self.class isEqual:BCOColumnEntry.class]) ? self : [[BCOColumnEntry alloc] initWithValue:self.value objects:self.objects];
 }
 
 
 
 -(id)mutableCopyWithZone:(NSZone *)zone
 {
-    return [[BCOMutableIndexEntry alloc] initWithKey:self.key objects:self.objects];
+    return [[BCOMutableIndexEntry alloc] initWithValue:self.value objects:self.objects];
 }
 
 @end
@@ -71,9 +71,9 @@
 
 @implementation BCOMutableIndexEntry
 
--(instancetype)initWithKey:(id)key objects:(NSSet *)objects
+-(instancetype)initWithValue:(id)value objects:(NSSet *)objects
 {
-    return [super initWithKey:key objects:[objects mutableCopy] shouldCopyObjects:NO];
+    return [super initWithvalue:value objects:[objects mutableCopy] shouldCopyObjects:NO];
 }
 
 @end

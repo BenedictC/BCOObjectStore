@@ -9,7 +9,7 @@
 #import "BCOObjectStore.h"
 
 #import "BCOObjectStoreSnapshot.h"
-#import "BCOIndexColumnDescription.h"
+#import "BCOColumnDescription.h"
 
 
 

@@ -8,7 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol BCOColumnKey;
+@protocol BCOColumnValue;
 
 
 
@@ -17,6 +17,6 @@
 -(instancetype)initWithRecord:(id)record;
 
 @property(nonatomic, readonly) id record;
-@property(nonatomic, readonly) NSMutableDictionary *keysByColumnName;
+@property(nonatomic, readonly) NSMutableDictionary *valuesByColumnName;
 
 @end

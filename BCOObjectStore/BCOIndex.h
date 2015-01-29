@@ -13,19 +13,19 @@
 
 @interface BCOIndex : NSObject <NSCopying>
 
--(instancetype)initWithIndexColumnDescriptions:(NSDictionary *)indexColumnDescriptions;
+-(instancetype)initWithColumnDescriptions:(NSDictionary *)columnDescriptions;
 
-@property(nonatomic, readonly) NSDictionary *indexColumnDescriptions;
+@property(nonatomic, readonly) NSDictionary *columnDescriptions;
 
 -(BCOIndexEntry *)insertEntryForRecord:(id)record byIndexingObject:(id)object;
 -(void)removeEntry:(BCOIndexEntry *)indexEntry;
 
--(NSSet *)recordsInColumn:(NSString *)columnName forKey:(id)value;
--(NSSet *)recordsInColumn:(NSString *)columnName forKeysInSet:(NSSet *)value;
--(NSSet *)recordsInColumn:(NSString *)columnName lessThanKey:(id)value;
--(NSSet *)recordsInColumn:(NSString *)columnName lessThanOrEqualToKey:(id)value;
--(NSSet *)recordsInColumn:(NSString *)columnName greaterThanKey:(id)value;
--(NSSet *)recordsInColumn:(NSString *)columnName greaterThanOrEqualToKey:(id)value;
--(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToKey:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forValue:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forValuesInSet:(NSSet *)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName lessThanValue:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName lessThanOrEqualToValue:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName greaterThanValue:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName greaterThanOrEqualToValue:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToValue:(id)value;
 
 @end

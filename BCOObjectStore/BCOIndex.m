@@ -22,29 +22,29 @@
 @implementation BCOIndex
 
 #pragma mark - instance life cycle
--(instancetype)initWithIndexColumnDescriptions:(NSDictionary *)indexColumnDescriptions
+-(instancetype)initWithColumnDescriptions:(NSDictionary *)indexColumnDescriptions
 {
     //Create and add the index
     NSMutableDictionary *mutableIndexesByName = [NSMutableDictionary new];
-    [indexColumnDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexColumnDescription *indexColumnDescription, BOOL *stop) {
+    [indexColumnDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOColumnDescription *indexColumnDescription, BOOL *stop) {
         BCOColumn *newIndex = [[BCOColumn alloc] initWithIndexColumnDescription:indexColumnDescription];
         mutableIndexesByName[indexName] = newIndex;
     }];
 
-    return [self initWithIndexColumnDescriptions:indexColumnDescriptions mutableColumnsByName:mutableIndexesByName];
+    return [self initWithColumnDescriptions:indexColumnDescriptions mutableColumnsByName:mutableIndexesByName];
 }
 
 
 
--(instancetype)initWithIndexColumnDescriptions:(NSDictionary *)indexColumnDescriptions mutableColumnsByName:(NSMutableDictionary *)mutableColumnsByName
+-(instancetype)initWithColumnDescriptions:(NSDictionary *)columnDescriptions mutableColumnsByName:(NSMutableDictionary *)mutableColumnsByName
 {
-    NSParameterAssert(indexColumnDescriptions);
+    NSParameterAssert(columnDescriptions);
     NSParameterAssert(mutableColumnsByName);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _indexColumnDescriptions = [indexColumnDescriptions copy];
+    _columnDescriptions = [columnDescriptions copy];
     _mutableColumnsByName = mutableColumnsByName;
 
     return self;
@@ -61,7 +61,7 @@
         mutableColumnsByName[indexName] = [index copy];
     }];
 
-    return [[BCOIndex alloc] initWithIndexColumnDescriptions:self.indexColumnDescriptions mutableColumnsByName:mutableColumnsByName];
+    return [[BCOIndex alloc] initWithColumnDescriptions:self.columnDescriptions mutableColumnsByName:mutableColumnsByName];
 }
 
 
@@ -79,14 +79,14 @@
 {
     BCOIndexEntry *entry = [[BCOIndexEntry alloc] initWithRecord:record];
     [self.columnsByName enumerateKeysAndObjectsUsingBlock:^(NSString *columnName, BCOColumn *column, BOOL *stop) {
-        id key = [column generateColumnKeyForObject:object];
-        if (key == nil) return;
+        id value = [column generateColumnValueForObject:object];
+        if (value == nil) return;
 
         //Add the record to the column
-        [column addRecord:record forKey:key];
+        [column addRecord:record forColumnValue:value];
 
-        //Add a reference for the columnName:key pair to the entry.
-        entry.keysByColumnName[columnName] = key;
+        //Add a reference for the columnName:value pair to the entry.
+        entry.valuesByColumnName[columnName] = value;
     }];
 
     return entry;
@@ -97,17 +97,10 @@
 -(void)removeEntry:(BCOIndexEntry *)indexEntry
 {
     NSDictionary *mutableColumns = self.mutableColumnsByName;
-    [indexEntry.keysByColumnName enumerateKeysAndObjectsUsingBlock:^(NSString *columnName, id key, BOOL *stop) {
+    [indexEntry.valuesByColumnName enumerateKeysAndObjectsUsingBlock:^(NSString *columnName, id value, BOOL *stop) {
         BCOColumn *column = mutableColumns[columnName];
-        [column removeRecord:indexEntry.record forKey:key];
+        [column removeRecord:indexEntry.record forColumnValue:value];
     }];
-}
-
-
-
--(id)objectForKeyedSubscript:(NSString *)key
-{
-    return self.mutableColumnsByName[key];
 }
 
 
@@ -120,58 +113,58 @@
 
 
 #pragma mark - modifying
--(NSSet *)recordsInColumn:(NSString *)columnName forKey:(id)value
+-(NSSet *)recordsInColumn:(NSString *)columnName forValue:(id)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsForKey:value];
+    return [column recordsForValue:value];
 }
 
 
 
--(NSSet *)recordsInColumn:(NSString *)columnName forKeysInSet:(NSSet *)value
+-(NSSet *)recordsInColumn:(NSString *)columnName forValuesInSet:(NSSet *)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsForKeysInSet:value];
+    return [column recordsForValuesInSet:value];
 }
 
 
 
--(NSSet *)recordsInColumn:(NSString *)columnName lessThanKey:(id)value
+-(NSSet *)recordsInColumn:(NSString *)columnName lessThanValue:(id)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsLessThanKey:value];
+    return [column recordsWithValueLessThan:value];
 }
 
 
 
--(NSSet *)recordsInColumn:(NSString *)columnName lessThanOrEqualToKey:(id)value
+-(NSSet *)recordsInColumn:(NSString *)columnName lessThanOrEqualToValue:(id)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsLessThanOrEqualToKey:value];
+    return [column recordsWithValueLessThanOrEqualTo:value];
 }
 
 
 
--(NSSet *)recordsInColumn:(NSString *)columnName greaterThanKey:(id)value
+-(NSSet *)recordsInColumn:(NSString *)columnName greaterThanValue:(id)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsGreaterThanKey:value];
+    return [column recordsWithValueGreaterThan:value];
 }
 
 
 
--(NSSet *)recordsInColumn:(NSString *)columnName greaterThanOrEqualToKey:(id)value
+-(NSSet *)recordsInColumn:(NSString *)columnName greaterThanOrEqualToValue:(id)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsGreaterThanOrEqualToKey:value];
+    return [column recordsWithValueGreaterThanOrEqualTo:value];
 }
 
 
 
--(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToKey:(id)value
+-(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToValue:(id)value
 {
     BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsForKeysNotEqualToKey:value];
+    return [column recordsWithValueNotEqualTo:value];
 }
 
 @end

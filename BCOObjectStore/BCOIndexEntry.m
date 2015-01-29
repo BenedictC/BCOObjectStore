@@ -7,7 +7,7 @@
 //
 
 #import "BCOIndexEntry.h"
-#import "BCOColumnKey.h"
+#import "BCOColumnValue.h"
 
 
 
@@ -20,7 +20,7 @@
     if (self == nil) return nil;
 
     _record = record;
-    _keysByColumnName = [NSMutableDictionary new];
+    _valuesByColumnName = [NSMutableDictionary new];
 
     return self;
 }

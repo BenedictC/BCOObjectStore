@@ -61,31 +61,31 @@
     switch (expression.operator) {
 
         case BCOQueryOperatorEqualTo: {
-            return [index recordsInColumn:expression.indexName forKey:expression.value];
+            return [index recordsInColumn:expression.indexName forValue:expression.value];
         }
 
         case BCOQueryOperatorIn: {
-            return [index recordsInColumn:expression.indexName forKeysInSet:expression.value];
+            return [index recordsInColumn:expression.indexName forValuesInSet:expression.value];
         }
 
         case BCOQueryOperatorLessThan: {
-            return [index recordsInColumn:expression.indexName lessThanKey:expression.value];
+            return [index recordsInColumn:expression.indexName lessThanValue:expression.value];
         }
 
         case BCOQueryOperatorLessThanOrEqualTo: {
-            return [index recordsInColumn:expression.indexName lessThanOrEqualToKey:expression.value];
+            return [index recordsInColumn:expression.indexName lessThanOrEqualToValue:expression.value];
         }
 
         case BCOQueryOperatorGreaterThan: {
-            return [index recordsInColumn:expression.indexName greaterThanKey:expression.value];
+            return [index recordsInColumn:expression.indexName greaterThanValue:expression.value];
         }
 
         case BCOQueryOperatorGreaterThanOrEqualTo: {
-            return [index recordsInColumn:expression.indexName greaterThanOrEqualToKey:expression.value];
+            return [index recordsInColumn:expression.indexName greaterThanOrEqualToValue:expression.value];
         }
 
         case BCOQueryOperatorNotEqualTo: {
-            return [index recordsInColumn:expression.indexName forKeysNotEqualToKey:expression.value];
+            return [index recordsInColumn:expression.indexName forKeysNotEqualToValue:expression.value];
         }
 
         case BCOQueryOperatorPredicate:

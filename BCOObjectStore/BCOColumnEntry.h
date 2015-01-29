@@ -7,14 +7,14 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "BCOColumnKey.h"
+#import "BCOColumnValue.h"
 
 
 
 @interface BCOColumnEntry : NSObject <NSCopying, NSMutableCopying>
 
--(instancetype)initWithKey:(id<BCOColumnKey>)key objects:(NSSet *)objects;
-@property(nonatomic, readonly) id<BCOColumnKey> key;
+-(instancetype)initWithValue:(id<BCOColumnValue>)value objects:(NSSet *)objects;
+@property(nonatomic, readonly) id<BCOColumnValue> value;
 @property(nonatomic, readonly) NSSet *objects;
 
 -(NSComparisonResult)compare:(BCOColumnEntry *)otherEntry;
@@ -24,6 +24,6 @@
 
 
 @interface BCOMutableIndexEntry : BCOColumnEntry
-@property(nonatomic) id<BCOColumnKey> key;
+@property(nonatomic) id<BCOColumnValue> value;
 @property(nonatomic, readonly) NSMutableSet *objects;
 @end

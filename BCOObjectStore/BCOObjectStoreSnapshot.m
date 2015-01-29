@@ -9,7 +9,7 @@
 #import "BCOObjectStoreSnapshot.h"
 
 #import "BCOObjectStoreSnapshot+Query.h"
-#import "BCOIndexColumnDescription.h"
+#import "BCOColumnDescription.h"
 #import "BCOObjectStorageContainer.h"
 #import "BCOStorageRecord.h"
 #import "BCOStorageRecordsToIndexEntriesLookUpTable.h"
@@ -70,7 +70,7 @@
     NSParameterAssert(indexColumnDescriptions);
 
     //Create index
-    BCOIndex *index = [[BCOIndex alloc] initWithIndexColumnDescriptions:indexColumnDescriptions];
+    BCOIndex *index = [[BCOIndex alloc] initWithColumnDescriptions:indexColumnDescriptions];
     BCOStorageRecordsToIndexEntriesLookUpTable *indexEntriesByStorageRecords = [[BCOStorageRecordsToIndexEntriesLookUpTable alloc] init];
 
     //Add each object to the index
@@ -119,7 +119,7 @@
 #pragma mark - properties
 -(NSDictionary *)indexColumnDescriptions
 {
-    return self.index.indexColumnDescriptions;
+    return self.index.columnDescriptions;
 }
 
 
