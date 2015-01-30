@@ -25,7 +25,7 @@
 #pragma message "TODO: We need to change `object` to be a value that we can reliable derive from `object` so that we can\
 lookup match up an object inserted into the store with on that already exists in the store but only on disk and that hasn't been loaded from disk. \
 This cannot be based on -hash because that may rely on a pointer which will change from on each run. \
-A murmur2(3?) hash of the data represention of the object seems like a good start."
+A murmur3 hash of the data represention of the object seems like a good start."
 
     }
 
