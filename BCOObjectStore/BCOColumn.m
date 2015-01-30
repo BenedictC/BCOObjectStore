@@ -14,13 +14,13 @@
 
 @interface BCOColumn ()
 {
-    NSMutableArray *_mutableIndexEntries;
-    NSArray *_indexEntries;
+    NSMutableArray *_mutableColumnEntries;
+    NSArray *_columnEntries;
 }
 
--(instancetype)initWithIndexEntries:(NSArray *)objects columnDescription:(BCOColumnDescription *)columnDescription __attribute__((objc_designated_initializer));
+-(instancetype)initWithColumnEntries:(NSArray *)objects columnDescription:(BCOColumnDescription *)columnDescription __attribute__((objc_designated_initializer));
 
-@property(nonatomic, readonly) NSMutableSet *dirtyIndexEntries;
+@property(nonatomic, readonly) NSMutableSet *dirtyColumnEntries;
 
 @end
 
@@ -31,31 +31,31 @@
 #pragma mark - instance life cycle
 -(instancetype)init
 {
-    return [self initWithIndexEntries:nil columnDescription:nil];
+    return [self initWithColumnEntries:nil columnDescription:nil];
 }
 
 
 
 -(instancetype)initWithColumnDescription:(BCOColumnDescription *)columnDescription
 {
-    return [self initWithIndexEntries:[NSMutableArray new] columnDescription:columnDescription];
+    return [self initWithColumnEntries:[NSMutableArray new] columnDescription:columnDescription];
 }
 
 
 
--(instancetype)initWithIndexEntries:(NSArray *)indexEntries columnDescription:(BCOColumnDescription *)columnDescription
+-(instancetype)initWithColumnEntries:(NSArray *)columnEntries columnDescription:(BCOColumnDescription *)columnDescription
 {
-    //BCOIndex assumes ownership of indexEntries and will modify it
+    //BCOIndex assumes ownership of columnEntries and will modify it
     NSParameterAssert(columnDescription);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _indexEntries = indexEntries;
-    _mutableIndexEntries = nil; //We only create this if we need to and it's lazily created in the getter
+    _columnEntries = columnEntries;
+    _mutableColumnEntries = nil; //We only create this if we need to and it's lazily created in the getter
     _columnDescription = columnDescription;
 
-    _dirtyIndexEntries = [NSMutableSet new];
+    _dirtyColumnEntries = [NSMutableSet new];
 
 
     return self;
@@ -66,54 +66,64 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    if (![self isIndexEntriesDirty]) {
-        return [[BCOColumn alloc] initWithIndexEntries:self.indexEntries columnDescription:self.columnDescription];
+    if (![self isColumnEntriesDirty]) {
+        return [[BCOColumn alloc] initWithColumnEntries:self.columnEntries columnDescription:self.columnDescription];
     }
 
     //Deep copy and replace dirty entries with a copy
     NSMutableArray *copy = [NSMutableArray new];
-    NSSet *dirtyEntries = self.dirtyIndexEntries;
+    NSSet *dirtyEntries = self.dirtyColumnEntries;
 
-    for (BCOColumnEntry *entry in self.mutableIndexEntries) {
+    for (BCOColumnEntry *entry in self.mutableColumnEntries) {
         BOOL mustCopy = [dirtyEntries containsObject:entry];
         BCOColumnEntry *shareableEntry = (mustCopy) ? [entry copy] : entry;
         [copy addObject:shareableEntry];
     }
 
-    return [[BCOColumn alloc] initWithIndexEntries:copy columnDescription:self.columnDescription];
+    return [[BCOColumn alloc] initWithColumnEntries:copy columnDescription:self.columnDescription];
 }
 
 
 
 #pragma mark - properties
--(NSArray *)indexEntries
+-(NSArray *)columnEntries
 {
-    return ([self isIndexEntriesDirty]) ? _mutableIndexEntries : _indexEntries;
+    return ([self isColumnEntriesDirty]) ? _mutableColumnEntries : _columnEntries;
 }
 
 
 
--(NSMutableArray *)mutableIndexEntries
+-(NSMutableArray *)mutableColumnEntries
 {
-    if (_mutableIndexEntries == nil) {
-        _mutableIndexEntries = [_indexEntries mutableCopy];
-        _indexEntries = nil; //We should never touch this now so we get rid of it.
+    if (_mutableColumnEntries == nil) {
+        _mutableColumnEntries = [_columnEntries mutableCopy];
+        _columnEntries = nil; //We should never touch this now so we get rid of it.
     }
 
-    return _mutableIndexEntries;
+    return _mutableColumnEntries;
 }
 
 
 
--(BOOL)isIndexEntriesDirty
+-(BOOL)isColumnEntriesDirty
 {
-    return (_mutableIndexEntries != nil);
+    return (_mutableColumnEntries != nil);
+}
+
+
+
+-(NSComparator)entriesComparator
+{
+    NSComparator comparator = self.columnDescription.valueComparator;
+    return ^NSComparisonResult(BCOColumnEntry *entry1, BCOColumnEntry *entry2) {
+        return comparator(entry1.value, entry2.value);
+    };
 }
 
 
 
 #pragma mark - value generation
--(id<BCOColumnValue>)generateColumnValueForObject:(id)object
+-(id)generateColumnValueForObject:(id)object
 {
     return self.columnDescription.columnValueGenerator(object);
 }
@@ -123,9 +133,9 @@
 #pragma mark - Entry Access
 -(BCOColumnEntry *)entryForValue:(id)value index:(NSUInteger *)outIndex
 {
-    BCOMutableIndexEntry *referenceEntry = [[BCOMutableIndexEntry alloc] initWithValue:value objects:nil];
-    NSArray *entries = self.indexEntries;
-    NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.columnDescription.valueComparator];
+    BCOMutableColumnEntry *referenceEntry = [[BCOMutableColumnEntry alloc] initWithValue:value objects:nil];
+    NSArray *entries = self.columnEntries;
+    NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.entriesComparator];
 
     BCOColumnEntry *entry = (index == NSNotFound) ? nil : [entries objectAtIndex:index];
 
@@ -136,7 +146,7 @@
 
 
 #pragma mark - Entry Updating
--(BCOMutableIndexEntry *)mutableEntryForValue:(id)value index:(NSUInteger *)outIndex
+-(BCOMutableColumnEntry *)mutableEntryForValue:(id)value index:(NSUInteger *)outIndex
 {
     NSUInteger index = NSNotFound;
     id entry = [self entryForValue:value index:&index];
@@ -144,25 +154,25 @@
     BOOL isNewEntry = entry == nil;
     if (isNewEntry) {
         //It's a new entry so own it and insert it into the array
-        BCOMutableIndexEntry *newEntry = [[BCOMutableIndexEntry alloc] initWithValue:value objects:[NSSet new]];
+        BCOMutableColumnEntry *newEntry = [[BCOMutableColumnEntry alloc] initWithValue:value objects:[NSSet new]];
 
-        [self.dirtyIndexEntries addObject:newEntry];
+        [self.dirtyColumnEntries addObject:newEntry];
 
-        NSMutableArray *objects = self.mutableIndexEntries;
-        NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.columnDescription.valueComparator];
+        NSMutableArray *objects = self.mutableColumnEntries;
+        NSUInteger insertionIndex = [objects indexOfObject:newEntry inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
         [objects insertObject:newEntry atIndex:insertionIndex];
 
         if (outIndex != NULL) *outIndex = insertionIndex;
         return newEntry;
     }
 
-    BOOL isAlreadyDirty = (entry != nil) && [self.dirtyIndexEntries containsObject:entry];
+    BOOL isAlreadyDirty = (entry != nil) && [self.dirtyColumnEntries containsObject:entry];
     if (isAlreadyDirty) return entry;
 
     //We need to claim the entry
-    BCOMutableIndexEntry *claimedEntry = [entry mutableCopy];
-    [self.dirtyIndexEntries addObject:claimedEntry];
-    [self.mutableIndexEntries replaceObjectAtIndex:index withObject:claimedEntry];
+    BCOMutableColumnEntry *claimedEntry = [entry mutableCopy];
+    [self.dirtyColumnEntries addObject:claimedEntry];
+    [self.mutableColumnEntries replaceObjectAtIndex:index withObject:claimedEntry];
 
      return claimedEntry;
 }
@@ -171,7 +181,7 @@
 
 -(void)addRecord:(id)record forColumnValue:(id)value
 {
-    BCOMutableIndexEntry *entry = [self mutableEntryForValue:value index:NULL];
+    BCOMutableColumnEntry *entry = [self mutableEntryForValue:value index:NULL];
     [entry.objects addObject:record];
 }
 
@@ -180,11 +190,11 @@
 -(void)removeRecord:(id)record forColumnValue:(id)value
 {
     NSUInteger index = NSNotFound;
-    BCOMutableIndexEntry *entry = [self mutableEntryForValue:value index:&index];
+    BCOMutableColumnEntry *entry = [self mutableEntryForValue:value index:&index];
     [entry.objects removeObject:record];
 
     if (entry.objects.count == 0) {
-        [self.mutableIndexEntries removeObjectAtIndex:index];
+        [self.mutableColumnEntries removeObjectAtIndex:index];
     }
 }
 
@@ -216,9 +226,9 @@
 {
 #pragma message "TODO: This needs to handle values that are out side of array bounds"
     BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value objects:nil];
-    NSArray *entries = self.indexEntries;
+    NSArray *entries = self.columnEntries;
     //Index will 
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.columnDescription.valueComparator];
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
 
     NSMutableSet *matches = [NSMutableSet set];
     for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanValue; i++) {
@@ -235,9 +245,10 @@
 {
 #pragma message "TODO: This needs to handle values that are out side of array bounds"
     BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value objects:nil];
-    NSArray *entries = self.indexEntries;
+    NSArray *entries = self.columnEntries;
     //Index will
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.columnDescription.valueComparator];
+    NSComparator entriesComparator = self.entriesComparator;
+    NSUInteger indexOfFirstObjectEqualToOrGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:entriesComparator];
 
     NSMutableSet *matches = [NSMutableSet set];
     for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanValue; i++) {
@@ -246,7 +257,7 @@
     }
 
     BCOColumnEntry *possibleExactMatch = entries[indexOfFirstObjectEqualToOrGreaterThanValue];
-    if ([possibleExactMatch compare:referenceEntry] == NSOrderedSame) {
+    if (entriesComparator(possibleExactMatch, referenceEntry) == NSOrderedSame) {
         [matches unionSet:possibleExactMatch.objects];
     }
 
@@ -274,8 +285,10 @@
 -(NSSet *)recordsWithValueNotEqualTo:(id)value
 {
     NSMutableSet *matches = [NSMutableSet new];
-    for (BCOColumnEntry *entry in self.indexEntries) {
-        if ([entry.value compare:value]) continue;
+    NSComparator comparator = self.columnDescription.valueComparator;
+    for (BCOColumnEntry *entry in self.columnEntries) {
+
+        if (comparator(entry.value, value) == NSOrderedSame) continue;
 
         [matches unionSet:entry.objects];
     }

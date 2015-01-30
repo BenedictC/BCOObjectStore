@@ -8,8 +8,6 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol BCOColumnValue;
-
 
 
 @interface BCOIndexEntry : NSObject

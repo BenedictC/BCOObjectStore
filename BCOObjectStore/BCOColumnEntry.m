@@ -11,7 +11,7 @@
 
 
 @interface BCOColumnEntry ()
-@property(nonatomic) id<BCOColumnValue> value;
+@property(nonatomic) id value;
 @end
 
 
@@ -46,13 +46,6 @@
 
 
 
--(NSComparisonResult)compare:(BCOColumnEntry *)otherEntry
-{
-    return [self.value compare:otherEntry.value];
-}
-
-
-
 -(id)copyWithZone:(NSZone *)zone
 {
     return ([self.class isEqual:BCOColumnEntry.class]) ? self : [[BCOColumnEntry alloc] initWithValue:self.value objects:self.objects];
@@ -62,14 +55,14 @@
 
 -(id)mutableCopyWithZone:(NSZone *)zone
 {
-    return [[BCOMutableIndexEntry alloc] initWithValue:self.value objects:self.objects];
+    return [[BCOMutableColumnEntry alloc] initWithValue:self.value objects:self.objects];
 }
 
 @end
 
 
 
-@implementation BCOMutableIndexEntry
+@implementation BCOMutableColumnEntry
 
 -(instancetype)initWithValue:(id)value objects:(NSSet *)objects
 {

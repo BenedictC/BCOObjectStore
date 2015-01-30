@@ -8,6 +8,7 @@
 
 #import "BCOIndex.h"
 #import "BCOColumn.h"
+#import "BCOIndexEntry.h"
 
 
 

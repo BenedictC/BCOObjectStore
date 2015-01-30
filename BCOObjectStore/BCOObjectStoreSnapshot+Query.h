@@ -7,6 +7,7 @@
 //
 
 #import "BCOObjectStoreSnapshot.h"
+
 @class BCOObjectStorageContainer;
 @class BCOIndex;
 

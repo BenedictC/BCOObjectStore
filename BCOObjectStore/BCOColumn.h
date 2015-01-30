@@ -7,8 +7,8 @@
 //
 
 #import <Foundation/Foundation.h>
+
 @class BCOColumnDescription;
-@protocol BCOColumnValue;
 
 
 
@@ -19,10 +19,10 @@
 @property(nonatomic, readonly) BCOColumnDescription *columnDescription;
 
 //Entry Updating
--(id<BCOColumnValue>)generateColumnValueForObject:(id)object;
+-(id)generateColumnValueForObject:(id)object;
 
--(void)addRecord:(id)record forColumnValue:(id<BCOColumnValue>)value;
--(void)removeRecord:(id)record forColumnValue:(id<BCOColumnValue>)value;
+-(void)addRecord:(id)record forColumnValue:(id)value;
+-(void)removeRecord:(id)record forColumnValue:(id)value;
 
 //Object Access
 -(NSSet *)recordsForValue:(id)value;

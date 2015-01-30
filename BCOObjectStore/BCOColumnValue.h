@@ -11,26 +11,8 @@
 
 
 
-@protocol BCOColumnValue <NSObject>
--(NSComparisonResult)compare:(id)otherKey;
-@end
+typedef id(^BCOColumnValueGenerator)(id object);
 
-
-
-typedef id<BCOColumnValue>(^BCOColumnValueGenerator)(id object);
-
-
-@interface NSNumber (BCOColumnValue) <BCOColumnValue>
-@end
-
-@interface NSDate (BCOColumnValue) <BCOColumnValue>
-@end
-
-@interface NSString (BCOColumnValue) <BCOColumnValue>
-@end
-
-@interface NSIndexPath (BCOColumnValue) <BCOColumnValue>
-@end
 
 
 #endif
