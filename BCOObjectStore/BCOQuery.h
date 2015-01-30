@@ -8,6 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
+@class BCOWhereClauseExpression;
+
 
 
 typedef NS_ENUM(NSInteger, BCOQueryOperator) {
@@ -21,20 +23,33 @@ typedef NS_ENUM(NSInteger, BCOQueryOperator) {
     BCOQueryOperatorGreaterThanOrEqualTo,
     BCOQueryOperatorNotEqualTo,
     BCOQueryOperatorPredicate,
+
+    BCOQueryOperatorAND,
+    BCOQueryOperatorOR,
 };
-
-
-
-@interface BCOWhereClauseExpression : NSObject
-@property(nonatomic, readonly) BCOQueryOperator operator;
-@property(nonatomic, readonly) NSString *indexName; //TODO: Rename to leftOperand
-@property(nonatomic, readonly) id value; //TODO: Rename to rightOperand
-@end
 
 
 
 @interface BCOQuery : NSObject
 +(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable;
-@property(nonatomic, readonly) NSArray *whereClauseExpressions;
+
+//TODO: EG: 'SELECT * FROM masterTable', 'SELECT name FROM indexName'
+// The 'SELECT *' could translate to a KVC-inspired keypath. 'SELECT name, date' , 'SELECT @sum/avg/max/min(numberProperty)', @distinct(), @union() 
+//TODO: what's the difference between specifying a restriction in a FROM clause compared to in the WHERE clause?
+//@property(nonatomic, readonly) id *selectClause;
+
+@property(nonatomic, readonly) BCOWhereClauseExpression *rootWhereExpression;
+
 @property(nonatomic, readonly) NSArray *sortDescriptors;
 @end
+
+
+
+
+@interface BCOWhereClauseExpression : NSObject
+@property(nonatomic, readonly) BCOQueryOperator operator;
+@property(nonatomic, readonly) id leftOperand;
+@property(nonatomic, readonly) id rightOperand;
+@end
+
+

@@ -21,94 +21,91 @@
     //Create the query
     BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
 
-    //Filter
-    NSMutableSet *allMatchedRecords = nil;
-    for (BCOWhereClauseExpression *expression in query.whereClauseExpressions) {
+    //Get the matching records
+    NSSet *matchedRecords = [self evaluateWHEREClauseExpression:query.rootWhereExpression storage:storage index:index];
 
-        //Fetch the objects for the individual WHERE clause
-        NSSet *potentialRecords = allMatchedRecords ?: [NSSet setWithArray:storage.allStorageRecords];
-        NSSet *matchedRecords = [self evaluateWHEREClauseExpression:expression tokens:potentialRecords storage:storage index:index];
-
-        //Intersect with the existing objects
-        if (allMatchedRecords == nil) {
-            allMatchedRecords = [matchedRecords mutableCopy];
-        } else {
-            [allMatchedRecords intersectSet:matchedRecords];
-        }
-
-        //Because we only allow ANDing of WHERE clauses we can bail as soon as there are 0 matches.
-        if (allMatchedRecords.count == 0) {
-            return @[];
-        }
-    }
-
-    //Convert records to objects
+    //Convert the records to objects
     NSMutableArray *objects = [NSMutableArray new];
-    for (BCOStorageRecord *record in allMatchedRecords) {
+    for (BCOStorageRecord *record in matchedRecords) {
         id object = [storage objectForStorageRecord:record];
         [objects addObject:object];
     }
 
-    //Sort
+    //Sort the objects
     return [objects sortedArrayUsingDescriptors:query.sortDescriptors];
 }
 
 
 
 #pragma mark - Object fetching
--(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression tokens:(NSSet *)records storage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index
+-(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression storage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index
 {
     switch (expression.operator) {
 
+        case BCOQueryOperatorAND: {
+            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage index:index];
+            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage index:index];
+            NSMutableSet *intersectSet = [leftSet mutableCopy];
+            [intersectSet intersectSet:rightSet];
+            return intersectSet;
+        }
+
+        case BCOQueryOperatorOR: {
+            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage index:index];
+            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage index:index];
+            NSMutableSet *unionSet = [leftSet mutableCopy];
+            [unionSet unionSet:rightSet];
+            return unionSet;
+        }
+
         case BCOQueryOperatorEqualTo: {
-            return [index recordsInColumn:expression.indexName forValue:expression.value];
+            return [index recordsInColumn:expression.leftOperand forValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorIn: {
-            return [index recordsInColumn:expression.indexName forValuesInSet:expression.value];
+            return [index recordsInColumn:expression.leftOperand forValuesInSet:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThan: {
-            return [index recordsInColumn:expression.indexName lessThanValue:expression.value];
+            return [index recordsInColumn:expression.leftOperand lessThanValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThanOrEqualTo: {
-            return [index recordsInColumn:expression.indexName lessThanOrEqualToValue:expression.value];
+            return [index recordsInColumn:expression.leftOperand lessThanOrEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorGreaterThan: {
-            return [index recordsInColumn:expression.indexName greaterThanValue:expression.value];
+            return [index recordsInColumn:expression.leftOperand greaterThanValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorGreaterThanOrEqualTo: {
-            return [index recordsInColumn:expression.indexName greaterThanOrEqualToValue:expression.value];
+            return [index recordsInColumn:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorNotEqualTo: {
-            return [index recordsInColumn:expression.indexName forKeysNotEqualToValue:expression.value];
+            return [index recordsInColumn:expression.leftOperand forKeysNotEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorPredicate:
         {
-            NSPredicate *predicate = expression.value;
-            NSMutableSet *filteredObjects = [NSMutableSet new];
-            for (BCOStorageRecord *record in records) {
+            NSPredicate *predicate = expression.leftOperand;
+            NSMutableSet *filteredRecords = [NSMutableSet new];
+            for (id record in storage.allStorageRecords) {
                 id object = [storage objectForStorageRecord:record];
                 BOOL didMatch = [predicate evaluateWithObject:object];
-                if (didMatch) [filteredObjects addObject:record];
+                if (didMatch) [filteredRecords addObject:record];
             }
-            return filteredObjects;
+            return filteredRecords;
         }
 
         case BCOQueryOperatorInvalid: {
-            [NSException raise:NSInvalidArgumentException format:@"Invalid operator for index."];
+            //This should never happen. If it does it indicates a bug in the parsing.
+            [NSException raise:NSInvalidArgumentException format:@"Invalid operator."];
             break;
         }
     }
 
     return nil;
 }
-
-
 
 @end

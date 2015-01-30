@@ -12,14 +12,14 @@
 
 @implementation BCOWhereClauseExpression
 
--(instancetype)initWithOperator:(BCOQueryOperator)operator indexName:(NSString *)indexName value:(id)value
+-(instancetype)initWithOperator:(BCOQueryOperator)operator leftOperand:(id)leftOperand rightOperand:(id)rightOperand
 {
     self = [super init];
     if (self == nil) return nil;
 
     _operator = operator;
-    _indexName = indexName;
-    _value = value;
+    _leftOperand = leftOperand;
+    _rightOperand = rightOperand;
 
     return self;
 }
@@ -30,12 +30,12 @@
 
 @implementation BCOQuery
 
--(instancetype)initWithWhereClauses:(NSArray *)whereClauses sortDescriptors:(NSArray *)sortDescriptors
+-(instancetype)initWithRootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression sortDescriptors:(NSArray *)sortDescriptors
 {
     self = [super init];
     if (self == nil) return nil;
 
-    _whereClauseExpressions = whereClauses;
+    _rootWhereExpression = rootWhereExpression;
     _sortDescriptors = sortDescriptors;
 
     return self;
@@ -48,82 +48,8 @@
 {
     NSScanner *scanner = [NSScanner scannerWithString:queryString];
 
-    //A query must start with 'WHERE'
-    BOOL didScanWHEREDelimitter = [scanner scanString:@"WHERE" intoString:NULL];
-    if (!didScanWHEREDelimitter) {
-        [NSException raise:NSInvalidArgumentException format:@"Invalid query. Queries must start with 'WHERE'"];
-        return nil;
-    }
-
-    //Scan and fetch objcts
-    NSMutableArray *whereClauses = [NSMutableArray new];
-    do {
-        NSPredicate *predicate = [self scanPredicateWithScanner:scanner substitutionVariables:subsitutionVariable];
-        if (predicate != nil) {
-            BCOWhereClauseExpression *whereClause = [[BCOWhereClauseExpression alloc] initWithOperator:BCOQueryOperatorPredicate indexName:nil value:predicate];
-            [whereClauses addObject:whereClause];
-            continue;
-        }
-
-        NSString *indexName = [self scanIdentifierWithScanner:scanner];
-        if (indexName == nil) {
-            [NSException raise:NSInvalidArgumentException format:@"Expected index name."];
-            return nil;
-        }
-
-        BCOQueryOperator operator = [self scanOperatorWithScanner:scanner];
-        if (operator == BCOQueryOperatorInvalid) {
-            [NSException raise:NSInvalidArgumentException format:@"Expected operator."];
-            return nil;
-        }
-
-        id value = [self scanValueWithScanner:scanner substitutionVariables:subsitutionVariable];
-        if (value == nil) {
-            [NSException raise:NSInvalidArgumentException format:@"Expected value."];
-            return nil;
-        }
-
-        BCOWhereClauseExpression *whereClause = [[BCOWhereClauseExpression alloc] initWithOperator:operator indexName:indexName value:value];
-        [whereClauses addObject:whereClause];
-
-    } while ([scanner scanString:@"AND" intoString:NULL]); //"Let's go round again"
-
-
-    //Scan optional 'ORDERED BY'
-    NSMutableArray *sortDescriptors = [NSMutableArray new];
-    BOOL didScanORDEREDBYDelimitter = [scanner scanString:@"ORDERED BY" intoString:NULL];
-    if (didScanORDEREDBYDelimitter) {
-        do {
-            //Attempt to scan a sort descriptor variable
-            id sortDescriptor = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
-            if ([sortDescriptor isKindOfClass:NSSortDescriptor.class]) {
-                [sortDescriptors addObject:sortDescriptor];
-                continue;
-            } else  if (sortDescriptor != nil) {
-                //sortDescriptor is not of the expected class
-                [NSException raise:NSInvalidArgumentException format:@"Expected NSSortDescriptor for varible."];
-                return nil;
-            }
-
-            //else scan a property name...
-            NSString *key = [self scanIdentifierWithScanner:scanner];
-            if (key == nil) {
-                [NSException raise:NSInvalidArgumentException format:@"Expected sort key."];
-                return nil;
-            }
-            //...followed by an optional sort direction
-            BOOL ascending = YES;
-            if ([scanner scanString:@"DESC" intoString:NULL]) {
-                ascending = NO;
-            } else {
-                //Consume a  trailing ASC. We don't need to set it because the default is YES
-                [scanner scanString:@"ASC" intoString:NULL];
-            }
-            //...and create a sort descriptor
-            [sortDescriptors addObject:[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
-
-        } while ([scanner scanString:@"," intoString:NULL]);
-    }
+    BCOWhereClauseExpression *where = [self scanWhereClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
+    NSArray *sortDescriptors = [self scanOrderByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
 
     //Check that there's no junk at the end of the query
     [scanner scanCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:NULL];
@@ -132,7 +58,139 @@
         return nil;
     }
 
-    return [[BCOQuery alloc] initWithWhereClauses:whereClauses sortDescriptors:sortDescriptors];
+    return [[BCOQuery alloc] initWithRootWhereClauseExpression:where sortDescriptors:sortDescriptors];
+}
+
+
+
++(BCOWhereClauseExpression *)scanWhereClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    //A query must start with 'WHERE'
+    BOOL didScanWHEREDelimitter = [scanner scanString:@"WHERE" intoString:NULL];
+    if (!didScanWHEREDelimitter) {
+        [NSException raise:NSInvalidArgumentException format:@"Invalid query. Queries must start with 'WHERE'"];
+        return nil;
+    }
+
+    return [self scanWhereExpressionWithScanner:scanner substitutionVariables:subsitutionVariable];
+}
+
+
+
++(BCOWhereClauseExpression *)scanWhereExpressionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+//    NSLog(@"%@", [scanner.string substringToIndex:scanner.scanLocation]);
+
+    BCOWhereClauseExpression *firstClause = nil;
+
+    //isBracedExpression
+    BOOL isBracedExpression = [scanner scanString:@"(" intoString:NULL];
+    if (isBracedExpression) {
+
+        id leftOperand = [self scanWhereExpressionWithScanner:scanner substitutionVariables:subsitutionVariable];
+        //If there's a closing brace after the first operand then we've reached the end of the expression.
+        BOOL isOrnamentalBracing = [scanner scanString:@")" intoString:NULL];
+
+        firstClause = (isOrnamentalBracing) ? leftOperand : ({
+
+            BCOQueryOperator operator = [self scanConjunctiveOperatorWithScanner:scanner];
+            if (operator == BCOQueryOperatorInvalid) {
+                [NSException raise:NSInvalidArgumentException format:@"Expected conjunctive ('AND' or 'OR')"];
+                return nil;
+            }
+
+            id rightOperand = [self scanWhereExpressionWithScanner:scanner substitutionVariables:subsitutionVariable];
+
+            BOOL didScanClosingBrace = [scanner scanString:@")" intoString:NULL];
+            if (!didScanClosingBrace) {
+                [NSException raise:NSInvalidArgumentException format:@"Expected closing brace (')')"];
+                return nil;
+            }
+
+            [[BCOWhereClauseExpression alloc] initWithOperator:operator leftOperand:leftOperand rightOperand:rightOperand];
+        });
+    } else {
+        //isPredicateExpression
+        NSPredicate *predicate = [self scanPredicateWithScanner:scanner substitutionVariables:subsitutionVariable];
+        BOOL isPredicateExpression = predicate != nil;
+        if (isPredicateExpression) {
+            firstClause = [[BCOWhereClauseExpression alloc] initWithOperator:BCOQueryOperatorPredicate leftOperand:predicate rightOperand:nil];
+        } else {
+            //isColumnExpression
+            id leftOperand = [self scanIdentifierWithScanner:scanner];
+            if (leftOperand == nil) {
+                [NSException raise:NSInvalidArgumentException format:@"Expected index name."];
+                return nil;
+            }
+            BCOQueryOperator operator = [self scanSetOperatorWithScanner:scanner];
+            if (operator == BCOQueryOperatorInvalid) {
+                [NSException raise:NSInvalidArgumentException format:@"Expected operator."];
+                return nil;
+            }
+
+            id rightOperand = [self scanValueWithScanner:scanner substitutionVariables:subsitutionVariable];
+            if (rightOperand == nil) {
+                [NSException raise:NSInvalidArgumentException format:@"Expected value."];
+                return nil;
+            }
+
+            firstClause = [[BCOWhereClauseExpression alloc] initWithOperator:operator leftOperand:leftOperand rightOperand:rightOperand];
+        }
+    }
+
+    BCOQueryOperator possibleOperator = [self scanConjunctiveOperatorWithScanner:scanner];
+    BOOL didEndClause = (possibleOperator == BCOQueryOperatorInvalid);
+    if (didEndClause) {
+        return firstClause;
+    }
+
+    id leftOperand = firstClause;
+    BCOQueryOperator operator = possibleOperator;
+    id rightOperand = [self scanWhereExpressionWithScanner:scanner substitutionVariables:subsitutionVariable];
+
+    return [[BCOWhereClauseExpression alloc] initWithOperator:operator leftOperand:leftOperand rightOperand:rightOperand];
+}
+
+
+
++(NSArray *)scanOrderByClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanORDEREDBYDelimitter = [scanner scanString:@"ORDERED BY" intoString:NULL];
+    if (!didScanORDEREDBYDelimitter) return @[];
+
+    NSMutableArray *sortDescriptors = [NSMutableArray new];
+    do {
+        //Attempt to scan a sort descriptor variable
+        id sortDescriptor = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+        if ([sortDescriptor isKindOfClass:NSSortDescriptor.class]) {
+            [sortDescriptors addObject:sortDescriptor];
+            continue;
+        } else if (sortDescriptor != nil) {
+            //sortDescriptor is not of the expected class
+            [NSException raise:NSInvalidArgumentException format:@"Expected NSSortDescriptor for varible."];
+            return nil;
+        }
+
+        //else scan a property name...
+        NSString *key = [self scanIdentifierWithScanner:scanner];
+        if (key == nil) {
+            [NSException raise:NSInvalidArgumentException format:@"Expected sort key."];
+            return nil;
+        }
+        //...followed by an optional sort direction
+        BOOL ascending = YES;
+        if ([scanner scanString:@"DESC" intoString:NULL]) {
+            ascending = NO;
+        } else {
+            //Consume a trailing ASC. We don't need to set it because the default is YES
+            [scanner scanString:@"ASC" intoString:NULL];
+        }
+        //...and create a sort descriptor
+        [sortDescriptors addObject:[NSSortDescriptor sortDescriptorWithKey:key ascending:ascending]];
+
+    } while ([scanner scanString:@"," intoString:NULL]);
+
+    return sortDescriptors;
 }
 
 
@@ -268,21 +326,33 @@
 
 
 
-+(BCOQueryOperator)scanOperatorWithScanner:(NSScanner *)scanner
++(BCOQueryOperator)scanConjunctiveOperatorWithScanner:(NSScanner *)scanner
 {
-    if ([scanner scanString:@"=" intoString:NULL])  return BCOQueryOperatorEqualTo;
-    if ([scanner scanString:@"!=" intoString:NULL]) return BCOQueryOperatorNotEqualTo;
+    //Note the trailing space to avoid ambiguous parsing
+    if ([scanner scanString:@"AND " intoString:NULL] || [scanner scanString:@"and " intoString:NULL])  return BCOQueryOperatorAND;
+    if ([scanner scanString:@"OR "  intoString:NULL] || [scanner scanString:@"or "  intoString:NULL])  return BCOQueryOperatorOR;
 
-    if ([scanner scanString:@"IN" intoString:NULL]) return BCOQueryOperatorIn;
-    if ([scanner scanString:@"in" intoString:NULL]) return BCOQueryOperatorIn;
+    return BCOQueryOperatorInvalid;
+}
 
-    //Note that the orde of these scans is significant
-    if ([scanner scanString:@"<=" intoString:NULL]) return BCOQueryOperatorLessThanOrEqualTo;
-    if ([scanner scanString:@"<" intoString:NULL])  return BCOQueryOperatorLessThan;
 
-    //Note that the orde of these scans is significant
-    if ([scanner scanString:@">=" intoString:NULL]) return BCOQueryOperatorGreaterThanOrEqualTo;
-    if ([scanner scanString:@">" intoString:NULL])  return BCOQueryOperatorGreaterThan;
+
++(BCOQueryOperator)scanSetOperatorWithScanner:(NSScanner *)scanner
+{
+    //Note the trailing space to avoid ambiguous parsing
+    if ([scanner scanString:@"= " intoString:NULL])  return BCOQueryOperatorEqualTo;
+    if ([scanner scanString:@"!= " intoString:NULL]) return BCOQueryOperatorNotEqualTo;
+
+    if ([scanner scanString:@"IN " intoString:NULL]) return BCOQueryOperatorIn;
+    if ([scanner scanString:@"in " intoString:NULL]) return BCOQueryOperatorIn;
+
+    //Note that the order of these scans is significant
+    if ([scanner scanString:@"<= " intoString:NULL]) return BCOQueryOperatorLessThanOrEqualTo;
+    if ([scanner scanString:@"< " intoString:NULL])  return BCOQueryOperatorLessThan;
+
+    //Note that the order of these scans is significant
+    if ([scanner scanString:@">= " intoString:NULL]) return BCOQueryOperatorGreaterThanOrEqualTo;
+    if ([scanner scanString:@"> " intoString:NULL])  return BCOQueryOperatorGreaterThan;
     
     return BCOQueryOperatorInvalid;
 }
