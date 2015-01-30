@@ -47,11 +47,9 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    if (![self isIndexEntriesByStorageRecordsDirty]) {
-        return [[BCOStorageRecordsToIndexEntriesLookUpTable alloc] initWithIndexEntriesByStorageRecords:self.indexEntriesByStorageRecords];
-    }
+    NSDictionary *entries = ([self isIndexEntriesByStorageRecordsDirty]) ? [self.indexEntriesByStorageRecords copy] : self.indexEntriesByStorageRecords;
 
-    return  [[BCOStorageRecordsToIndexEntriesLookUpTable alloc] initWithIndexEntriesByStorageRecords:[self.indexEntriesByStorageRecords copy]];
+    return  [[BCOStorageRecordsToIndexEntriesLookUpTable alloc] initWithIndexEntriesByStorageRecords:entries];
 }
 
 
