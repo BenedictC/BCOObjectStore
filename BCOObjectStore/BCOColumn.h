@@ -25,12 +25,15 @@
 -(void)removeRecord:(id)record forColumnValue:(id)value;
 
 //Object Access
--(NSSet *)recordsForValue:(id)value;
--(NSSet *)recordsForValuesInSet:(NSSet *)values;
 -(NSSet *)recordsWithValueLessThan:(id)value;
 -(NSSet *)recordsWithValueLessThanOrEqualTo:(id)value;
 -(NSSet *)recordsWithValueGreaterThan:(id)value;
 -(NSSet *)recordsWithValueGreaterThanOrEqualTo:(id)value;
+
+-(NSSet *)recordsForValue:(id)value;
 -(NSSet *)recordsWithValueNotEqualTo:(id)value;
+
+-(NSSet *)recordsForValuesInSet:(NSSet *)values;
+-(NSSet *)recordsForValuesNotInSet:(NSSet *)values;
 
 @end

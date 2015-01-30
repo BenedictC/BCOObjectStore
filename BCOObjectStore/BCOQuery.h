@@ -16,12 +16,16 @@ typedef NS_ENUM(NSInteger, BCOQueryOperator) {
     BCOQueryOperatorInvalid = -1,
 
     BCOQueryOperatorEqualTo,
+    BCOQueryOperatorNotEqualTo,
+
     BCOQueryOperatorIn,
+    BCOQueryOperatorNotIn,
+
     BCOQueryOperatorLessThan,
     BCOQueryOperatorLessThanOrEqualTo,
     BCOQueryOperatorGreaterThan,
     BCOQueryOperatorGreaterThanOrEqualTo,
-    BCOQueryOperatorNotEqualTo,
+
     BCOQueryOperatorPredicate,
 
     BCOQueryOperatorAND,

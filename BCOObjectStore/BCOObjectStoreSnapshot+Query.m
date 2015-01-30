@@ -62,8 +62,16 @@
             return [index recordsInColumn:expression.leftOperand forValue:expression.rightOperand];
         }
 
+        case BCOQueryOperatorNotEqualTo: {
+            return [index recordsInColumn:expression.leftOperand forValuesNotEqualToValue:expression.rightOperand];
+        }
+
         case BCOQueryOperatorIn: {
             return [index recordsInColumn:expression.leftOperand forValuesInSet:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorNotIn: {
+            return [index recordsInColumn:expression.leftOperand forValuesNotInSet:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThan: {
@@ -82,12 +90,7 @@
             return [index recordsInColumn:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
         }
 
-        case BCOQueryOperatorNotEqualTo: {
-            return [index recordsInColumn:expression.leftOperand forKeysNotEqualToValue:expression.rightOperand];
-        }
-
-        case BCOQueryOperatorPredicate:
-        {
+        case BCOQueryOperatorPredicate: {
             NSPredicate *predicate = expression.leftOperand;
             NSMutableSet *filteredRecords = [NSMutableSet new];
             for (id record in storage.allStorageRecords) {

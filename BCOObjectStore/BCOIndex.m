@@ -122,10 +122,26 @@
 
 
 
+-(NSSet *)recordsInColumn:(NSString *)columnName forValuesNotEqualToValue:(id)value
+{
+    BCOColumn *column = self.columnsByName[columnName];
+    return [column recordsWithValueNotEqualTo:value];
+}
+
+
+
 -(NSSet *)recordsInColumn:(NSString *)columnName forValuesInSet:(NSSet *)value
 {
     BCOColumn *column = self.columnsByName[columnName];
     return [column recordsForValuesInSet:value];
+}
+
+
+
+-(NSSet *)recordsInColumn:(NSString *)columnName forValuesNotInSet:(NSSet *)value
+{
+    BCOColumn *column = self.columnsByName[columnName];
+    return [column recordsForValuesNotInSet:value];
 }
 
 
@@ -158,14 +174,6 @@
 {
     BCOColumn *column = self.columnsByName[columnName];
     return [column recordsWithValueGreaterThanOrEqualTo:value];
-}
-
-
-
--(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToValue:(id)value
-{
-    BCOColumn *column = self.columnsByName[columnName];
-    return [column recordsWithValueNotEqualTo:value];
 }
 
 @end

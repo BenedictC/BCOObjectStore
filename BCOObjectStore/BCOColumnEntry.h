@@ -12,9 +12,9 @@
 
 @interface BCOColumnEntry : NSObject <NSCopying, NSMutableCopying>
 
--(instancetype)initWithValue:(id)value objects:(NSSet *)objects;
+-(instancetype)initWithValue:(id)value records:(NSSet *)records;
 @property(nonatomic, readonly) id value;
-@property(nonatomic, readonly) NSSet *objects;
+@property(nonatomic, readonly) NSSet *records;
 
 @end
 
@@ -22,5 +22,6 @@
 
 @interface BCOMutableColumnEntry : BCOColumnEntry
 @property(nonatomic) id value;
-@property(nonatomic, readonly) NSMutableSet *objects;
+-(void)addRecord:(id)record;
+-(void)removeRecord:(id)record;
 @end

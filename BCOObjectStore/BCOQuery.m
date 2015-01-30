@@ -346,6 +346,9 @@
     if ([scanner scanString:@"IN " intoString:NULL]) return BCOQueryOperatorIn;
     if ([scanner scanString:@"in " intoString:NULL]) return BCOQueryOperatorIn;
 
+    if ([scanner scanString:@"NOT IN " intoString:NULL]) return BCOQueryOperatorNotIn;
+    if ([scanner scanString:@"not in " intoString:NULL]) return BCOQueryOperatorNotIn;
+
     //Note that the order of these scans is significant
     if ([scanner scanString:@"<= " intoString:NULL]) return BCOQueryOperatorLessThanOrEqualTo;
     if ([scanner scanString:@"< " intoString:NULL])  return BCOQueryOperatorLessThan;

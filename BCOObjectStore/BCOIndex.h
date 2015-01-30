@@ -22,11 +22,15 @@
 -(void)removeEntry:(BCOIndexEntry *)indexEntry;
 
 -(NSSet *)recordsInColumn:(NSString *)columnName forValue:(id)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forValuesNotEqualToValue:(id)value;
+
 -(NSSet *)recordsInColumn:(NSString *)columnName forValuesInSet:(NSSet *)value;
+-(NSSet *)recordsInColumn:(NSString *)columnName forValuesNotInSet:(NSSet *)value;
+
 -(NSSet *)recordsInColumn:(NSString *)columnName lessThanValue:(id)value;
 -(NSSet *)recordsInColumn:(NSString *)columnName lessThanOrEqualToValue:(id)value;
 -(NSSet *)recordsInColumn:(NSString *)columnName greaterThanValue:(id)value;
 -(NSSet *)recordsInColumn:(NSString *)columnName greaterThanOrEqualToValue:(id)value;
--(NSSet *)recordsInColumn:(NSString *)columnName forKeysNotEqualToValue:(id)value;
+
 
 @end

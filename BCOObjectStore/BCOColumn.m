@@ -133,7 +133,7 @@
 #pragma mark - Entry Access
 -(BCOColumnEntry *)entryForValue:(id)value index:(NSUInteger *)outIndex
 {
-    BCOMutableColumnEntry *referenceEntry = [[BCOMutableColumnEntry alloc] initWithValue:value objects:nil];
+    BCOMutableColumnEntry *referenceEntry = [[BCOMutableColumnEntry alloc] initWithValue:value records:nil];
     NSArray *entries = self.columnEntries;
     NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.entriesComparator];
 
@@ -154,7 +154,7 @@
     BOOL isNewEntry = entry == nil;
     if (isNewEntry) {
         //It's a new entry so own it and insert it into the array
-        BCOMutableColumnEntry *newEntry = [[BCOMutableColumnEntry alloc] initWithValue:value objects:[NSSet new]];
+        BCOMutableColumnEntry *newEntry = [[BCOMutableColumnEntry alloc] initWithValue:value records:[NSSet new]];
 
         [self.dirtyColumnEntries addObject:newEntry];
 
@@ -182,7 +182,7 @@
 -(void)addRecord:(id)record forColumnValue:(id)value
 {
     BCOMutableColumnEntry *entry = [self mutableEntryForValue:value index:NULL];
-    [entry.objects addObject:record];
+    [entry addRecord:record];
 }
 
 
@@ -191,109 +191,138 @@
 {
     NSUInteger index = NSNotFound;
     BCOMutableColumnEntry *entry = [self mutableEntryForValue:value index:&index];
-    [entry.objects removeObject:record];
+    [entry removeRecord:record];
 
-    if (entry.objects.count == 0) {
+    if (entry.records.count == 0) {
         [self.mutableColumnEntries removeObjectAtIndex:index];
     }
 }
 
 
 
-#pragma mark - Object Access
--(NSSet *)recordsForValue:(id)value
+#pragma mark - Collating Records from Entries
+-(NSSet *)recordsFromEntriesInRange:(NSRange)range
 {
-    BCOColumnEntry *entry = [self entryForValue:value index:NULL];
-    return [entry.objects copy];
-}
+    const NSInteger first = range.location;
+    const NSInteger last = first + range.length;
+    NSArray *entries = self.columnEntries;
 
-
-
--(NSSet *)recordsForValuesInSet:(NSSet *)values
-{
-    NSMutableSet *objects = [NSMutableSet new];
-    for (id value in values) {
-        BCOColumnEntry *entry = [self entryForValue:value index:NULL];
-        [objects unionSet:entry.objects];
+    NSMutableSet *matchingRecords = [NSMutableSet new];
+    for (int i = first; i < last; i++) {
+        BCOColumnEntry *entry = entries[i];
+        [matchingRecords unionSet:entry.records];
     }
 
-    return objects;
+    return matchingRecords;
 }
 
 
 
+#pragma mark - Record Access
 -(NSSet *)recordsWithValueLessThan:(id)value
 {
-#pragma message "TODO: This needs to handle values that are out side of array bounds"
-    BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value objects:nil];
+    BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value records:nil];
     NSArray *entries = self.columnEntries;
-    //Index will 
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
+    NSUInteger indexOfFirstObjectEqualToGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
+    NSRange range = NSMakeRange(0, indexOfFirstObjectEqualToGreaterThanValue);
 
-    NSMutableSet *matches = [NSMutableSet set];
-    for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanValue; i++) {
-        BCOColumnEntry *entry = [entries objectAtIndex:i];
-        [matches unionSet:entry.objects];
-    }
-
-    return matches;
+    return [self recordsFromEntriesInRange:range];
 }
 
 
 
 -(NSSet *)recordsWithValueLessThanOrEqualTo:(id)value
 {
-#pragma message "TODO: This needs to handle values that are out side of array bounds"
-    BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value objects:nil];
+    BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value records:nil];
     NSArray *entries = self.columnEntries;
-    //Index will
-    NSComparator entriesComparator = self.entriesComparator;
-    NSUInteger indexOfFirstObjectEqualToOrGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:entriesComparator];
+    NSUInteger indexOfFirstObjectGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingLastEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
+    NSRange range = NSMakeRange(0, indexOfFirstObjectGreaterThanValue);
 
-    NSMutableSet *matches = [NSMutableSet set];
-    for (NSUInteger i = 0; i < indexOfFirstObjectEqualToOrGreaterThanValue; i++) {
-        BCOColumnEntry *entry = [entries objectAtIndex:i];
-        [matches unionSet:entry.objects];
-    }
-
-    BCOColumnEntry *possibleExactMatch = entries[indexOfFirstObjectEqualToOrGreaterThanValue];
-    if (entriesComparator(possibleExactMatch, referenceEntry) == NSOrderedSame) {
-        [matches unionSet:possibleExactMatch.objects];
-    }
-
-    return matches;
+    return [self recordsFromEntriesInRange:range];
 }
 
 
 
 -(NSSet *)recordsWithValueGreaterThan:(id)value
 {
-    //TODO:
-    return [NSSet set];
+    BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value records:nil];
+    NSArray *entries = self.columnEntries;
+    NSUInteger indexOfFirstObjectGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingLastEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
+    NSRange range = NSMakeRange(indexOfFirstObjectGreaterThanValue, entries.count - indexOfFirstObjectGreaterThanValue);
+
+    return [self recordsFromEntriesInRange:range];
 }
 
 
 
 -(NSSet *)recordsWithValueGreaterThanOrEqualTo:(id)value
 {
-    //TODO:
-    return [NSSet set];
+    BCOColumnEntry *referenceEntry = [[BCOColumnEntry alloc] initWithValue:value records:nil];
+    NSArray *entries = self.columnEntries;
+    NSUInteger indexOfFirstObjectGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
+
+    NSRange range = NSMakeRange(indexOfFirstObjectGreaterThanValue, entries.count - indexOfFirstObjectGreaterThanValue);
+
+    return [self recordsFromEntriesInRange:range];
+}
+
+
+
+-(NSSet *)recordsForValue:(id)value
+{
+    BCOColumnEntry *entry = [self entryForValue:value index:NULL];
+    return entry.records;
 }
 
 
 
 -(NSSet *)recordsWithValueNotEqualTo:(id)value
 {
-    NSMutableSet *matches = [NSMutableSet new];
     NSComparator comparator = self.columnDescription.valueComparator;
+
+    NSMutableSet *records = [NSMutableSet new];
     for (BCOColumnEntry *entry in self.columnEntries) {
-
-        if (comparator(entry.value, value) == NSOrderedSame) continue;
-
-        [matches unionSet:entry.objects];
+        if (comparator(entry.value, value) != NSOrderedSame) {
+            [records unionSet:entry.records];
+        }
     }
 
-    return matches;
+    return records;
+}
+
+
+
+-(NSSet *)recordsForValuesInSet:(NSSet *)values
+{
+    NSMutableSet *records = [NSMutableSet new];
+    for (id value in values) {
+        BCOColumnEntry *entry = [self entryForValue:value index:NULL];
+        [records unionSet:entry.records];
+    }
+
+    return records;
+}
+
+
+
+-(NSSet *)recordsForValuesNotInSet:(NSSet *)values
+{
+    NSMutableSet *shunnedEntries = [NSMutableSet new];
+    for (id value in values) {
+        BCOColumnEntry *shunnedEntry = [[BCOColumnEntry alloc] initWithValue:value records:nil];
+        [shunnedEntries addObject:shunnedEntry];
+    }
+
+    NSMutableSet *records = [NSMutableSet new];
+    for (BCOColumnEntry *entry in self.columnEntries) {
+        BOOL shouldIgnoreRecords = [shunnedEntries containsObject:entry];
+
+        if (shouldIgnoreRecords) continue;
+
+        [records unionSet:entry.records];
+    }
+
+    return records;
 }
 
 @end
