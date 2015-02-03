@@ -17,14 +17,16 @@
 @property(nonatomic, readonly) NSArray *sortDescriptors;
 @property(nonatomic, readonly) NSArray *(^selectBlock)(NSArray *);
 
-//bucket name
+//Group properties
+//@property(nonatomic, readonly) id objects;
 @property(nonatomic, readonly) id groupIdentifier;
 
 //Storage
 @property(nonatomic, readonly) NSMutableDictionary *mutableGroups;
 @property(nonatomic, readonly) NSMutableArray *mutableObjects;
 
-//caches
+//Caches
+@property(nonatomic, readonly) id cachedObjectForGroupComparsion;
 @property(nonatomic, readonly) NSArray *cachedObjects;
 
 @end
@@ -91,8 +93,8 @@
     for (BCOQueryResultGroup *group in self.mutableGroups.objectEnumerator) {
         NSUInteger insertionIdx = [orderedGroups indexOfObject:group inSortedRange:NSMakeRange(0, orderedGroups.count) options:NSBinarySearchingInsertionIndex usingComparator:^NSComparisonResult(BCOQueryResultGroup *group1, BCOQueryResultGroup *group2) {
             //TODO: What if the the sort descriptors are DESC? Should we pick lastObject?
-            id obj1 = [group1.objects firstObject];
-            id obj2 = [group2.objects firstObject];
+            id obj1 = [group1 objectForGroupComparsion];
+            id obj2 = [group2 objectForGroupComparsion];
             //Try each sort descriptor
             for (NSSortDescriptor *sortDescriptor in sortDescriptors) {
                 NSComparisonResult result = [sortDescriptor compareObject:obj1 toObject:obj2];
@@ -113,10 +115,22 @@
 -(NSArray *)orderedObjects
 {
     //Map the objects if necessary
-    NSArray *objects = self.objects;
+    NSArray *objects = self.mutableObjects;
     NSArray *(^selectBlock)(NSArray *) = self.selectBlock;
 
     return (selectBlock == NULL) ? objects : selectBlock(objects);
+}
+
+
+
+-(id)objectForGroupComparsion
+{
+    if (_cachedObjectForGroupComparsion != nil) {
+        return _cachedObjectForGroupComparsion;
+    }
+
+    NSAssert(NO, @"This should not happen!");
+    return [self.mutableObjects firstObject];
 }
 
 
@@ -198,7 +212,7 @@
     for (BCOQueryResultGroup *group in self.mutableGroups.objectEnumerator) {
         [group cacheResultsAndDiscardStorage];
     }
-
+    _cachedObjectForGroupComparsion = [self.mutableObjects firstObject];
     _cachedObjects = [self objects];
 
     //...AndDiscardStorage

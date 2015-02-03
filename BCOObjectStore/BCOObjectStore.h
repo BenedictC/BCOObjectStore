@@ -10,6 +10,7 @@
 
 #import "BCOObjectStoreConfiguration.h"
 #import "BCOObjectStoreSnapshotProtocol.h"
+#import "BCOQueryResultGroupProtocol.h"
 
 
 

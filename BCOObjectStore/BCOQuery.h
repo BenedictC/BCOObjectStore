@@ -38,8 +38,7 @@ typedef NS_ENUM(NSInteger, BCOQueryOperator) {
 +(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable;
 
 
-// TODO: Allow agregation/mapping functions for select field
-@property(nonatomic, readonly) NSString *selectField;
+@property(nonatomic, readonly) NSArray *(^selectMapper)(NSArray *);
 @property(nonatomic, readonly) BCOWhereClauseExpression *rootWhereExpression;
 @property(nonatomic, readonly) NSString *groupBy;
 @property(nonatomic, readonly) NSArray *sortDescriptors;

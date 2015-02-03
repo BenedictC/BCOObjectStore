@@ -32,20 +32,8 @@
         [objects addObject:object];
     }
 
-    //Create the SELECT block
-    NSString *key = query.selectField;
-    NSArray *(^selectBlock)(NSArray *) = (key == nil) ? NULL : ^(NSArray *objects){
-        NSMutableArray *results = [NSMutableArray new];
-        for (id object in objects) {
-            id result = [object valueForKey:key];
-            NSParameterAssert(result);
-            [results addObject:result];
-        }
-        return results;
-    };
-
     //Create ORDERed GROUPs
-    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectBlock:selectBlock];
+    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectBlock:query.selectMapper];
 }
 
 
