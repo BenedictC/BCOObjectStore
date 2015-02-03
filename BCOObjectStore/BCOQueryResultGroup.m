@@ -25,7 +25,7 @@
 @property(nonatomic, readonly) NSMutableArray *mutableObjects;
 
 //caches
-@property(nonatomic, readonly) NSArray *cachedResults;
+@property(nonatomic, readonly) NSArray *cachedObjects;
 
 @end
 
@@ -131,8 +131,8 @@
 
 -(NSArray *)objects
 {
-    if (_cachedResults != nil) {
-        return _cachedResults;
+    if (_cachedObjects != nil) {
+        return _cachedObjects;
     }
 
     return ([self isGrouped]) ? [self orderedGroups] : [self orderedObjects];
@@ -169,7 +169,7 @@
 
 -(void)insertObject:(id)object
 {
-    NSAssert(_cachedResults == nil, @"Attempted to insert an object into a completed result group.");
+    NSAssert(_cachedObjects == nil, @"Attempted to insert an object into a completed result group.");
 
     if ([self isGrouped]) {
         [self insertObjectIntoGroup:object];
@@ -199,7 +199,7 @@
         [group cacheResultsAndDiscardStorage];
     }
 
-    _cachedResults = [self objects];
+    _cachedObjects = [self objects];
 
     //...AndDiscardStorage
     _mutableGroups = nil;
