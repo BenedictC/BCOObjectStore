@@ -1,18 +1,18 @@
 //
-//  BCOColumnDescription.m
+//  BCOIndexDescription.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 13/10/2014.
 //  Copyright (c) 2014 Benedict Cohen. All rights reserved.
 //
 
-#import "BCOColumnDescription.h"
+#import "BCOIndexDescription.h"
 
 
 
-@implementation BCOColumnDescription
+@implementation BCOIndexDescription
 
--(instancetype)initWithColumnValueGenerator:(BCOColumnValueGenerator)generator valueComparator:(NSComparator)comparator
+-(instancetype)initWithIndexValueGenerator:(BCOIndexValueGenerator)generator valueComparator:(NSComparator)comparator
 {
     NSParameterAssert(generator);
     NSParameterAssert(comparator);
@@ -20,7 +20,7 @@
     self = [super init];
     if (self == nil) return nil;
 
-    _columnValueGenerator = generator;
+    _indexValueGenerator = generator;
     _valueComparator = comparator;
 
     return self;

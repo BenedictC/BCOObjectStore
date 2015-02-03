@@ -1,16 +1,16 @@
 //
-//  BCOColumnEntry.m
+//  BCOIndexEntry.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
 //
 //
 
-#import "BCOColumnEntry.h"
+#import "BCOIndexEntry.h"
 
 
 
-@interface BCOColumnEntry ()
+@interface BCOIndexEntry ()
 {
     @protected
     NSSet *_records;
@@ -20,7 +20,7 @@
 
 
 
-@implementation BCOColumnEntry
+@implementation BCOIndexEntry
 
 #pragma mark - instance life cylce
 -(instancetype)init
@@ -53,22 +53,22 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    return ([self.class isEqual:BCOColumnEntry.class]) ? self : [[BCOColumnEntry alloc] initWithValue:self.value records:self.records];
+    return ([self.class isEqual:BCOIndexEntry.class]) ? self : [[BCOIndexEntry alloc] initWithValue:self.value records:self.records];
 }
 
 
 
 -(id)mutableCopyWithZone:(NSZone *)zone
 {
-    return [[BCOMutableColumnEntry alloc] initWithValue:self.value records:self.records];
+    return [[BCOMutableIndexEntry alloc] initWithValue:self.value records:self.records];
 }
 
 
 
 #pragma mark - equality
--(BOOL)isEqual:(BCOColumnEntry *)object
+-(BOOL)isEqual:(BCOIndexEntry *)object
 {
-    if (![object isKindOfClass:BCOColumnEntry.class])  return NO;
+    if (![object isKindOfClass:BCOIndexEntry.class])  return NO;
 
     return [[object value] isEqual:self.value];
 }
@@ -77,7 +77,7 @@
 
 -(NSUInteger)hash
 {
-    return BCOColumnEntry.class.hash ^ [self.value hash];
+    return BCOIndexEntry.class.hash ^ [self.value hash];
 }
 
 
@@ -101,7 +101,7 @@
 
 
 
-@implementation BCOMutableColumnEntry
+@implementation BCOMutableIndexEntry
 
 -(instancetype)initWithValue:(id)value records:(NSSet *)records
 {

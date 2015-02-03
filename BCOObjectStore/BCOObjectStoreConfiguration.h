@@ -8,8 +8,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import "BCOColumnValue.h"
-@class BCOColumnDescription;
+#import "BCOIndexValue.h"
+@class BCOIndexDescription;
 
 
 
@@ -19,10 +19,10 @@
 
 @property(nonatomic, copy) NSString *persistentStorePath;
 
-@property(nonatomic, readonly) NSDictionary *columnDescriptions;
+@property(nonatomic, readonly) NSDictionary *indexDescriptions;
 
--(void)addColumnWithName:(NSString *)columnName columnValueGenerator:(BCOColumnValueGenerator)generator valueComparator:(NSComparator)comparator;
--(void)addColumnWithName:(NSString *)columnName columnDescription:(BCOColumnDescription *)columnDescription;
+-(void)addIndexWithName:(NSString *)indexName indexValueGenerator:(BCOIndexValueGenerator)generator valueComparator:(NSComparator)comparator;
+-(void)addIndexWithName:(NSString *)indexName indexDescription:(BCOIndexDescription *)indexDescription;
 
 @end
 

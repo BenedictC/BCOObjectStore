@@ -1,5 +1,5 @@
 //
-//  BCOColumn.h
+//  BCOIndex.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 23/01/2015.
@@ -8,21 +8,21 @@
 
 #import <Foundation/Foundation.h>
 
-@class BCOColumnDescription;
+@class BCOIndexDescription;
 
 
 
-@interface BCOColumn : NSObject <NSCopying>
+@interface BCOIndex : NSObject <NSCopying>
 
--(instancetype)initWithColumnDescription:(BCOColumnDescription *)columnDescription;
+-(instancetype)initWithIndexDescription:(BCOIndexDescription *)indexDescription;
 
-@property(nonatomic, readonly) BCOColumnDescription *columnDescription;
+@property(nonatomic, readonly) BCOIndexDescription *indexDescription;
 
 //Entry Updating
--(id)generateColumnValueForObject:(id)object;
+-(id)generateIndexValueForObject:(id)object;
 
--(void)addRecord:(id)record forColumnValue:(id)value;
--(void)removeRecord:(id)record forColumnValue:(id)value;
+-(void)addRecord:(id)record forIndexValue:(id)value;
+-(void)removeRecord:(id)record forIndexValue:(id)value;
 
 //Object Access
 -(NSSet *)recordsWithValueLessThan:(id)value;

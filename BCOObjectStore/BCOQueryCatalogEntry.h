@@ -1,5 +1,5 @@
 //
-//  BCOIndekzEntry.h
+//  BCOQueryCatalogEntry.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
@@ -10,11 +10,11 @@
 
 
 
-@interface BCOIndekzEntry : NSObject
+@interface BCOQueryCatalogEntry : NSObject
 
 -(instancetype)initWithRecord:(id)record;
 
 @property(nonatomic, readonly) id record;
-@property(nonatomic, readonly) NSMutableDictionary *valuesByColumnName;
+@property(nonatomic, readonly) NSMutableDictionary *valuesByIndexName;
 
 @end

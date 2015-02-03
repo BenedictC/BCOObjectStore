@@ -1,17 +1,17 @@
 //
-//  BCOIndekzEntry.m
+//  BCOQueryCatalogEntry.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
 //
 //
 
-#import "BCOIndekzEntry.h"
-#import "BCOColumnValue.h"
+#import "BCOQueryCatalogEntry.h"
+#import "BCOIndexValue.h"
 
 
 
-@implementation BCOIndekzEntry;
+@implementation BCOQueryCatalogEntry;
 
 -(instancetype)initWithRecord:(id)record
 {
@@ -20,7 +20,7 @@
     if (self == nil) return nil;
 
     _record = record;
-    _valuesByColumnName = [NSMutableDictionary new];
+    _valuesByIndexName = [NSMutableDictionary new];
 
     return self;
 }

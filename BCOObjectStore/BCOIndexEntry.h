@@ -1,5 +1,5 @@
 //
-//  BCOColumnEntry.h
+//  BCOIndexEntry.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
@@ -10,7 +10,7 @@
 
 
 
-@interface BCOColumnEntry : NSObject <NSCopying, NSMutableCopying>
+@interface BCOIndexEntry : NSObject <NSCopying, NSMutableCopying>
 
 -(instancetype)initWithValue:(id)value records:(NSSet *)records;
 @property(nonatomic, readonly) id value;
@@ -20,7 +20,7 @@
 
 
 
-@interface BCOMutableColumnEntry : BCOColumnEntry
+@interface BCOMutableIndexEntry : BCOIndexEntry
 @property(nonatomic) id value;
 -(void)addRecord:(id)record;
 -(void)removeRecord:(id)record;

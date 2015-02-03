@@ -9,7 +9,7 @@
 #import "BCOObjectStore.h"
 
 #import "BCOObjectStoreSnapshot.h"
-#import "BCOColumnDescription.h"
+#import "BCOIndexDescription.h"
 
 
 
@@ -42,7 +42,7 @@
     if (self == nil) return nil;
 
     _configuration = [configuration copy];
-    _snapshot = [BCOObjectStoreSnapshot snapshotWithPersistentStorePath:configuration.persistentStorePath columnDescriptions:configuration.columnDescriptions];
+    _snapshot = [BCOObjectStoreSnapshot snapshotWithPersistentStorePath:configuration.persistentStorePath indexDescriptions:configuration.indexDescriptions];
 
     return self;
 }

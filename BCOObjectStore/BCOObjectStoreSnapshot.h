@@ -14,7 +14,7 @@
 @interface BCOObjectStoreSnapshot : NSObject <BCOObjectStoreSnapshot>
 
 //Snapshot creation
-+(BCOObjectStoreSnapshot *)snapshotWithPersistentStorePath:(NSString *)path columnDescriptions:(NSDictionary *)columnDescriptions;
++(BCOObjectStoreSnapshot *)snapshotWithPersistentStorePath:(NSString *)path indexDescriptions:(NSDictionary *)indexDescriptions;
 
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects;
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects;
@@ -23,6 +23,6 @@
 -(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
 
 //Properties
--(NSDictionary *)columnDescriptions;
+-(NSDictionary *)indexDescriptions;
 
 @end

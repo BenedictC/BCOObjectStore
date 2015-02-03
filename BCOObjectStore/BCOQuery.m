@@ -156,7 +156,7 @@
         if (isPredicateExpression) {
             firstClause = [[BCOWhereClauseExpression alloc] initWithOperator:BCOQueryOperatorPredicate leftOperand:predicate rightOperand:nil];
         } else {
-            //isColumnExpression
+            //isIndexExpression
             id leftOperand = [self scanIdentifierWithScanner:scanner];
             if (leftOperand == nil) {
                 [NSException raise:NSInvalidArgumentException format:@"Expected index name."];

@@ -7,12 +7,12 @@
 //
 
 #import "BCOObjectStoreConfiguration.h"
-#import "BCOColumnDescription.h"
+#import "BCOIndexDescription.h"
 
 
 
 @interface BCOObjectStoreConfiguration ()
-@property(nonatomic, readonly) NSMutableDictionary *mutableColumnDescriptions;
+@property(nonatomic, readonly) NSMutableDictionary *mutableIndexDescriptions;
 @end
 
 
@@ -22,19 +22,19 @@
 #pragma mark - instance life cycle
 -(instancetype) init
 {
-    return [self initWithColumnDescriptions:@{}];
+    return [self initWithIndexDescriptions:@{}];
 }
 
 
 
--(instancetype)initWithColumnDescriptions:(NSDictionary *)columnDescriptions
+-(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions
 {
-    NSParameterAssert(columnDescriptions);
+    NSParameterAssert(indexDescriptions);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _mutableColumnDescriptions = [columnDescriptions mutableCopy];
+    _mutableIndexDescriptions = [indexDescriptions mutableCopy];
 
     return self;
 }
@@ -44,7 +44,7 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithColumnDescriptions:self.mutableColumnDescriptions];
+    BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithIndexDescriptions:self.mutableIndexDescriptions];
     copy.dispatchQueue = self.dispatchQueue;
     copy.persistentStorePath = self.persistentStorePath;
 
@@ -54,36 +54,36 @@
 
 
 #pragma mark - properties
--(NSDictionary *)columnDescriptions
+-(NSDictionary *)indexDescriptions
 {
-    return [self.mutableColumnDescriptions copy];
+    return [self.mutableIndexDescriptions copy];
 }
 
 
 
--(void)addColumnWithName:(NSString *)columnName columnValueGenerator:(BCOColumnValueGenerator)generator valueComparator:(NSComparator)comparator
+-(void)addIndexWithName:(NSString *)indexName indexValueGenerator:(BCOIndexValueGenerator)generator valueComparator:(NSComparator)comparator
 {
-    BCOColumnDescription *description = [[BCOColumnDescription alloc] initWithColumnValueGenerator:generator valueComparator:comparator];
+    BCOIndexDescription *description = [[BCOIndexDescription alloc] initWithIndexValueGenerator:generator valueComparator:comparator];
 
-    [self addColumnWithName:columnName columnDescription:description];
+    [self addIndexWithName:indexName indexDescription:description];
 }
 
 
 
--(void)addColumnWithName:(NSString *)columnName columnDescription:(BCOColumnDescription *)columnDescription
+-(void)addIndexWithName:(NSString *)indexName indexDescription:(BCOIndexDescription *)indexDescription
 {
     NSRange validCharacterRange = ({
         NSCharacterSet *invalidCharacters = [[NSCharacterSet characterSetWithCharactersInString:@"1234567890_qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"] invertedSet];
-        [columnName rangeOfCharacterFromSet:invalidCharacters];
+        [indexName rangeOfCharacterFromSet:invalidCharacters];
     });
 
     BOOL isValidName = (validCharacterRange.location == NSNotFound);
     if (!isValidName) {
-        [NSException raise:NSInvalidArgumentException format:@"Invalid columnName. columnName must be at least 1 letter long and can only include letters (case-insensitive), numbers and underscore."];
+        [NSException raise:NSInvalidArgumentException format:@"Invalid indexName. indexName must be at least 1 letter long and can only include letters (case-insensitive), numbers and underscore."];
         return;
     }
 
-    self.mutableColumnDescriptions[columnName] = columnDescription;
+    self.mutableIndexDescriptions[indexName] = indexDescription;
 }
 
 @end
