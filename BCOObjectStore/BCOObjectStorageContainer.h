@@ -15,11 +15,7 @@
 @interface BCOObjectStorageContainer : NSObject <NSCopying>
 
 //Instance life cycle
-+(BCOObjectStorageContainer *)objectStorageWithObjects:(NSSet *)objects;
-
-+(BCOObjectStorageContainer *)objectStorageWithData:(NSData *)data;
-
--(NSData *)dataRepresentation;
++(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path;
 
 //Content updating
 -(BCOStorageRecord *)addObject:(id)object;
@@ -32,5 +28,8 @@
 //Enumerated content access
 -(NSArray *)allStorageRecords;
 -(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block;
+
+//Archiving
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
 
 @end

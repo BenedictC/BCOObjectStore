@@ -42,7 +42,7 @@
     if (self == nil) return nil;
 
     _configuration = [configuration copy];
-    _snapshot = [BCOObjectStoreSnapshot snapshotFromSnapshotArchive:configuration.initialSnapshotArchive columnDescriptions:configuration.columnDescriptions];
+    _snapshot = [BCOObjectStoreSnapshot snapshotWithPersistentStorePath:configuration.persistentStorePath columnDescriptions:configuration.columnDescriptions];
 
     return self;
 }
@@ -143,9 +143,9 @@
 
 
 
--(NSData *)snapshotArchive
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
 {
-    return self.snapshot.snapshotArchive;
+    return [self.snapshot writeToPath:path error:outError];
 }
 
 @end

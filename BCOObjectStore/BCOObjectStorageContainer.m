@@ -37,14 +37,17 @@
 
 
 
-+(BCOObjectStorageContainer *)objectStorageWithData:(NSData *)data
++(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path
 {
-    if (data == nil) {
+    //Attempt to load objects
+    NSString *objectsPath = [path stringByAppendingPathComponent:@"objects.archive"];
+    NSData *archive = [NSData dataWithContentsOfFile:objectsPath];
+    if (archive == nil) {
         return [BCOObjectStorageContainer new];
     }
 
-    NSArray *objects = [NSKeyedUnarchiver unarchiveObjectWithData:data];
-
+    //Load objects
+    NSArray *objects = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
     NSAssert(objects != nil, @"Failed to un-archive objects.");
 
     NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
@@ -91,16 +94,6 @@
 
 
 #pragma mark - properties
--(NSData *)dataRepresentation
-{
-    NSArray *objects = self.objectsByStorageRecords.allValues;
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:objects];
-
-    return data;
-}
-
-
-
 -(BOOL)isObjectsByStorageRecordsDirty
 {
     return _mutableObjectsByStorageRecords != nil;
@@ -127,7 +120,7 @@
 
 
 
-#pragma mark - content managment
+#pragma mark - Content updating
 -(BCOStorageRecord *)addObject:(id)object
 {
     BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
@@ -144,6 +137,20 @@
 
 
 
+-(void)removeObjectForStorageRecord:(BCOStorageRecord *)record
+{
+    BOOL isObjectInStore = self.objectsByStorageRecords[record] != nil;
+    if (!isObjectInStore) {
+        NSLog(@"Attempting to remove an object not in the store");
+        return;
+    }
+
+    [self.mutableObjectsByStorageRecords removeObjectForKey:record];
+}
+
+
+
+#pragma mark - Random content access
 -(id)objectForStorageRecord:(BCOStorageRecord *)record
 {
     return self.objectsByStorageRecords[record];
@@ -162,19 +169,7 @@
 
 
 
--(void)removeObjectForStorageRecord:(BCOStorageRecord *)record
-{
-    BOOL isObjectInStore = self.objectsByStorageRecords[record] != nil;
-    if (!isObjectInStore) {
-        NSLog(@"Attempting to remove an object not in the store");
-        return;
-    }
-
-    [self.mutableObjectsByStorageRecords removeObjectForKey:record];
-}
-
-
-
+#pragma mark - Enumerated content access
 -(NSArray *)allObjects
 {
     return self.objectsByStorageRecords.allValues;
@@ -192,6 +187,18 @@
 -(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block
 {
     [self.objectsByStorageRecords enumerateKeysAndObjectsUsingBlock:block];
+}
+
+
+
+#pragma mark - Archiving
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError
+{
+    NSString *objectsPath = [path stringByAppendingPathComponent:@"objects.archive"];
+
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:self.allObjects];
+
+    return [data writeToFile:objectsPath options:NSDataWritingAtomic error:ourError];
 }
 
 @end

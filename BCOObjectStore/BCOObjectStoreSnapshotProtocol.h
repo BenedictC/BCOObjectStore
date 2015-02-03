@@ -13,7 +13,7 @@
 @protocol BCOObjectStoreSnapshot <NSObject>
 
 //Archiving
--(NSData *)snapshotArchive;
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
 
 //Querying
 -(NSArray *)executeQuery:(NSString *)query;

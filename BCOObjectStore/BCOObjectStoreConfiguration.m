@@ -46,7 +46,7 @@
 {
     BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithColumnDescriptions:self.mutableColumnDescriptions];
     copy.dispatchQueue = self.dispatchQueue;
-    copy.initialSnapshotArchive = self.initialSnapshotArchive;
+    copy.persistentStorePath = self.persistentStorePath;
 
     return copy;
 }
@@ -56,7 +56,7 @@
 #pragma mark - properties
 -(NSDictionary *)columnDescriptions
 {
-    return self.mutableColumnDescriptions;
+    return [self.mutableColumnDescriptions copy];
 }
 
 
@@ -77,9 +77,9 @@
         [columnName rangeOfCharacterFromSet:invalidCharacters];
     });
 
-    BOOL isValidIndexName = (validCharacterRange.location == NSNotFound);
-    if (!isValidIndexName) {
-        [NSException raise:NSInvalidArgumentException format:@"Invalid indexName. indexName must be at least 1 letter long and can only include letters (case-insensitive), numbers and underscore."];
+    BOOL isValidName = (validCharacterRange.location == NSNotFound);
+    if (!isValidName) {
+        [NSException raise:NSInvalidArgumentException format:@"Invalid columnName. columnName must be at least 1 letter long and can only include letters (case-insensitive), numbers and underscore."];
         return;
     }
 

@@ -7,6 +7,7 @@
 //
 
 #import "BCOStorageRecord.h"
+#import <CommonCrypto/CommonCrypto.h>
 
 
 
@@ -18,15 +19,31 @@
 
 @implementation BCOStorageRecord
 
++(NSString *)md5HashForData:(NSData *)data
+{
+    unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
+
+    // Create 16 byte MD5 hash value, store in buffer
+    CC_MD5(data.bytes, data.length, md5Buffer);
+
+    // Convert MD5 value in the buffer to NSString of hex values
+    NSMutableString *output = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
+    for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
+        [output appendFormat:@"%02x",md5Buffer[i]];
+    }
+
+    return output;
+}
+
+
+
 +(BCOStorageRecord *)storageRecordForObject:(id)object
 {
     BOOL isSerializable = NO; //TODO:
     if (isSerializable) {
-#pragma message "TODO: We need to change `object` to be a value that we can reliable derive from `object` so that we can\
-lookup match up an object inserted into the store with on that already exists in the store but only on disk and that hasn't been loaded from disk. \
-This cannot be based on -hash because that may rely on a pointer which will change from on each run. \
-A murmur3 hash of the data represention of the object seems like a good start."
-
+        //TODO: We need a fingerprint for the data so that we store it on disk. We're currently using MD5 but that's a bad choice.
+        //It would be much better to use Rabin Fingerprint function but we'd have to implement that from scratch.
+        //Once we have the hash then we can store the object on disk.
     }
 
     return [[BCOStorageRecord alloc] initWithValue:object];

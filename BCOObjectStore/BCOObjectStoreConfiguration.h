@@ -16,12 +16,13 @@
 @interface BCOObjectStoreConfiguration : NSObject <NSCopying>
 
 @property(nonatomic) dispatch_queue_t dispatchQueue;
-@property(nonatomic) NSData *initialSnapshotArchive;
+
+@property(nonatomic, copy) NSString *persistentStorePath;
+
+@property(nonatomic, readonly) NSDictionary *columnDescriptions;
 
 -(void)addColumnWithName:(NSString *)columnName columnValueGenerator:(BCOColumnValueGenerator)generator valueComparator:(NSComparator)comparator;
 -(void)addColumnWithName:(NSString *)columnName columnDescription:(BCOColumnDescription *)columnDescription;
-
-@property(nonatomic, readonly) NSDictionary *columnDescriptions;
 
 @end
 

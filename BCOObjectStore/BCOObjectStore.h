@@ -43,6 +43,6 @@ typedef void (^BCOObjectStoreUpdateObjectsCompletionHandler)(NSSet *insertedObje
 -(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
 
 //Archiving
--(NSData *)snapshotArchive;
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
 
 @end
