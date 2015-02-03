@@ -10,19 +10,20 @@
 #import "BCOColumn.h"
 #import "BCOQuery.h"
 #import "BCOObjectStorageContainer.h"
-#import "BCOIndex.h"
+#import "BCOIndekz.h"
+#import "BCOQueryResultGroup.h"
 
 
 
 @implementation BCOObjectStoreSnapshot (Query)
 
--(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index
+-(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage indekz:(BCOIndekz *)indekz
 {
     //Create the query
     BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
 
-    //Get the matching records
-    NSSet *matchedRecords = [self evaluateWHEREClauseExpression:query.rootWhereExpression storage:storage index:index];
+    //Match the objects (WHERE)
+    NSSet *matchedRecords = [self evaluateWHEREClauseExpression:query.rootWhereExpression storage:storage indekz:indekz searchSpace:nil];
 
     //Convert the records to objects
     NSMutableArray *objects = [NSMutableArray new];
@@ -31,69 +32,89 @@
         [objects addObject:object];
     }
 
-    //Sort the objects
-    return [objects sortedArrayUsingDescriptors:query.sortDescriptors];
+    //Create the SELECT block
+    NSString *key = query.selectField;
+    NSArray *(^selectBlock)(NSArray *) = (key == nil) ? NULL : ^(NSArray *objects){
+        NSMutableArray *results = [NSMutableArray new];
+        for (id object in objects) {
+            id result = [object valueForKey:key];
+            NSParameterAssert(result);
+            [results addObject:result];
+        }
+        return results;
+    };
+
+    //Create ORDERed GROUPs
+    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectBlock:selectBlock];
 }
 
 
 
 #pragma mark - Object fetching
--(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression storage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index
+-(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression storage:(BCOObjectStorageContainer *)storage indekz:(BCOIndekz *)indekz searchSpace:(NSSet *)searchSpace
 {
     switch (expression.operator) {
 
         case BCOQueryOperatorAND: {
-            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage index:index];
-            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage index:index];
+            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage indekz:indekz searchSpace:searchSpace];
+
+            //Optimizations
+            BOOL isRightBranchRedundant = (leftSet.count == 0);
+            if (isRightBranchRedundant)return [NSSet set];
+            //TODO: What other optimizations are there?
+
+            //Not that we're restricting the search space to leftSet. Only predicate uses this but that is potential very useful as predicates would otherwise have to scan ALL objects.
+            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage indekz:indekz searchSpace:leftSet];
             NSMutableSet *intersectSet = [leftSet mutableCopy];
             [intersectSet intersectSet:rightSet];
             return intersectSet;
         }
 
         case BCOQueryOperatorOR: {
-            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage index:index];
-            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage index:index];
+            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage indekz:indekz searchSpace:searchSpace];
+            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage indekz:indekz searchSpace:searchSpace];
             NSMutableSet *unionSet = [leftSet mutableCopy];
             [unionSet unionSet:rightSet];
             return unionSet;
         }
 
         case BCOQueryOperatorEqualTo: {
-            return [index recordsInColumn:expression.leftOperand forValue:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand forValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorNotEqualTo: {
-            return [index recordsInColumn:expression.leftOperand forValuesNotEqualToValue:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand forValuesNotEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorIn: {
-            return [index recordsInColumn:expression.leftOperand forValuesInSet:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand forValuesInSet:expression.rightOperand];
         }
 
         case BCOQueryOperatorNotIn: {
-            return [index recordsInColumn:expression.leftOperand forValuesNotInSet:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand forValuesNotInSet:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThan: {
-            return [index recordsInColumn:expression.leftOperand lessThanValue:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand lessThanValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThanOrEqualTo: {
-            return [index recordsInColumn:expression.leftOperand lessThanOrEqualToValue:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand lessThanOrEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorGreaterThan: {
-            return [index recordsInColumn:expression.leftOperand greaterThanValue:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand greaterThanValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorGreaterThanOrEqualTo: {
-            return [index recordsInColumn:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
+            return [indekz recordsInColumn:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorPredicate: {
             NSPredicate *predicate = expression.leftOperand;
             NSMutableSet *filteredRecords = [NSMutableSet new];
-            for (id record in storage.allStorageRecords) {
+            id recordsToSearch = searchSpace ?: storage.allStorageRecords;
+            for (id record in recordsToSearch) {
                 id object = [storage objectForStorageRecord:record];
                 BOOL didMatch = [predicate evaluateWithObject:object];
                 if (didMatch) [filteredRecords addObject:record];

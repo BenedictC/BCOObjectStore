@@ -30,12 +30,14 @@
 
 @implementation BCOQuery
 
--(instancetype)initWithRootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression sortDescriptors:(NSArray *)sortDescriptors
+-(instancetype)initWithSelectField:(NSString *)selectField rootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression groupBy:(NSString *)groupBy sortDescriptors:(NSArray *)sortDescriptors
 {
     self = [super init];
     if (self == nil) return nil;
 
+    _selectField = [selectField copy];
     _rootWhereExpression = rootWhereExpression;
+    _groupBy = [groupBy copy];
     _sortDescriptors = sortDescriptors;
 
     return self;
@@ -48,7 +50,9 @@
 {
     NSScanner *scanner = [NSScanner scannerWithString:queryString];
 
+    NSString *selectField = [self scanSelectFieldWithScanner:scanner substitutionVariables:subsitutionVariable];
     BCOWhereClauseExpression *where = [self scanWhereClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
+    NSString *groupBy = [self scanGroupByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSArray *sortDescriptors = [self scanOrderByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
 
     //Check that there's no junk at the end of the query
@@ -58,7 +62,43 @@
         return nil;
     }
 
-    return [[BCOQuery alloc] initWithRootWhereClauseExpression:where sortDescriptors:sortDescriptors];
+    return [[BCOQuery alloc] initWithSelectField:selectField rootWhereClauseExpression:where groupBy:groupBy sortDescriptors:sortDescriptors];
+}
+
+
+
++(NSString *)scanSelectFieldWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanSELECT = [scanner scanString:@"SELECT" intoString:NULL];
+    if (!didScanSELECT) {
+        return nil;
+    }
+
+    BOOL didScanObjectSelector = [scanner scanString:@"*" intoString:NULL];
+    if (didScanObjectSelector) {
+        return nil;
+    }
+
+    //TODO: Add function scanning
+
+    id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+    BOOL didScanVariable = variable != nil;
+    if (didScanVariable) {
+        if (![variable isKindOfClass:NSString.class]) {
+            [NSException raise:NSInvalidArgumentException format:@"Varaible for SELECT clause is not a string"];
+            return nil;
+        }
+        return variable;
+    }
+
+    NSString *identifier = [self scanIdentifierWithScanner:scanner];
+    BOOL didScanIdentifier = identifier != nil;
+    if (!didScanIdentifier) {
+        [NSException raise:NSInvalidArgumentException format:@"Failed to scan identifier for SELECT clause."];
+        return nil;
+    }
+
+    return identifier;
 }
 
 
@@ -153,10 +193,37 @@
 
 
 
++(NSString *)scanGroupByClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanGROUPBYDelimitter = [scanner scanString:@"GROUP BY" intoString:NULL];
+    if (!didScanGROUPBYDelimitter) return nil;
+
+    id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+    BOOL didScanVariable = variable != nil;
+    if (didScanVariable) {
+        if (![variable isKindOfClass:NSString.class]) {
+            [NSException raise:NSInvalidArgumentException format:@"Varaible for GROUP BY clause is not a string"];
+            return nil;
+        }
+        return variable;
+    }
+
+    NSString *identifier = [self scanIdentifierWithScanner:scanner];
+    BOOL didScanIdentifier = identifier != nil;
+    if (!didScanIdentifier) {
+        [NSException raise:NSInvalidArgumentException format:@"Failed to scan identifier for GROUP BY clause."];
+        return nil;
+    }
+
+    return identifier;
+}
+
+
+
 +(NSArray *)scanOrderByClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
-    BOOL didScanORDEREDBYDelimitter = [scanner scanString:@"ORDERED BY" intoString:NULL];
-    if (!didScanORDEREDBYDelimitter) return @[];
+    BOOL didScanORDERBYDelimitter = [scanner scanString:@"ORDER BY" intoString:NULL];
+    if (!didScanORDERBYDelimitter) return @[];
 
     NSMutableArray *sortDescriptors = [NSMutableArray new];
     do {

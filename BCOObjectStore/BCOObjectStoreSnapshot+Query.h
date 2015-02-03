@@ -9,12 +9,12 @@
 #import "BCOObjectStoreSnapshot.h"
 
 @class BCOObjectStorageContainer;
-@class BCOIndex;
+@class BCOIndekz;
 
 
 
 @interface BCOObjectStoreSnapshot (Query)
 
--(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage index:(BCOIndex *)index;
+-(NSArray *)executeQuery:(NSString *)queryString subsitutionVariable:(NSDictionary *)subsitutionVariable objectStorage:(BCOObjectStorageContainer *)storage indekz:(BCOIndekz *)indekz;
 
 @end

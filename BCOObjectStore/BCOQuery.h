@@ -37,16 +37,13 @@ typedef NS_ENUM(NSInteger, BCOQueryOperator) {
 @interface BCOQuery : NSObject
 +(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable;
 
-//TODO: EG: 'SELECT * FROM masterTable', 'SELECT name FROM indexName'
-// The 'SELECT *' could translate to a KVC-inspired keypath. 'SELECT name, date' , 'SELECT @sum/avg/max/min(numberProperty)', @distinct(), @union() 
-//TODO: what's the difference between specifying a restriction in a FROM clause compared to in the WHERE clause?
-//@property(nonatomic, readonly) id *selectClause;
 
+// TODO: Allow agregation/mapping functions for select field
+@property(nonatomic, readonly) NSString *selectField;
 @property(nonatomic, readonly) BCOWhereClauseExpression *rootWhereExpression;
-
+@property(nonatomic, readonly) NSString *groupBy;
 @property(nonatomic, readonly) NSArray *sortDescriptors;
 @end
-
 
 
 
