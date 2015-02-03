@@ -45,7 +45,7 @@
 
 -(instancetype)initWithColumnEntries:(NSArray *)columnEntries columnDescription:(BCOColumnDescription *)columnDescription
 {
-    //BCOIndex assumes ownership of columnEntries and will modify it
+    //BCOColumn assumes ownership of columnEntries and will modify it
     NSParameterAssert(columnDescription);
 
     self = [super init];
