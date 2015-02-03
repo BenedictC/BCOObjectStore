@@ -1,5 +1,5 @@
 //
-//  BCOIndexEntry.h
+//  BCOIndekzEntry.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
@@ -10,7 +10,7 @@
 
 
 
-@interface BCOIndexEntry : NSObject
+@interface BCOIndekzEntry : NSObject
 
 -(instancetype)initWithRecord:(id)record;
 

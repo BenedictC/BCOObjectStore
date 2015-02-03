@@ -1,5 +1,5 @@
 //
-//  BCOIndex.h
+//  BCOIndekz.h
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 29/01/2015.
@@ -8,18 +8,18 @@
 
 #import <Foundation/Foundation.h>
 
-@class BCOIndexEntry;
+@class BCOIndekzEntry;
 
 
 
-@interface BCOIndex : NSObject <NSCopying>
+@interface BCOIndekz : NSObject <NSCopying>
 
 -(instancetype)initWithColumnDescriptions:(NSDictionary *)columnDescriptions;
 
 @property(nonatomic, readonly) NSDictionary *columnDescriptions;
 
--(BCOIndexEntry *)insertEntryForRecord:(id)record byIndexingObject:(id)object;
--(void)removeEntry:(BCOIndexEntry *)indexEntry;
+-(BCOIndekzEntry *)insertEntryForRecord:(id)record byIndexingObject:(id)object;
+-(void)removeEntry:(BCOIndekzEntry *)indekzEntry;
 
 -(NSSet *)recordsInColumn:(NSString *)columnName forValue:(id)value;
 -(NSSet *)recordsInColumn:(NSString *)columnName forValuesNotEqualToValue:(id)value;

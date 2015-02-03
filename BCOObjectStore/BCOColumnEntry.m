@@ -1,5 +1,5 @@
 //
-//  BCOIndexEntry.m
+//  BCOColumnEntry.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.

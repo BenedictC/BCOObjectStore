@@ -1,17 +1,17 @@
 //
-//  BCOIndexEntry.m
+//  BCOIndekzEntry.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 22/01/2015.
 //
 //
 
-#import "BCOIndexEntry.h"
+#import "BCOIndekzEntry.h"
 #import "BCOColumnValue.h"
 
 
 
-@implementation BCOIndexEntry;
+@implementation BCOIndekzEntry;
 
 -(instancetype)initWithRecord:(id)record
 {
