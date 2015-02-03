@@ -13,6 +13,8 @@
 @protocol BCOQueryResultGroup <NSObject>
 
 @property(nonatomic, readonly) id identifier;
-@property(nonatomic, readonly) NSArray *results;
+
+@property(nonatomic, readonly) NSUInteger numberOfObjects;
+@property(nonatomic, readonly) NSArray *objects;
 
 @end

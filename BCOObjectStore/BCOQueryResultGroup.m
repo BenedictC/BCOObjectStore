@@ -11,14 +11,22 @@
 
 
 @interface BCOQueryResultGroup ()
+
+//Query parameters
 @property(nonatomic, readonly) NSString *groupByField;
 @property(nonatomic, readonly) NSArray *sortDescriptors;
 @property(nonatomic, readonly) NSArray *(^selectBlock)(NSArray *);
 
+//bucket name
 @property(nonatomic, readonly) id groupIdentifier;
 
-@property(nonatomic, readonly) NSMutableArray *objects;
-@property(nonatomic, readonly) NSMutableDictionary *groups;
+//Storage
+@property(nonatomic, readonly) NSMutableDictionary *mutableGroups;
+@property(nonatomic, readonly) NSMutableArray *mutableObjects;
+
+//caches
+@property(nonatomic, readonly) NSArray *cachedResults;
+
 @end
 
 
@@ -33,9 +41,9 @@
         [group insertObject:object];
     }
 
-#pragma message "calculate orderedGroups and orderedObjects now rather than lazily of get"
+    [group cacheResultsAndDiscardStorage];
 
-    return [group results];
+    return [group objects];
 }
 
 
@@ -52,8 +60,8 @@
     _selectBlock = selectBlock;
 
     BOOL isGrouped = (groupByField != nil);
-    _objects = (isGrouped) ?  nil : [NSMutableArray new];
-    _groups =  (isGrouped) ? [NSMutableDictionary new] : nil;
+    _mutableObjects = (isGrouped) ?  nil : [NSMutableArray new];
+    _mutableGroups  = (isGrouped) ? [NSMutableDictionary new] : nil;
 
     return self;
 }
@@ -63,7 +71,7 @@
 #pragma mark - properties
 -(NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p> {identifier: %@, objects:\n%@}", NSStringFromClass(self.class), self, self.groupIdentifier, self.results];
+    return [NSString stringWithFormat:@"<%@: %p> {identifier: %@, objects:\n%@}", NSStringFromClass(self.class), self, self.groupIdentifier, self.objects];
 }
 
 
@@ -80,7 +88,7 @@
     NSMutableArray *orderedGroups = [NSMutableArray new];
 
     NSArray *sortDescriptors = self.sortDescriptors;
-    for (BCOQueryResultGroup *group in self.groups.objectEnumerator) {
+    for (BCOQueryResultGroup *group in self.mutableGroups.objectEnumerator) {
         NSUInteger insertionIdx = [orderedGroups indexOfObject:group inSortedRange:NSMakeRange(0, orderedGroups.count) options:NSBinarySearchingInsertionIndex usingComparator:^NSComparisonResult(BCOQueryResultGroup *group1, BCOQueryResultGroup *group2) {
             //TODO: What if the the sort descriptors are DESC? Should we pick lastObject?
             id obj1 = [group1.objects firstObject];
@@ -121,9 +129,20 @@
 
 
 
--(NSArray *)results
+-(NSArray *)objects
 {
+    if (_cachedResults != nil) {
+        return _cachedResults;
+    }
+
     return ([self isGrouped]) ? [self orderedGroups] : [self orderedObjects];
+}
+
+
+
+-(NSUInteger)numberOfObjects
+{
+    return self.objects.count;
 }
 
 
@@ -133,7 +152,7 @@
 {
     id groupIdentifer = [object valueForKey:self.groupByField];
 
-    NSMutableDictionary *groups = self.groups;
+    NSMutableDictionary *groups = self.mutableGroups;
     BCOQueryResultGroup *group = groups[groupIdentifer];
     if (group == nil) {
         //Create and insert a group
@@ -150,12 +169,14 @@
 
 -(void)insertObject:(id)object
 {
+    NSAssert(_cachedResults == nil, @"Attempted to insert an object into a completed result group.");
+
     if ([self isGrouped]) {
         [self insertObjectIntoGroup:object];
         return;
     }
 
-    NSMutableArray *objects = self.objects;
+    NSMutableArray *objects = self.mutableObjects;
     NSArray *sortDescriptors = self.sortDescriptors;
     NSUInteger insertionIndex = [objects indexOfObject:object inSortedRange:NSMakeRange(0, objects.count) options:NSBinarySearchingInsertionIndex usingComparator:^NSComparisonResult(id obj1, id obj2) {
         //Try each sort descriptor
@@ -167,6 +188,22 @@
         return NSOrderedSame;
     }];
     [objects insertObject:object atIndex:insertionIndex];
+}
+
+
+
+-(void)cacheResultsAndDiscardStorage
+{
+    //cacheResults...
+    for (BCOQueryResultGroup *group in self.mutableGroups.objectEnumerator) {
+        [group cacheResultsAndDiscardStorage];
+    }
+
+    _cachedResults = [self objects];
+
+    //...AndDiscardStorage
+    _mutableGroups = nil;
+    _mutableObjects = nil;
 }
 
 @end
