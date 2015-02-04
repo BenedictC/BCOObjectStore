@@ -14,6 +14,8 @@
 
 @property(nonatomic, readonly) id identifier;
 
+@property(nonatomic, readonly) id result;
+
 @property(nonatomic, readonly) NSUInteger numberOfObjects;
 @property(nonatomic, readonly) NSArray *objects;
 

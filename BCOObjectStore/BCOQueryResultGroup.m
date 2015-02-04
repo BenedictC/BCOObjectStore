@@ -15,7 +15,7 @@
 //Query parameters
 @property(nonatomic, readonly) NSString *groupByField;
 @property(nonatomic, readonly) NSArray *sortDescriptors;
-@property(nonatomic, readonly) NSArray *(^selectBlock)(NSArray *);
+@property(nonatomic, readonly) id (^selectBlock)(NSArray *);
 
 //Group properties
 //@property(nonatomic, readonly) id objects;
@@ -27,7 +27,7 @@
 
 //Caches
 @property(nonatomic, readonly) id cachedObjectForGroupComparsion;
-@property(nonatomic, readonly) NSArray *cachedObjects;
+@property(nonatomic, readonly) id cachedResult;
 
 @end
 
@@ -36,7 +36,7 @@
 @implementation BCOQueryResultGroup
 
 #pragma mark - factory
-+(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectBlock:(NSArray *(^)(NSArray *))selectBlock
++(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectBlock:(id (^)(NSArray *))selectBlock
 {
     BCOQueryResultGroup *group = [[BCOQueryResultGroup alloc] initWithGroupByField:groupByField SortDescriptors:sortDescriptors groupIdentifier:nil selectBlock:selectBlock];
     for (id object in objects) {
@@ -45,13 +45,13 @@
 
     [group cacheResultsAndDiscardStorage];
 
-    return [group objects];
+    return [group result];
 }
 
 
 
 #pragma mark - instance life cycle
--(instancetype)initWithGroupByField:(NSString *)groupByField SortDescriptors:(NSArray *)sortDescriptors groupIdentifier:(id)groupIdentifier selectBlock:(NSArray *(^)(NSArray *))selectBlock
+-(instancetype)initWithGroupByField:(NSString *)groupByField SortDescriptors:(NSArray *)sortDescriptors groupIdentifier:(id)groupIdentifier selectBlock:(id (^)(NSArray *))selectBlock
 {
     self = [super init];
     if (self == nil) return nil;
@@ -73,7 +73,7 @@
 #pragma mark - properties
 -(NSString *)description
 {
-    return [NSString stringWithFormat:@"<%@: %p> {identifier: %@, objects:\n%@}", NSStringFromClass(self.class), self, self.groupIdentifier, self.objects];
+    return [NSString stringWithFormat:@"<%@: %p> {identifier: %@, result:\n%@}", NSStringFromClass(self.class), self, self.groupIdentifier, self.result];
 }
 
 
@@ -112,11 +112,11 @@
 
 
 
--(NSArray *)orderedObjects
+-(id)mappedObjects
 {
     //Map the objects if necessary
     NSArray *objects = self.mutableObjects;
-    NSArray *(^selectBlock)(NSArray *) = self.selectBlock;
+    id (^selectBlock)(NSArray *) = self.selectBlock;
 
     return (selectBlock == NULL) ? objects : selectBlock(objects);
 }
@@ -143,20 +143,29 @@
 
 
 
--(NSArray *)objects
+-(id)result
 {
-    if (_cachedObjects != nil) {
-        return _cachedObjects;
+    if (_cachedResult != nil) {
+        return _cachedResult;
     }
 
-    return ([self isGrouped]) ? [self orderedGroups] : [self orderedObjects];
+    return ([self isGrouped]) ? [self orderedGroups] : [self mappedObjects];
+}
+
+
+
+-(NSArray *)objects
+{
+    id objects = self.result;
+    return ([objects isKindOfClass:NSArray.class]) ? objects : nil;
 }
 
 
 
 -(NSUInteger)numberOfObjects
 {
-    return self.objects.count;
+    NSArray *objects = self.objects;
+    return (objects == nil) ? 0 : objects.count;
 }
 
 
@@ -183,7 +192,7 @@
 
 -(void)insertObject:(id)object
 {
-    NSAssert(_cachedObjects == nil, @"Attempted to insert an object into a completed result group.");
+    NSAssert(_cachedResult == nil, @"Attempted to insert an object into a completed result group.");
 
     if ([self isGrouped]) {
         [self insertObjectIntoGroup:object];
@@ -213,7 +222,7 @@
         [group cacheResultsAndDiscardStorage];
     }
     _cachedObjectForGroupComparsion = [self.mutableObjects firstObject];
-    _cachedObjects = [self objects];
+    _cachedResult = [self result];
 
     //...AndDiscardStorage
     _mutableGroups = nil;
