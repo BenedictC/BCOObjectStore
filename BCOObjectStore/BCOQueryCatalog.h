@@ -24,8 +24,8 @@
 -(NSSet *)recordsInIndex:(NSString *)indexName forValue:(id)value;
 -(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value;
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesInSet:(NSSet *)value;
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotInSet:(NSSet *)value;
+-(NSSet *)recordsInIndex:(NSString *)indexName forValuesInSet:(NSArray *)value;
+-(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotInSet:(NSArray *)value;
 
 -(NSSet *)recordsInIndex:(NSString *)indexName lessThanValue:(id)value;
 -(NSSet *)recordsInIndex:(NSString *)indexName lessThanOrEqualToValue:(id)value;

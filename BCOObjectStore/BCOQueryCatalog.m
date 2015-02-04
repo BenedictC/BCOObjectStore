@@ -14,7 +14,7 @@
 
 @interface BCOQueryCatalog ()
 
-@property(nonatomic, readonly) NSMutableDictionary *mutableIndexsByName;
+@property(nonatomic, readonly) NSMutableDictionary *mutableIndexesByName;
 
 @end
 
@@ -26,27 +26,27 @@
 -(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions
 {
     //Create and add the index
-    NSMutableDictionary *mutableIndexsByName = [NSMutableDictionary new];
+    NSMutableDictionary *mutableIndexesByName = [NSMutableDictionary new];
     [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
         BCOIndex *newIndex = [[BCOIndex alloc] initWithIndexDescription:indexDescription];
-        mutableIndexsByName[indexName] = newIndex;
+        mutableIndexesByName[indexName] = newIndex;
     }];
 
-    return [self initWithIndexDescriptions:indexDescriptions mutableIndexsByName:mutableIndexsByName];
+    return [self initWithIndexDescriptions:indexDescriptions mutableIndexesByName:mutableIndexesByName];
 }
 
 
 
--(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions mutableIndexsByName:(NSMutableDictionary *)mutableIndexsByName
+-(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions mutableIndexesByName:(NSMutableDictionary *)mutableIndexesByName
 {
     NSParameterAssert(indexDescriptions);
-    NSParameterAssert(mutableIndexsByName);
+    NSParameterAssert(mutableIndexesByName);
 
     self = [super init];
     if (self == nil) return nil;
 
     _indexDescriptions = [indexDescriptions copy];
-    _mutableIndexsByName = mutableIndexsByName;
+    _mutableIndexesByName = mutableIndexesByName;
 
     return self;
 }
@@ -56,21 +56,21 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    //Perfrom a deep copy of the indexs
-    NSMutableDictionary *mutableIndexsByName = [NSMutableDictionary new];
-    [self.mutableIndexsByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-        mutableIndexsByName[indexName] = [index copy];
+    //Perfrom a deep copy of the indexes
+    NSMutableDictionary *mutableIndexesByName = [NSMutableDictionary new];
+    [self.mutableIndexesByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
+        mutableIndexesByName[indexName] = [index copy];
     }];
 
-    return [[BCOQueryCatalog alloc] initWithIndexDescriptions:self.indexDescriptions mutableIndexsByName:mutableIndexsByName];
+    return [[BCOQueryCatalog alloc] initWithIndexDescriptions:self.indexDescriptions mutableIndexesByName:mutableIndexesByName];
 }
 
 
 
 #pragma mark - properties
--(NSDictionary *)indexsByName
+-(NSDictionary *)indexesByName
 {
-    return _mutableIndexsByName;
+    return _mutableIndexesByName;
 }
 
 
@@ -78,8 +78,9 @@
 #pragma mark - access
 -(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object
 {
-    BCOQueryCatalogEntry *entry = [[BCOQueryCatalogEntry alloc] initWithRecord:record];
-    [self.indexsByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
+    NSMutableDictionary *indexValuesByIndexName = [NSMutableDictionary new];
+
+    [self.indexesByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
         id value = [index generateIndexValueForObject:object];
         if (value == nil) return;
 
@@ -87,8 +88,10 @@
         [index addRecord:record forIndexValue:value];
 
         //Add a reference for the indexName:value pair to the entry.
-        entry.valuesByIndexName[indexName] = value;
+        indexValuesByIndexName[indexName] = value;
     }];
+
+    BCOQueryCatalogEntry *entry = [[BCOQueryCatalogEntry alloc] initWithRecord:record indexValuesByIndexName:indexValuesByIndexName];
 
     return entry;
 }
@@ -97,9 +100,9 @@
 
 -(void)removeEntry:(BCOQueryCatalogEntry *)queryCatalogEntry
 {
-    NSDictionary *mutableIndexs = self.mutableIndexsByName;
-    [queryCatalogEntry.valuesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, id value, BOOL *stop) {
-        BCOIndex *index = mutableIndexs[indexName];
+    NSDictionary *mutableIndexes = self.mutableIndexesByName;
+    [queryCatalogEntry.indexValuesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, id value, BOOL *stop) {
+        BCOIndex *index = mutableIndexes[indexName];
         [index removeRecord:queryCatalogEntry.record forIndexValue:value];
     }];
 }
@@ -108,7 +111,7 @@
 
 -(void)enumerateKeysAndObjectsUsingBlock:(void(^)(NSString *indexName, BCOIndex *index, BOOL *stop))block
 {
-    [self.mutableIndexsByName enumerateKeysAndObjectsUsingBlock:block];
+    [self.mutableIndexesByName enumerateKeysAndObjectsUsingBlock:block];
 }
 
 
@@ -116,7 +119,7 @@
 #pragma mark - modifying
 -(NSSet *)recordsInIndex:(NSString *)indexName forValue:(id)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsForValue:value];
 }
 
@@ -124,23 +127,23 @@
 
 -(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsWithValueNotEqualTo:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesInSet:(NSSet *)value
+-(NSSet *)recordsInIndex:(NSString *)indexName forValuesInSet:(NSArray *)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsForValuesInSet:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotInSet:(NSSet *)value
+-(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotInSet:(NSArray *)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsForValuesNotInSet:value];
 }
 
@@ -148,7 +151,7 @@
 
 -(NSSet *)recordsInIndex:(NSString *)indexName lessThanValue:(id)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsWithValueLessThan:value];
 }
 
@@ -156,7 +159,7 @@
 
 -(NSSet *)recordsInIndex:(NSString *)indexName lessThanOrEqualToValue:(id)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsWithValueLessThanOrEqualTo:value];
 }
 
@@ -164,7 +167,7 @@
 
 -(NSSet *)recordsInIndex:(NSString *)indexName greaterThanValue:(id)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsWithValueGreaterThan:value];
 }
 
@@ -172,7 +175,7 @@
 
 -(NSSet *)recordsInIndex:(NSString *)indexName greaterThanOrEqualToValue:(id)value
 {
-    BCOIndex *index = self.indexsByName[indexName];
+    BCOIndex *index = self.indexesByName[indexName];
     return [index recordsWithValueGreaterThanOrEqualTo:value];
 }
 
