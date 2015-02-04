@@ -23,6 +23,82 @@
 
 @implementation BCOObjectStorageContainer
 
++(NSMutableDictionary *)readObjectsAndRecordsFromPath:(NSString *)objectsPath
+{
+    NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
+    NSInputStream *stream = [NSInputStream inputStreamWithFileAtPath:objectsPath];
+    [stream open];
+
+    do {
+        //Read the length
+        NSInteger dataLength = 0;
+        [stream read:(uint8_t *)&dataLength maxLength:sizeof(NSInteger)];
+
+        if (stream.streamStatus == NSStreamStatusAtEnd) break;
+
+        //Read the data
+        NSInteger bytesRemaining = dataLength;
+        void *buffer = malloc(sizeof(uint8_t) * dataLength);
+        while (bytesRemaining > 0) {
+            bytesRemaining -= [stream read:buffer maxLength:bytesRemaining];
+        }
+
+        //Create the object from the data
+        NSData *archive = [NSData dataWithBytesNoCopy:buffer length:dataLength freeWhenDone:YES];
+        id object = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+
+        //Create a record and store
+        BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
+        objectsByStorageRecords[record] = object;
+    } while (stream.streamStatus != NSStreamStatusAtEnd);
+    
+    [stream close];
+
+    return objectsByStorageRecords;
+}
+
+
+
++(BOOL)writeObjects:(NSArray *)objects toPath:(NSString *)objectsPath error:(NSError **)outError
+{
+    NSOutputStream *stream = [NSOutputStream outputStreamToMemory];
+    [stream open];
+
+    for (id object in objects) {
+        NSData *archive = [NSKeyedArchiver archivedDataWithRootObject:object];
+
+        //Write the length
+        {
+            const NSInteger scalarToWrite = archive.length;
+            const uint8_t *bytes = (uint8_t *)&scalarToWrite;
+            const NSInteger totalBytes = sizeof(scalarToWrite);
+
+            NSInteger bytesWritten = 0;
+            while (bytesWritten < totalBytes) {
+                bytesWritten += [stream write:bytes+(bytesWritten) maxLength:(totalBytes-bytesWritten)];
+            }
+        }
+
+        //Write the data
+        {
+            const uint8_t *bytes = (uint8_t *)archive.bytes;
+            const NSInteger totalBytes = archive.length;
+
+            NSInteger bytesWritten = 0;
+            while (bytesWritten < totalBytes) {
+                bytesWritten += [stream write:bytes+(bytesWritten) maxLength:(totalBytes-bytesWritten)];
+            }
+        }
+    }
+
+    [stream close];
+    NSData *data = [stream propertyForKey:NSStreamDataWrittenToMemoryStreamKey];
+
+    return [data writeToFile:objectsPath options:NSDataWritingAtomic error:outError];
+}
+
+
+
 #pragma mark - instance life cycle
 +(BCOObjectStorageContainer *)objectStorageWithObjects:(NSSet *)objects
 {
@@ -47,15 +123,7 @@
     }
 
     //Load objects
-    NSArray *objects = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
-    NSAssert(objects != nil, @"Failed to un-archive objects.");
-
-    NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
-    for (id object in objects) {
-        BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
-        objectsByStorageRecords[record] = object;
-    }
-
+    NSMutableDictionary *objectsByStorageRecords = [self readObjectsAndRecordsFromPath:path];
     return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:objectsByStorageRecords];
 }
 
@@ -192,13 +260,11 @@
 
 
 #pragma mark - Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
 {
     NSString *objectsPath = [path stringByAppendingPathComponent:@"objects.archive"];
 
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:self.allObjects];
-
-    return [data writeToFile:objectsPath options:NSDataWritingAtomic error:ourError];
+    return [self.class writeObjects:self.objectsByStorageRecords.allValues toPath:objectsPath error:outError];
 }
 
 @end
