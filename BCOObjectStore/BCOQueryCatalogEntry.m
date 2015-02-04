@@ -11,16 +11,16 @@
 
 
 
-@implementation BCOQueryCatalogEntry;
+@implementation BCOQueryCatalogEntry
 
--(instancetype)initWithRecord:(id)record
+-(instancetype)initWithRecord:(id)record indexValuesByIndexName:(NSDictionary *)indexValuesByIndexName
 {
     NSParameterAssert(record);
     self = [super init];
     if (self == nil) return nil;
 
     _record = record;
-    _valuesByIndexName = [NSMutableDictionary new];
+    _indexValuesByIndexName = [indexValuesByIndexName copy];
 
     return self;
 }
