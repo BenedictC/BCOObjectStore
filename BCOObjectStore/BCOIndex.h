@@ -33,7 +33,7 @@
 -(NSSet *)recordsForValue:(id)value;
 -(NSSet *)recordsWithValueNotEqualTo:(id)value;
 
--(NSSet *)recordsForValuesInSet:(NSSet *)values;
--(NSSet *)recordsForValuesNotInSet:(NSSet *)values;
+-(NSSet *)recordsForValuesInSet:(NSArray *)values;
+-(NSSet *)recordsForValuesNotInSet:(NSArray *)values;
 
 @end
