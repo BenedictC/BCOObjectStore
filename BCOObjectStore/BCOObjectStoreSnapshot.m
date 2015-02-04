@@ -18,7 +18,7 @@
 
 
 @interface BCOObjectStoreSnapshot ()
-
+#pragma message "TODO: Improve performance by replacing *some of* the NS* data structures with CF* that do not need to retain/release."
 //Storage
 @property(nonatomic, readonly) BCOObjectStorageContainer *objectStorage;
 //Index
@@ -128,7 +128,7 @@
 
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects
 {
-#pragma message "TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are."
+//TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are.
     //Copy state
     BCOObjectStorageContainer *newStorage = [self.objectStorage copy];
     BCOQueryCatalog *newQueryCatalog = [self.queryCatalog copy];
