@@ -46,7 +46,7 @@ static inline BOOL isObjectABlock(id variable) {
 
 @implementation BCOQuery
 
--(instancetype)initWithSelectMapper:(NSArray *(^)(NSArray *))selectMapper rootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression groupBy:(NSString *)groupBy sortDescriptors:(NSArray *)sortDescriptors
+-(instancetype)initWithSelectMapper:(id (^)(NSArray *))selectMapper rootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression groupBy:(NSString *)groupBy sortDescriptors:(NSArray *)sortDescriptors
 {
     self = [super init];
     if (self == nil) return nil;
@@ -66,7 +66,7 @@ static inline BOOL isObjectABlock(id variable) {
 {
     NSScanner *scanner = [NSScanner scannerWithString:queryString];
 
-    NSArray *(^selectMapper)(NSArray *) = [self scanSelectFieldWithScanner:scanner substitutionVariables:subsitutionVariable];
+    id (^selectMapper)(NSArray *) = [self scanSelectMapperWithScanner:scanner substitutionVariables:subsitutionVariable];
     BCOWhereClauseExpression *where = [self scanWhereClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSString *groupBy = [self scanGroupByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSArray *sortDescriptors = [self scanOrderByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
@@ -83,62 +83,23 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
-+(NSArray *(^)(NSArray *))scanSelectFieldWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
++(id(^)(NSArray *))scanSelectMapperWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
     BOOL didScanSELECT = [scanner scanString:@"SELECT" intoString:NULL];
-    if (!didScanSELECT) {
-        return NULL;
-    }
+    if (!didScanSELECT) return NULL;
 
     //Check for 'full object' selector
     BOOL didScanObjectSelector = [scanner scanString:@"*" intoString:NULL];
-    if (didScanObjectSelector) {
-        return NULL;
-    }
+    if (didScanObjectSelector) return NULL;
 
-    //Check for function selector
-    BOOL didScanFunctionOpenDelimitter = [scanner scanString:@"@" intoString:NULL];
-    if (didScanFunctionOpenDelimitter) {
+    //Scan a function selector
+    id function = [self scanSelectFunctionWithScanner:scanner substitutionVariables:subsitutionVariable];
+    if (function != nil) return function;
 
-        //Variable function
-        BOOL didScanFunctionVariableDelimitter = [scanner scanString:@"(" intoString:NULL];
-        if (didScanFunctionVariableDelimitter) {
-            id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
-#ifdef DEBUG
-            //This check is possibly unsafe as it relies on private implementation.
-            if (!isObjectABlock(variable)) {
-                [NSException raise:NSInvalidArgumentException format:@"Varible for SELECT function is not a block"];
-                return nil;
-            }
-#endif
-            BOOL didScanFunctionCloseDelimitter = [scanner scanString:@")" intoString:NULL];
-            if (!didScanFunctionCloseDelimitter) {
-                [NSException raise:NSInvalidArgumentException format:@"Failed to scan SELECT function closing brace."];
-                return nil;
-            }
+    //The selector mist be a fieldMapper
+    NSString *fieldName = nil;
 
-            return variable;
-        }
-
-        //Named function
-        NSString *functionName = [self scanIdentifierWithScanner:scanner];
-        BOOL didScanFunctionName = functionName != nil;
-        if (!didScanFunctionName) {
-            [NSException raise:NSInvalidArgumentException format:@"Failed to scan SELECT function name."];
-            return nil;
-        }
-
-        if ([@"count" isEqualToString:functionName]) {
-            return ^(NSArray *objects){
-                return @[@(objects.count)];
-            };
-        }
-
-        [NSException raise:NSInvalidArgumentException format:@"Unknown SELECT function name '%@'.", functionName];
-        return nil;
-    }
-
-
+    //Scan a variable string fieldMapper
     id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
     BOOL didScanVariable = variable != nil;
     if (didScanVariable) {
@@ -146,16 +107,23 @@ static inline BOOL isObjectABlock(id variable) {
             [NSException raise:NSInvalidArgumentException format:@"Variable for SELECT clause is not a string"];
             return nil;
         }
-        return variable;
+        fieldName = variable;
     }
 
-    NSString *identifier = [self scanIdentifierWithScanner:scanner];
+    //Scan an identifier fieldMapper
+    BOOL shouldScanIdentifier = (fieldName == nil);
+    NSString *identifier = (shouldScanIdentifier) ? [self scanIdentifierWithScanner:scanner] : nil;
     BOOL didScanIdentifier = identifier != nil;
-    if (!didScanIdentifier) {
+    if (didScanIdentifier) {
+        fieldName = identifier;
+    }
+
+    if (fieldName == nil) {
         [NSException raise:NSInvalidArgumentException format:@"Failed to scan identifier for SELECT clause."];
         return nil;
     }
 
+    //Create and return an fieldName mapper
     return ^(NSArray *objects){
         NSMutableArray *results = [NSMutableArray new];
         for (id object in objects) {
@@ -166,6 +134,129 @@ static inline BOOL isObjectABlock(id variable) {
 
         return results;
     };
+}
+
+
+
++(id(^)(NSArray *))scanSelectFunctionWithScanner:(NSScanner *)scanner  substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanFunctionOpenDelimitter = [scanner scanString:@"@" intoString:NULL];
+    if (!didScanFunctionOpenDelimitter) return nil;
+
+    id(^function)(NSArray *objects, NSArray *parameters) = NULL;
+
+    //Variable function...
+    function = [self scanSelectVariableFunctionWithScanner:scanner substitutionVariables:subsitutionVariable];
+
+    //Named functions...
+    BOOL shouldScanNamedFunction = (function == NULL);
+    if (shouldScanNamedFunction) {
+        function = [self scanSelectNamedFunctionWithScanner:scanner substitutionVariables:subsitutionVariable];
+    }
+
+    //Err...
+    if (function == NULL) {
+        [NSException raise:NSInvalidArgumentException format:@"Invalid SELECT mapper."];
+        return nil;
+    }
+
+    NSArray *parameters = [self scanSelectFunctionParametersWithScanner:scanner substitutionVariables:subsitutionVariable];
+
+    //Let's have a some indian food.
+    return ^(NSArray *objects){
+        return function(objects, parameters);
+    };
+}
+
+
+
++(id(^)(NSArray *, NSArray *))scanSelectVariableFunctionWithScanner:(NSScanner *)scanner  substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+    BOOL didScanFunctionVariable = (variable != nil);
+    if (didScanFunctionVariable && !isObjectABlock(variable)) {
+#ifdef DEBUG
+        //This check is possibly unsafe as it relies on private implementation.
+        [NSException raise:NSInvalidArgumentException format:@"Varible for SELECT function is not a block"];
+        return nil;
+#endif
+    }
+    return variable;
+}
+
+
+
++(id(^)(NSArray *, NSArray *))scanSelectNamedFunctionWithScanner:(NSScanner *)scanner  substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    NSString *functionName = [self scanIdentifierWithScanner:scanner];
+    if (functionName == nil) return nil;
+
+    //count
+    if ([@"count" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            return @(objects.count);
+        };
+    }
+
+    //dict
+    if ([@"dict" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            NSMutableDictionary *dict = [NSMutableDictionary new];
+            NSString *kvcKey = [parameters firstObject];
+            for (id object in objects) {
+                id dictKey = [object valueForKey:kvcKey];
+                dict[dictKey] = object;
+            }
+            return dict;
+        };
+    }
+
+    #pragma message "TODO: add more functions"
+    //max
+    //min
+    //distinctUnion
+    //...
+
+    [NSException raise:NSInvalidArgumentException format:@"Unknown SELECT mapper for name '%@'", functionName];
+    return nil;
+}
+
+
+
++(NSArray *)scanSelectFunctionParametersWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanOpeningBrace = [scanner scanString:@"(" intoString:NULL];
+    if (!didScanOpeningBrace) return nil;
+
+    BOOL didScanImmediateClosingBrace = [scanner scanString:@")" intoString:NULL];
+    if (didScanImmediateClosingBrace) return nil;
+
+    NSMutableArray *parameters = [NSMutableArray new];
+    do {        
+        id identifier = [self scanIdentifierWithScanner:scanner];
+        if (identifier != nil) {
+            [parameters addObject:identifier];
+            continue;
+        }
+
+        id value = [self scanValueWithScanner:scanner substitutionVariables:subsitutionVariable];
+        if (value != nil) {
+            [parameters addObject:value];
+            continue;
+        }
+
+        [NSException raise:NSInvalidArgumentException format:@"Expected value in SELECT parameter list."];
+        return nil;
+
+    } while ([scanner scanString:@"," intoString:NULL]); //Scan parameter separator.
+
+    BOOL didScanClosingBrace = [scanner scanString:@")" intoString:NULL];
+    if (!didScanClosingBrace) {
+        [NSException raise:NSInvalidArgumentException format:@"Failed to scan closing brace of SELECT function parameter list."];
+        return nil;
+    }
+
+    return parameters;
 }
 
 
@@ -395,7 +486,7 @@ static inline BOOL isObjectABlock(id variable) {
     //Collection
     BOOL didScanOpenCollectionDelimtter = [scanner scanString:@"{" intoString:NULL];
     if (didScanOpenCollectionDelimtter) {
-        NSMutableSet *set = [NSMutableSet new];
+        NSMutableArray *array = [NSMutableArray new];
 
         do {
             id value = [self scanValueWithScanner:scanner substitutionVariables:substitutionVariables];
@@ -403,7 +494,7 @@ static inline BOOL isObjectABlock(id variable) {
                 [NSException raise:NSInvalidArgumentException format:@"Invalid collection. Expected value."];
                 return nil;
             }
-            [set addObject:value];
+            [array addObject:value];
         } while ([scanner scanString:@"," intoString:NULL]);
 
         BOOL didScanCloseCollectionDelimitter = [scanner scanString:@"}" intoString:NULL];
@@ -412,7 +503,7 @@ static inline BOOL isObjectABlock(id variable) {
             return nil;
         }
 
-        return set;
+        return array;
     }
 
     return nil;
