@@ -15,7 +15,7 @@
     @protected
     NSSet *_records;
 }
-@property(nonatomic) id value;
+@property(nonatomic) id indexValue;
 @end
 
 
@@ -25,24 +25,24 @@
 #pragma mark - instance life cylce
 -(instancetype)init
 {
-    return [self initWithValue:nil records:nil];
+    return [self initWithIndexValue:nil records:nil];
 }
 
 
--(instancetype)initWithValue:(id)value records:(NSSet *)records
+-(instancetype)initWithIndexValue:(id)value records:(NSSet *)records
 {
-    return [self initWithvalue:value records:records shouldCopyObjects:YES];
+    return [self initWithIndexValue:value records:records shouldCopyObjects:YES];
 }
 
 
--(instancetype)initWithvalue:(id)value records:(NSSet *)records shouldCopyObjects:(BOOL)shouldCopyRecords
+-(instancetype)initWithIndexValue:(id)value records:(NSSet *)records shouldCopyObjects:(BOOL)shouldCopyRecords
 {
     NSParameterAssert(value);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _value = value;
+    _indexValue = value;
     _records = (shouldCopyRecords) ? [records copy] : records;
 
     return self;
@@ -53,14 +53,14 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    return ([self.class isEqual:BCOIndexEntry.class]) ? self : [[BCOIndexEntry alloc] initWithValue:self.value records:self.records];
+    return ([self.class isEqual:BCOIndexEntry.class]) ? self : [[BCOIndexEntry alloc] initWithIndexValue:self.indexValue records:self.records];
 }
 
 
 
 -(id)mutableCopyWithZone:(NSZone *)zone
 {
-    return [[BCOMutableIndexEntry alloc] initWithValue:self.value records:self.records];
+    return [[BCOMutableIndexEntry alloc] initWithIndexValue:self.indexValue records:self.records];
 }
 
 
@@ -70,14 +70,14 @@
 {
     if (![object isKindOfClass:BCOIndexEntry.class])  return NO;
 
-    return [[object value] isEqual:self.value];
+    return [object.indexValue isEqual:self.indexValue];
 }
 
 
 
 -(NSUInteger)hash
 {
-    return BCOIndexEntry.class.hash ^ [self.value hash];
+    return BCOIndexEntry.class.hash ^ [self.indexValue hash];
 }
 
 
@@ -93,7 +93,7 @@
 
 -(NSString *)description
 {
-    NSString *description = [NSString stringWithFormat:@"<%@: %p> {value: %@}", NSStringFromClass(self.class), self, self.value];
+    NSString *description = [NSString stringWithFormat:@"<%@: %p> {value: %@}", NSStringFromClass(self.class), self, self.indexValue];
     return description;
 }
 
@@ -103,9 +103,9 @@
 
 @implementation BCOMutableIndexEntry
 
--(instancetype)initWithValue:(id)value records:(NSSet *)records
+-(instancetype)initWithIndexValue:(id)value records:(NSSet *)records
 {
-    return [super initWithvalue:value records:[records mutableCopy] shouldCopyObjects:NO];
+    return [super initWithIndexValue:value records:[records mutableCopy] shouldCopyObjects:NO];
 }
 
 
@@ -113,7 +113,7 @@
 -(NSMutableSet *)mutableRecords
 {
     id records = _records;
-    NSAssert([records isKindOfClass:NSMutableSet.class], @".records is expected to be an NSMutableSet but is a %@.", NSStringFromClass([records class]));
+    NSAssert([records isKindOfClass:NSMutableSet.class], @"BCOMutableIndexEntry.records is expected to be an NSMutableSet but is a %@.", NSStringFromClass([records class]));
     return records;
 }
 
