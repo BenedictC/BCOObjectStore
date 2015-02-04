@@ -46,6 +46,7 @@
 -(instancetype)initWithIndexEntries:(NSArray *)indexEntries indexDescription:(BCOIndexDescription *)indexDescription
 {
     //BCOIndex assumes ownership of indexEntries and will modify it
+    NSParameterAssert(indexEntries);
     NSParameterAssert(indexDescription);
 
     self = [super init];
@@ -56,7 +57,6 @@
     _indexDescription = indexDescription;
 
     _dirtyIndexEntries = [NSMutableSet new];
-
 
     return self;
 }
@@ -116,7 +116,7 @@
 {
     NSComparator comparator = self.indexDescription.valueComparator;
     return ^NSComparisonResult(BCOIndexEntry *entry1, BCOIndexEntry *entry2) {
-        return comparator(entry1.value, entry2.value);
+        return comparator(entry1.indexValue, entry2.indexValue);
     };
 }
 
@@ -133,7 +133,7 @@
 #pragma mark - Entry Access
 -(BCOIndexEntry *)entryForValue:(id)value index:(NSUInteger *)outIndex
 {
-    BCOMutableIndexEntry *referenceEntry = [[BCOMutableIndexEntry alloc] initWithValue:value records:nil];
+    BCOMutableIndexEntry *referenceEntry = [[BCOMutableIndexEntry alloc] initWithIndexValue:value records:nil];
     NSArray *entries = self.indexEntries;
     NSUInteger index = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual usingComparator:self.entriesComparator];
 
@@ -154,7 +154,7 @@
     BOOL isNewEntry = entry == nil;
     if (isNewEntry) {
         //It's a new entry so own it and insert it into the array
-        BCOMutableIndexEntry *newEntry = [[BCOMutableIndexEntry alloc] initWithValue:value records:[NSSet new]];
+        BCOMutableIndexEntry *newEntry = [[BCOMutableIndexEntry alloc] initWithIndexValue:value records:[NSSet new]];
 
         [self.dirtyIndexEntries addObject:newEntry];
 
@@ -208,7 +208,7 @@
     NSArray *entries = self.indexEntries;
 
     NSMutableSet *matchingRecords = [NSMutableSet new];
-    for (int i = first; i < last; i++) {
+    for (NSInteger i = first; i < last; i++) {
         BCOIndexEntry *entry = entries[i];
         [matchingRecords unionSet:entry.records];
     }
@@ -221,7 +221,7 @@
 #pragma mark - Record Access
 -(NSSet *)recordsWithValueLessThan:(id)value
 {
-    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithValue:value records:nil];
+    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithIndexValue:value records:nil];
     NSArray *entries = self.indexEntries;
     NSUInteger indexOfFirstObjectEqualToGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
     NSRange range = NSMakeRange(0, indexOfFirstObjectEqualToGreaterThanValue);
@@ -233,7 +233,7 @@
 
 -(NSSet *)recordsWithValueLessThanOrEqualTo:(id)value
 {
-    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithValue:value records:nil];
+    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithIndexValue:value records:nil];
     NSArray *entries = self.indexEntries;
     NSUInteger indexOfFirstObjectGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingLastEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
     NSRange range = NSMakeRange(0, indexOfFirstObjectGreaterThanValue);
@@ -245,7 +245,7 @@
 
 -(NSSet *)recordsWithValueGreaterThan:(id)value
 {
-    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithValue:value records:nil];
+    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithIndexValue:value records:nil];
     NSArray *entries = self.indexEntries;
     NSUInteger indexOfFirstObjectGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingLastEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
     NSRange range = NSMakeRange(indexOfFirstObjectGreaterThanValue, entries.count - indexOfFirstObjectGreaterThanValue);
@@ -257,7 +257,7 @@
 
 -(NSSet *)recordsWithValueGreaterThanOrEqualTo:(id)value
 {
-    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithValue:value records:nil];
+    BCOIndexEntry *referenceEntry = [[BCOIndexEntry alloc] initWithIndexValue:value records:nil];
     NSArray *entries = self.indexEntries;
     NSUInteger indexOfFirstObjectGreaterThanValue = [entries indexOfObject:referenceEntry inSortedRange:NSMakeRange(0, entries.count) options:NSBinarySearchingFirstEqual | NSBinarySearchingInsertionIndex usingComparator:self.entriesComparator];
 
@@ -282,7 +282,7 @@
 
     NSMutableSet *records = [NSMutableSet new];
     for (BCOIndexEntry *entry in self.indexEntries) {
-        if (comparator(entry.value, value) != NSOrderedSame) {
+        if (comparator(entry.indexValue, value) != NSOrderedSame) {
             [records unionSet:entry.records];
         }
     }
@@ -292,7 +292,7 @@
 
 
 
--(NSSet *)recordsForValuesInSet:(NSSet *)values
+-(NSSet *)recordsForValuesInSet:(NSArray *)values
 {
     NSMutableSet *records = [NSMutableSet new];
     for (id value in values) {
@@ -309,7 +309,7 @@
 {
     NSMutableSet *shunnedEntries = [NSMutableSet new];
     for (id value in values) {
-        BCOIndexEntry *shunnedEntry = [[BCOIndexEntry alloc] initWithValue:value records:nil];
+        BCOIndexEntry *shunnedEntry = [[BCOIndexEntry alloc] initWithIndexValue:value records:nil];
         [shunnedEntries addObject:shunnedEntry];
     }
 
