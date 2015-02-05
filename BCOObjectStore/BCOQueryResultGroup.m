@@ -70,6 +70,42 @@
 
 
 
+#pragma mark - equality
+-(BOOL)isEqual:(id)object
+{
+    //We only care about the properties that are exposed in the BCOQueryResultGroup protocol    
+    if (![object isKindOfClass:self.class]) return NO;
+
+    id selfIdentifier = self.identifier;
+    id otherIdentifer = [object identifier];
+    if (selfIdentifier == nil && otherIdentifer != nil) return NO;
+    if (selfIdentifier != nil && otherIdentifer == nil) return NO;
+    if (![selfIdentifier isEqual:otherIdentifer])       return NO;
+
+    id selfResult = self.result;
+    id otherResult = [object result];
+    if (selfResult == nil && otherResult != nil) return NO;
+    if (selfResult != nil && otherResult == nil) return NO;
+    if (![selfResult isEqual:otherResult])       return NO;
+
+    return YES;
+}
+
+
+
+-(NSUInteger)hash
+{
+    //We only care about the properties that are exposed in the BCOQueryResultGroup protocol
+    NSUInteger hash = 0;
+
+    hash ^= [self.identifier hash];
+    hash ^= [self.result hash];
+
+    return hash;
+}
+
+
+
 #pragma mark - properties
 -(NSString *)description
 {
