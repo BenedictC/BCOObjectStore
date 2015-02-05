@@ -16,7 +16,7 @@
 -(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
 
 //Querying
--(NSArray *)executeQuery:(NSString *)query;
--(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
+-(id)executeQuery:(NSString *)query;
+-(id)executeQuery:(NSString *)query substitutionVariables:(NSDictionary *)substitutionVariables;
 
 @end
