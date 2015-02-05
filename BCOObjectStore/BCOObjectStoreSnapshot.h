@@ -9,6 +9,8 @@
 #import <Foundation/Foundation.h>
 #import "BCOObjectStoreSnapshotProtocol.h"
 
+@class BCOQuery;
+
 
 
 @interface BCOObjectStoreSnapshot : NSObject <BCOObjectStoreSnapshot>
@@ -19,10 +21,10 @@
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects;
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects;
 
-//Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
-
 //Properties
 -(NSDictionary *)indexDescriptions;
+
+//Object access
+-(id)executeQueryObject:(BCOQuery *)query;
 
 @end

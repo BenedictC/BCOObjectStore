@@ -8,12 +8,11 @@
 
 #import "BCOObjectStoreSnapshot.h"
 
-#import "BCOObjectStoreSnapshot+Query.h"
-#import "BCOIndexDescription.h"
 #import "BCOObjectStorageContainer.h"
-#import "BCOStorageRecord.h"
 #import "BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h"
 #import "BCOQueryCatalog.h"
+#import "BCOQuery.h"
+#import "BCOQueryResultGroup.h"
 
 
 
@@ -101,13 +100,6 @@
 }
 
 
-#pragma mark - archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
-{
-    return [self.objectStorage writeToPath:path error:outError];
-}
-
-
 
 #pragma mark - properties
 -(NSDictionary *)indexDescriptions
@@ -162,17 +154,136 @@
 
 
 
-#pragma mark - object access
--(NSArray *)executeQuery:(NSString *)query
+#pragma mark - BCOObjectStoreSnapshot protocol
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
 {
-    return [self executeQuery:query subsitutionVariable:nil objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
+    return [self.objectStorage writeToPath:path error:outError];
 }
 
 
 
--(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable
+-(id)executeQuery:(NSString *)queryString
 {
-    return [self executeQuery:query subsitutionVariable:subsitutionVariable objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:nil];
+    return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
+}
+
+
+
+-(id)executeQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
+    return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
+}
+
+
+
+#pragma mark - object access
+-(id)executeQueryObject:(BCOQuery *)query
+{
+    return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
+}
+
+
+
++(id)executeQuery:(BCOQuery *)query objectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog
+{
+    //Match the objects (WHERE)
+    NSSet *matchedRecords = [self evaluateWHEREClauseExpression:query.rootWhereExpression storage:storage queryCatalog:queryCatalog searchSpace:nil];
+
+    //Convert the records to objects
+    NSMutableArray *objects = [NSMutableArray new];
+    for (BCOStorageRecord *record in matchedRecords) {
+        id object = [storage objectForStorageRecord:record];
+        [objects addObject:object];
+    }
+
+    //Create ORDERed GROUPs
+    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectBlock:query.selectMapper];
+}
+
+
+
+#pragma mark - Object fetching
++(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression storage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog searchSpace:(NSSet *)searchSpace
+{
+    switch (expression.operator) {
+
+        case BCOQueryOperatorAND: {
+            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
+
+            //Optimizations
+            BOOL isRightBranchRedundant = (leftSet.count == 0);
+            if (isRightBranchRedundant)return [NSSet set];
+            //TODO: What other optimizations are there?
+
+            //Not that we're restricting the search space to leftSet. Only predicate uses this but that is potential very useful as predicates would otherwise have to scan ALL objects.
+            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage queryCatalog:queryCatalog searchSpace:leftSet];
+            NSMutableSet *intersectSet = [leftSet mutableCopy];
+            [intersectSet intersectSet:rightSet];
+            return intersectSet;
+        }
+
+        case BCOQueryOperatorOR: {
+            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
+            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
+            NSMutableSet *unionSet = [leftSet mutableCopy];
+            [unionSet unionSet:rightSet];
+            return unionSet;
+        }
+
+        case BCOQueryOperatorEqualTo: {
+            return [queryCatalog recordsInIndex:expression.leftOperand forValue:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorNotEqualTo: {
+            return [queryCatalog recordsInIndex:expression.leftOperand forValuesNotEqualToValue:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorIn: {
+            return [queryCatalog recordsInIndex:expression.leftOperand forValuesInSet:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorNotIn: {
+            return [queryCatalog recordsInIndex:expression.leftOperand forValuesNotInSet:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorLessThan: {
+            return [queryCatalog recordsInIndex:expression.leftOperand lessThanValue:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorLessThanOrEqualTo: {
+            return [queryCatalog recordsInIndex:expression.leftOperand lessThanOrEqualToValue:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorGreaterThan: {
+            return [queryCatalog recordsInIndex:expression.leftOperand greaterThanValue:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorGreaterThanOrEqualTo: {
+            return [queryCatalog recordsInIndex:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
+        }
+
+        case BCOQueryOperatorPredicate: {
+            NSPredicate *predicate = expression.leftOperand;
+            NSMutableSet *filteredRecords = [NSMutableSet new];
+            id recordsToSearch = searchSpace ?: storage.allStorageRecords;
+            for (id record in recordsToSearch) {
+                id object = [storage objectForStorageRecord:record];
+                BOOL didMatch = [predicate evaluateWithObject:object];
+                if (didMatch) [filteredRecords addObject:record];
+            }
+            return filteredRecords;
+        }
+
+        case BCOQueryOperatorInvalid: {
+            //This should never happen. If it does it indicates a bug in the parsing.
+            [NSException raise:NSInvalidArgumentException format:@"Invalid operator."];
+            break;
+        }
+    }
+    
+    return nil;
 }
 
 @end
