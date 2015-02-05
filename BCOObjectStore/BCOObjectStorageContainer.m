@@ -123,7 +123,7 @@
     }
 
     //Load objects
-    NSMutableDictionary *objectsByStorageRecords = [self readObjectsAndRecordsFromPath:path];
+    NSMutableDictionary *objectsByStorageRecords = [self readObjectsAndRecordsFromPath:objectsPath];
     return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:objectsByStorageRecords];
 }
 
