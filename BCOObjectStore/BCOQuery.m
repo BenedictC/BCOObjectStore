@@ -211,6 +211,28 @@ static inline BOOL isObjectABlock(id variable) {
         };
     }
 
+    //first
+    if ([@"first" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            id object = [objects firstObject];
+            NSString *kvcKey = [parameters firstObject];
+            BOOL shouldReturnObject = kvcKey == nil || [@"*" isEqualToString:kvcKey];
+
+            return (shouldReturnObject) ? object : [object valueForKey:kvcKey];
+        };
+    }
+
+    //last
+    if ([@"last" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            id object = [objects lastObject];
+            NSString *kvcKey = [parameters firstObject];
+            BOOL shouldReturnObject = kvcKey == nil || [@"*" isEqualToString:kvcKey];
+
+            return (shouldReturnObject) ? object : [object valueForKey:kvcKey];
+        };
+    }
+
     #pragma message "TODO: add more functions"
     //max
     //min
@@ -565,7 +587,7 @@ static inline BOOL isObjectABlock(id variable) {
 +(BCOQueryOperator)scanSetOperatorWithScanner:(NSScanner *)scanner
 {
     //Note the trailing space to avoid ambiguous parsing
-    if ([scanner scanString:@"= " intoString:NULL])  return BCOQueryOperatorEqualTo;
+    if ([scanner scanString:@"= " intoString:NULL] || [scanner scanString:@"== " intoString:NULL])  return BCOQueryOperatorEqualTo;
     if ([scanner scanString:@"!= " intoString:NULL]) return BCOQueryOperatorNotEqualTo;
 
     if ([scanner scanString:@"IN " intoString:NULL]) return BCOQueryOperatorIn;
