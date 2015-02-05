@@ -17,7 +17,6 @@
 
 
 @interface BCOObjectStoreSnapshot ()
-#pragma message "TODO: Improve performance by replacing *some of* the NS* data structures with CF* that do not need to retain/release."
 //Storage
 @property(nonatomic, readonly) BCOObjectStorageContainer *objectStorage;
 //Index
