@@ -10,6 +10,8 @@
 
 #import "BCOObjectStoreSnapshot.h"
 #import "BCOIndexDescription.h"
+#import "BCOObjectStoreSnapshotChangeMonitor.h"
+#import "BCOQuery.h"
 
 
 
@@ -128,17 +130,29 @@
 
 
 
+#pragma mark - Change monitoring
+-(id)monitorStoreForChangesToQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)substitutionVariables changeHandler:(void(^)(id result, id<BCOObjectStoreSnapshot> snapshot))changeHandler
+{
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:substitutionVariables];
+
+    BCOObjectStoreSnapshotChangeMonitor *monitor = [[BCOObjectStoreSnapshotChangeMonitor alloc] initWithObjectStore:self query:query queue:self.configuration.dispatchQueue changeHandler:changeHandler];
+    [monitor start];
+
+    return monitor;
+}
+
+
+
 #pragma mark - BCOObjectStoreSnapshotProtocol
--(NSArray *)executeQuery:(NSString *)query
+-(id)executeQuery:(NSString *)query
 {
     return [self.snapshot executeQuery:query];
 }
 
 
-
--(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
+-(id)executeQuery:(NSString *)query substitutionVariables:(NSDictionary *)substitutionVariables
 {
-    return [self.snapshot executeQuery:query subsitutionVariable:subsitutionVariable];
+    return [self.snapshot executeQuery:query substitutionVariables:substitutionVariables];
 }
 
 

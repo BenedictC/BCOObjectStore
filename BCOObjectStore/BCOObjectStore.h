@@ -20,7 +20,7 @@ typedef void (^BCOObjectStoreUpdateObjectsCompletionHandler)(NSSet *insertedObje
 
 
 
-@interface BCOObjectStore : NSObject
+@interface BCOObjectStore : NSObject <BCOObjectStoreSnapshot>
 
 //Instance life cycle
 -(instancetype)initWithConfiguration:(BCOObjectStoreConfiguration *)configuration __attribute__((objc_designated_initializer));
@@ -33,17 +33,7 @@ typedef void (^BCOObjectStoreUpdateObjectsCompletionHandler)(NSSet *insertedObje
 //Snapshot access (to allow queries to be run on the same data set without concurrency issues)
 @property(nonatomic, readonly) id<BCOObjectStoreSnapshot> currentSnapshot;
 
-@end
-
-
-
-@interface BCOObjectStore (BCOObjectStoreSnapshot)
-
-// Accessing objects
--(NSArray *)executeQuery:(NSString *)query;
--(NSArray *)executeQuery:(NSString *)query subsitutionVariable:(NSDictionary *)subsitutionVariable;
-
-//Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
+//Change monitoring
+-(id)monitorStoreForChangesToQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)substitutionVariables changeHandler:(void(^)(id result, id<BCOObjectStoreSnapshot> snapshot))changeHandler;
 
 @end
