@@ -191,14 +191,7 @@ static inline BOOL isObjectABlock(id variable) {
     NSString *functionName = [self scanIdentifierWithScanner:scanner];
     if (functionName == nil) return nil;
 
-    //count
-    if ([@"count" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            return @(objects.count);
-        };
-    }
-
-    //dict
+    //Generic objects functions
     if ([@"dict" isEqualToString:functionName]) {
         return ^(NSArray *objects, NSArray *parameters){
             NSMutableDictionary *dict = [NSMutableDictionary new];
@@ -210,8 +203,11 @@ static inline BOOL isObjectABlock(id variable) {
             return dict;
         };
     }
-
-    //first
+    if ([@"count" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            return @(objects.count);
+        };
+    }
     if ([@"first" isEqualToString:functionName]) {
         return ^(NSArray *objects, NSArray *parameters){
             id object = [objects firstObject];
@@ -221,8 +217,6 @@ static inline BOOL isObjectABlock(id variable) {
             return (shouldReturnObject) ? object : [object valueForKey:kvcKey];
         };
     }
-
-    //last
     if ([@"last" isEqualToString:functionName]) {
         return ^(NSArray *objects, NSArray *parameters){
             id object = [objects lastObject];
@@ -233,11 +227,60 @@ static inline BOOL isObjectABlock(id variable) {
         };
     }
 
+    //Comparable objects functions (compare:)
+    if ([@"max" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            id max = [objects firstObject];
+            for (id object in objects) {
+                NSComparisonResult result = [max compare:object];
+                if (result == NSOrderedAscending) max = object;
+            }
+
+            return max;
+        };
+    }
+    if ([@"min" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            id max = [objects firstObject];
+            for (id object in objects) {
+                NSComparisonResult result = [max compare:object];
+                if (result == NSOrderedDescending) max = object;
+            }
+
+            return max;
+        };
+    }
+
+    //Numeric objects functions
+    if ([@"avg" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            double total = 0;
+            for (NSNumber *num in objects) {
+                total += [num doubleValue];
+            }
+
+            double count = objects.count;
+            return (objects.count == 0) ? @0 : @(total/count);
+        };
+    }
+    if ([@"sum" isEqualToString:functionName]) {
+        return ^(NSArray *objects, NSArray *parameters){
+            double total = 0;
+            for (NSNumber *num in objects) {
+                total += [num doubleValue];
+            }
+
+            return @(total);
+        };
+    }
+
     #pragma message "TODO: add more functions"
-    //max
-    //min
-    //distinctUnion
-    //...
+    //DistinctUnionOfArrays
+    //DistinctUnionOfObjects
+    //DistinctUnionOfSets
+    //UnionOfArrays
+    //UnionOfObjects
+    //UnionOfSets
 
     [NSException raise:NSInvalidArgumentException format:@"Unknown SELECT mapper for name '%@'", functionName];
     return nil;
