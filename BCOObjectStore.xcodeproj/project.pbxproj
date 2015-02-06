@@ -7,11 +7,43 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		82AF598D1A6D70370056EDB2 /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF597D1A6D70370056EDB2 /* BCOIndexDescription.m */; };
-		82AF598E1A6D70370056EDB2 /* BCOObjectStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF597F1A6D70370056EDB2 /* BCOObjectStore.m */; };
-		82AF598F1A6D70370056EDB2 /* BCOObjectStoreCoordinator.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59811A6D70370056EDB2 /* BCOObjectStoreCoordinator.m */; };
-		82AF59901A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59831A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m */; };
-		82AF59911A6D70370056EDB2 /* BCOObjectStore+Query.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59861A6D70370056EDB2 /* BCOObjectStore+Query.m */; };
+		82AA6A951A84DA51000D70CD /* BCOIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A741A84DA51000D70CD /* BCOIndex.m */; };
+		82AA6A961A84DA51000D70CD /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A761A84DA51000D70CD /* BCOIndexDescription.m */; };
+		82AA6A971A84DA51000D70CD /* BCOIndexEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A781A84DA51000D70CD /* BCOIndexEntry.m */; };
+		82AA6A981A84DA51000D70CD /* BCOObjectStorageContainer.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A7B1A84DA51000D70CD /* BCOObjectStorageContainer.m */; };
+		82AA6A991A84DA51000D70CD /* BCOObjectStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A7D1A84DA51000D70CD /* BCOObjectStore.m */; };
+		82AA6A9A1A84DA51000D70CD /* BCOObjectStoreConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A801A84DA51000D70CD /* BCOObjectStoreConfiguration.m */; };
+		82AA6A9B1A84DA51000D70CD /* BCOObjectStoreSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A821A84DA51000D70CD /* BCOObjectStoreSnapshot.m */; };
+		82AA6A9C1A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A841A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m */; };
+		82AA6A9D1A84DA51000D70CD /* BCOQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A871A84DA51000D70CD /* BCOQuery.m */; };
+		82AA6A9E1A84DA51000D70CD /* BCOQueryCatalog.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A891A84DA51000D70CD /* BCOQueryCatalog.m */; };
+		82AA6A9F1A84DA51000D70CD /* BCOQueryCatalogEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8B1A84DA51000D70CD /* BCOQueryCatalogEntry.m */; };
+		82AA6AA01A84DA51000D70CD /* BCOQueryResultGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */; };
+		82AA6AA11A84DA51000D70CD /* BCOSELECTFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */; };
+		82AA6AA21A84DA51000D70CD /* BCOStorageRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */; };
+		82AA6AA31A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A941A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m */; };
+		82AA6AAD1A84DC81000D70CD /* BCOObjectStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6AAC1A84DC81000D70CD /* BCOObjectStoreTests.swift */; };
+		82AA6AB21A84DCA5000D70CD /* BCOIndexEntryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6AB11A84DCA5000D70CD /* BCOIndexEntryTests.swift */; };
+		82AA6AB41A84DEF2000D70CD /* BCOIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A741A84DA51000D70CD /* BCOIndex.m */; };
+		82AA6AB51A84DEF2000D70CD /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A761A84DA51000D70CD /* BCOIndexDescription.m */; };
+		82AA6AB61A84DEF2000D70CD /* BCOIndexEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A781A84DA51000D70CD /* BCOIndexEntry.m */; };
+		82AA6AB71A84DEF2000D70CD /* BCOObjectStorageContainer.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A7B1A84DA51000D70CD /* BCOObjectStorageContainer.m */; };
+		82AA6AB81A84DEF2000D70CD /* BCOObjectStore.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A7D1A84DA51000D70CD /* BCOObjectStore.m */; };
+		82AA6AB91A84DEF2000D70CD /* BCOObjectStoreConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A801A84DA51000D70CD /* BCOObjectStoreConfiguration.m */; };
+		82AA6ABA1A84DEF2000D70CD /* BCOObjectStoreSnapshot.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A821A84DA51000D70CD /* BCOObjectStoreSnapshot.m */; };
+		82AA6ABB1A84DEF2000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A841A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m */; };
+		82AA6ABC1A84DEF2000D70CD /* BCOQuery.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A871A84DA51000D70CD /* BCOQuery.m */; };
+		82AA6ABD1A84DEF2000D70CD /* BCOQueryCatalog.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A891A84DA51000D70CD /* BCOQueryCatalog.m */; };
+		82AA6ABE1A84DEF2000D70CD /* BCOQueryCatalogEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8B1A84DA51000D70CD /* BCOQueryCatalogEntry.m */; };
+		82AA6ABF1A84DEF2000D70CD /* BCOQueryResultGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */; };
+		82AA6AC01A84DEF2000D70CD /* BCOSELECTFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */; };
+		82AA6AC11A84DEF2000D70CD /* BCOStorageRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */; };
+		82AA6AC21A84DEF2000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A941A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m */; };
+		82AA6AC41A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6AC31A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift */; };
+		82AA6AC61A84E5EA000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6AC51A84E5EA000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift */; };
+		82AA6ACB1A84ED87000D70CD /* BCOThrowsChecking.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6ACA1A84ED87000D70CD /* BCOThrowsChecking.m */; };
+		82AA6ACD1A84F2CF000D70CD /* BCOThrowsChecking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6ACC1A84F2CF000D70CD /* BCOThrowsChecking.swift */; };
+		82AA6AD01A850772000D70CD /* BCOIndexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6ACF1A850772000D70CD /* BCOIndexTests.swift */; };
 		82AF59921A6D70370056EDB2 /* LUMLine.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF59891A6D70370056EDB2 /* LUMLine.m */; };
 		82AF59931A6D70370056EDB2 /* LUMStation.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF598B1A6D70370056EDB2 /* LUMStation.m */; };
 		82AF59941A6D70370056EDB2 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AF598C1A6D70370056EDB2 /* main.m */; };
@@ -31,16 +63,51 @@
 
 /* Begin PBXFileReference section */
 		822B9EFF19E92B76009A4030 /* BCOObjectStore */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BCOObjectStore; sourceTree = BUILT_PRODUCTS_DIR; };
-		82AF597C1A6D70370056EDB2 /* BCOIndexDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexDescription.h; sourceTree = "<group>"; };
-		82AF597D1A6D70370056EDB2 /* BCOIndexDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndexDescription.m; sourceTree = "<group>"; };
-		82AF597E1A6D70370056EDB2 /* BCOObjectStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStore.h; sourceTree = "<group>"; };
-		82AF597F1A6D70370056EDB2 /* BCOObjectStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStore.m; sourceTree = "<group>"; };
-		82AF59801A6D70370056EDB2 /* BCOObjectStoreCoordinator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinator.h; sourceTree = "<group>"; };
-		82AF59811A6D70370056EDB2 /* BCOObjectStoreCoordinator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinator.m; sourceTree = "<group>"; };
-		82AF59821A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreCoordinatorSnapshot.h; sourceTree = "<group>"; };
-		82AF59831A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreCoordinatorSnapshot.m; sourceTree = "<group>"; };
-		82AF59851A6D70370056EDB2 /* BCOObjectStore+Query.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStore+Query.h"; sourceTree = "<group>"; };
-		82AF59861A6D70370056EDB2 /* BCOObjectStore+Query.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "BCOObjectStore+Query.m"; sourceTree = "<group>"; };
+		82AA6A731A84DA51000D70CD /* BCOIndex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndex.h; sourceTree = "<group>"; };
+		82AA6A741A84DA51000D70CD /* BCOIndex.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndex.m; sourceTree = "<group>"; };
+		82AA6A751A84DA51000D70CD /* BCOIndexDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexDescription.h; sourceTree = "<group>"; };
+		82AA6A761A84DA51000D70CD /* BCOIndexDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndexDescription.m; sourceTree = "<group>"; };
+		82AA6A771A84DA51000D70CD /* BCOIndexEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexEntry.h; sourceTree = "<group>"; };
+		82AA6A781A84DA51000D70CD /* BCOIndexEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndexEntry.m; sourceTree = "<group>"; };
+		82AA6A791A84DA51000D70CD /* BCOIndexValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndexValue.h; sourceTree = "<group>"; };
+		82AA6A7A1A84DA51000D70CD /* BCOObjectStorageContainer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStorageContainer.h; sourceTree = "<group>"; };
+		82AA6A7B1A84DA51000D70CD /* BCOObjectStorageContainer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStorageContainer.m; sourceTree = "<group>"; };
+		82AA6A7C1A84DA51000D70CD /* BCOObjectStore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStore.h; sourceTree = "<group>"; };
+		82AA6A7D1A84DA51000D70CD /* BCOObjectStore.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStore.m; sourceTree = "<group>"; };
+		82AA6A7E1A84DA51000D70CD /* BCOObjectStore+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStore+Protected.h"; sourceTree = "<group>"; };
+		82AA6A7F1A84DA51000D70CD /* BCOObjectStoreConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreConfiguration.h; sourceTree = "<group>"; };
+		82AA6A801A84DA51000D70CD /* BCOObjectStoreConfiguration.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreConfiguration.m; sourceTree = "<group>"; };
+		82AA6A811A84DA51000D70CD /* BCOObjectStoreSnapshot.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreSnapshot.h; sourceTree = "<group>"; };
+		82AA6A821A84DA51000D70CD /* BCOObjectStoreSnapshot.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreSnapshot.m; sourceTree = "<group>"; };
+		82AA6A831A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreSnapshotChangeMonitor.h; sourceTree = "<group>"; };
+		82AA6A841A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStoreSnapshotChangeMonitor.m; sourceTree = "<group>"; };
+		82AA6A851A84DA51000D70CD /* BCOObjectStoreSnapshotProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStoreSnapshotProtocol.h; sourceTree = "<group>"; };
+		82AA6A861A84DA51000D70CD /* BCOQuery.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQuery.h; sourceTree = "<group>"; };
+		82AA6A871A84DA51000D70CD /* BCOQuery.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOQuery.m; sourceTree = "<group>"; };
+		82AA6A881A84DA51000D70CD /* BCOQueryCatalog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQueryCatalog.h; sourceTree = "<group>"; };
+		82AA6A891A84DA51000D70CD /* BCOQueryCatalog.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOQueryCatalog.m; sourceTree = "<group>"; };
+		82AA6A8A1A84DA51000D70CD /* BCOQueryCatalogEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQueryCatalogEntry.h; sourceTree = "<group>"; };
+		82AA6A8B1A84DA51000D70CD /* BCOQueryCatalogEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOQueryCatalogEntry.m; sourceTree = "<group>"; };
+		82AA6A8C1A84DA51000D70CD /* BCOQueryResultGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQueryResultGroup.h; sourceTree = "<group>"; };
+		82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOQueryResultGroup.m; sourceTree = "<group>"; };
+		82AA6A8E1A84DA51000D70CD /* BCOQueryResultGroupProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQueryResultGroupProtocol.h; sourceTree = "<group>"; };
+		82AA6A8F1A84DA51000D70CD /* BCOSELECTFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOSELECTFunction.h; sourceTree = "<group>"; };
+		82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOSELECTFunction.m; sourceTree = "<group>"; };
+		82AA6A911A84DA51000D70CD /* BCOStorageRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOStorageRecord.h; sourceTree = "<group>"; };
+		82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOStorageRecord.m; sourceTree = "<group>"; };
+		82AA6A931A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h; sourceTree = "<group>"; };
+		82AA6A941A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m; sourceTree = "<group>"; };
+		82AA6AA81A84DC81000D70CD /* BCOObjectStoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BCOObjectStoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		82AA6AAB1A84DC81000D70CD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		82AA6AAC1A84DC81000D70CD /* BCOObjectStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BCOObjectStoreTests.swift; sourceTree = "<group>"; };
+		82AA6AB11A84DCA5000D70CD /* BCOIndexEntryTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BCOIndexEntryTests.swift; sourceTree = "<group>"; };
+		82AA6AB31A84DDF7000D70CD /* BCOObjectStoreTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStoreTests-Bridging-Header.h"; sourceTree = "<group>"; };
+		82AA6AC31A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BCOObjectStoreConfigurationTests.swift; sourceTree = "<group>"; };
+		82AA6AC51A84E5EA000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift; sourceTree = "<group>"; };
+		82AA6AC71A84EBB9000D70CD /* BCOThrowsChecking.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOThrowsChecking.h; sourceTree = "<group>"; };
+		82AA6ACA1A84ED87000D70CD /* BCOThrowsChecking.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = BCOThrowsChecking.m; path = ../../../../../../../../../.Trash/BCOThrowsChecking.m; sourceTree = "<group>"; };
+		82AA6ACC1A84F2CF000D70CD /* BCOThrowsChecking.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BCOThrowsChecking.swift; sourceTree = "<group>"; };
+		82AA6ACF1A850772000D70CD /* BCOIndexTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BCOIndexTests.swift; sourceTree = "<group>"; };
 		82AF59881A6D70370056EDB2 /* LUMLine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMLine.h; sourceTree = "<group>"; };
 		82AF59891A6D70370056EDB2 /* LUMLine.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LUMLine.m; sourceTree = "<group>"; };
 		82AF598A1A6D70370056EDB2 /* LUMStation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LUMStation.h; sourceTree = "<group>"; };
@@ -56,6 +123,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		82AA6AA51A84DC81000D70CD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -63,8 +137,8 @@
 			isa = PBXGroup;
 			children = (
 				82AF597B1A6D70370056EDB2 /* BCOObjectStore */,
-				82AF59841A6D70370056EDB2 /* BCOObjectStore+Query */,
 				82AF59871A6D70370056EDB2 /* Demo App */,
+				82AA6AA91A84DC81000D70CD /* BCOObjectStoreTests */,
 				822B9F0019E92B76009A4030 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -73,32 +147,83 @@
 			isa = PBXGroup;
 			children = (
 				822B9EFF19E92B76009A4030 /* BCOObjectStore */,
+				82AA6AA81A84DC81000D70CD /* BCOObjectStoreTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		82AA6AA91A84DC81000D70CD /* BCOObjectStoreTests */ = {
+			isa = PBXGroup;
+			children = (
+				82AA6ACE1A84F32F000D70CD /* BCOThrowsChecking */,
+				82AA6AB31A84DDF7000D70CD /* BCOObjectStoreTests-Bridging-Header.h */,
+				82AA6AAC1A84DC81000D70CD /* BCOObjectStoreTests.swift */,
+				82AA6AB11A84DCA5000D70CD /* BCOIndexEntryTests.swift */,
+				82AA6AC31A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift */,
+				82AA6AC51A84E5EA000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift */,
+				82AA6ACF1A850772000D70CD /* BCOIndexTests.swift */,
+				82AA6AAA1A84DC81000D70CD /* Supporting Files */,
+			);
+			path = BCOObjectStoreTests;
+			sourceTree = "<group>";
+		};
+		82AA6AAA1A84DC81000D70CD /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				82AA6AAB1A84DC81000D70CD /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		82AA6ACE1A84F32F000D70CD /* BCOThrowsChecking */ = {
+			isa = PBXGroup;
+			children = (
+				82AA6AC71A84EBB9000D70CD /* BCOThrowsChecking.h */,
+				82AA6ACA1A84ED87000D70CD /* BCOThrowsChecking.m */,
+				82AA6ACC1A84F2CF000D70CD /* BCOThrowsChecking.swift */,
+			);
+			name = BCOThrowsChecking;
 			sourceTree = "<group>";
 		};
 		82AF597B1A6D70370056EDB2 /* BCOObjectStore */ = {
 			isa = PBXGroup;
 			children = (
-				82AF597C1A6D70370056EDB2 /* BCOIndexDescription.h */,
-				82AF597D1A6D70370056EDB2 /* BCOIndexDescription.m */,
-				82AF597E1A6D70370056EDB2 /* BCOObjectStore.h */,
-				82AF597F1A6D70370056EDB2 /* BCOObjectStore.m */,
-				82AF59801A6D70370056EDB2 /* BCOObjectStoreCoordinator.h */,
-				82AF59811A6D70370056EDB2 /* BCOObjectStoreCoordinator.m */,
-				82AF59821A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.h */,
-				82AF59831A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m */,
+				82AA6A731A84DA51000D70CD /* BCOIndex.h */,
+				82AA6A741A84DA51000D70CD /* BCOIndex.m */,
+				82AA6A751A84DA51000D70CD /* BCOIndexDescription.h */,
+				82AA6A761A84DA51000D70CD /* BCOIndexDescription.m */,
+				82AA6A771A84DA51000D70CD /* BCOIndexEntry.h */,
+				82AA6A781A84DA51000D70CD /* BCOIndexEntry.m */,
+				82AA6A791A84DA51000D70CD /* BCOIndexValue.h */,
+				82AA6A7A1A84DA51000D70CD /* BCOObjectStorageContainer.h */,
+				82AA6A7B1A84DA51000D70CD /* BCOObjectStorageContainer.m */,
+				82AA6A7C1A84DA51000D70CD /* BCOObjectStore.h */,
+				82AA6A7D1A84DA51000D70CD /* BCOObjectStore.m */,
+				82AA6A7E1A84DA51000D70CD /* BCOObjectStore+Protected.h */,
+				82AA6A7F1A84DA51000D70CD /* BCOObjectStoreConfiguration.h */,
+				82AA6A801A84DA51000D70CD /* BCOObjectStoreConfiguration.m */,
+				82AA6A811A84DA51000D70CD /* BCOObjectStoreSnapshot.h */,
+				82AA6A821A84DA51000D70CD /* BCOObjectStoreSnapshot.m */,
+				82AA6A831A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.h */,
+				82AA6A841A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m */,
+				82AA6A851A84DA51000D70CD /* BCOObjectStoreSnapshotProtocol.h */,
+				82AA6A861A84DA51000D70CD /* BCOQuery.h */,
+				82AA6A871A84DA51000D70CD /* BCOQuery.m */,
+				82AA6A881A84DA51000D70CD /* BCOQueryCatalog.h */,
+				82AA6A891A84DA51000D70CD /* BCOQueryCatalog.m */,
+				82AA6A8A1A84DA51000D70CD /* BCOQueryCatalogEntry.h */,
+				82AA6A8B1A84DA51000D70CD /* BCOQueryCatalogEntry.m */,
+				82AA6A8C1A84DA51000D70CD /* BCOQueryResultGroup.h */,
+				82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */,
+				82AA6A8E1A84DA51000D70CD /* BCOQueryResultGroupProtocol.h */,
+				82AA6A8F1A84DA51000D70CD /* BCOSELECTFunction.h */,
+				82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */,
+				82AA6A911A84DA51000D70CD /* BCOStorageRecord.h */,
+				82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */,
+				82AA6A931A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h */,
+				82AA6A941A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m */,
 			);
 			path = BCOObjectStore;
-			sourceTree = "<group>";
-		};
-		82AF59841A6D70370056EDB2 /* BCOObjectStore+Query */ = {
-			isa = PBXGroup;
-			children = (
-				82AF59851A6D70370056EDB2 /* BCOObjectStore+Query.h */,
-				82AF59861A6D70370056EDB2 /* BCOObjectStore+Query.m */,
-			);
-			path = "BCOObjectStore+Query";
 			sourceTree = "<group>";
 		};
 		82AF59871A6D70370056EDB2 /* Demo App */ = {
@@ -133,6 +258,23 @@
 			productReference = 822B9EFF19E92B76009A4030 /* BCOObjectStore */;
 			productType = "com.apple.product-type.tool";
 		};
+		82AA6AA71A84DC81000D70CD /* BCOObjectStoreTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 82AA6AAE1A84DC81000D70CD /* Build configuration list for PBXNativeTarget "BCOObjectStoreTests" */;
+			buildPhases = (
+				82AA6AA41A84DC81000D70CD /* Sources */,
+				82AA6AA51A84DC81000D70CD /* Frameworks */,
+				82AA6AA61A84DC81000D70CD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BCOObjectStoreTests;
+			productName = BCOObjectStoreTests;
+			productReference = 82AA6AA81A84DC81000D70CD /* BCOObjectStoreTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -144,6 +286,9 @@
 				TargetAttributes = {
 					822B9EFE19E92B76009A4030 = {
 						CreatedOnToolsVersion = 6.0.1;
+					};
+					82AA6AA71A84DC81000D70CD = {
+						CreatedOnToolsVersion = 6.1.1;
 					};
 				};
 			};
@@ -160,23 +305,73 @@
 			projectRoot = "";
 			targets = (
 				822B9EFE19E92B76009A4030 /* BCOObjectStore */,
+				82AA6AA71A84DC81000D70CD /* BCOObjectStoreTests */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		82AA6AA61A84DC81000D70CD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		822B9EFB19E92B76009A4030 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				82AA6A9F1A84DA51000D70CD /* BCOQueryCatalogEntry.m in Sources */,
+				82AA6A961A84DA51000D70CD /* BCOIndexDescription.m in Sources */,
 				82AF59921A6D70370056EDB2 /* LUMLine.m in Sources */,
-				82AF598D1A6D70370056EDB2 /* BCOIndexDescription.m in Sources */,
-				82AF598E1A6D70370056EDB2 /* BCOObjectStore.m in Sources */,
-				82AF59901A6D70370056EDB2 /* BCOObjectStoreCoordinatorSnapshot.m in Sources */,
-				82AF598F1A6D70370056EDB2 /* BCOObjectStoreCoordinator.m in Sources */,
-				82AF59911A6D70370056EDB2 /* BCOObjectStore+Query.m in Sources */,
+				82AA6AA21A84DA51000D70CD /* BCOStorageRecord.m in Sources */,
+				82AA6A971A84DA51000D70CD /* BCOIndexEntry.m in Sources */,
+				82AA6A9C1A84DA51000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m in Sources */,
+				82AA6A991A84DA51000D70CD /* BCOObjectStore.m in Sources */,
+				82AA6A9E1A84DA51000D70CD /* BCOQueryCatalog.m in Sources */,
+				82AA6A951A84DA51000D70CD /* BCOIndex.m in Sources */,
+				82AA6AA11A84DA51000D70CD /* BCOSELECTFunction.m in Sources */,
 				82AF59941A6D70370056EDB2 /* main.m in Sources */,
+				82AA6A9D1A84DA51000D70CD /* BCOQuery.m in Sources */,
+				82AA6A9A1A84DA51000D70CD /* BCOObjectStoreConfiguration.m in Sources */,
+				82AA6AA31A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */,
 				82AF59931A6D70370056EDB2 /* LUMStation.m in Sources */,
+				82AA6A981A84DA51000D70CD /* BCOObjectStorageContainer.m in Sources */,
+				82AA6A9B1A84DA51000D70CD /* BCOObjectStoreSnapshot.m in Sources */,
+				82AA6AA01A84DA51000D70CD /* BCOQueryResultGroup.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		82AA6AA41A84DC81000D70CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				82AA6ACB1A84ED87000D70CD /* BCOThrowsChecking.m in Sources */,
+				82AA6AB91A84DEF2000D70CD /* BCOObjectStoreConfiguration.m in Sources */,
+				82AA6AC01A84DEF2000D70CD /* BCOSELECTFunction.m in Sources */,
+				82AA6AC21A84DEF2000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */,
+				82AA6ABC1A84DEF2000D70CD /* BCOQuery.m in Sources */,
+				82AA6AC41A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift in Sources */,
+				82AA6ABF1A84DEF2000D70CD /* BCOQueryResultGroup.m in Sources */,
+				82AA6ABE1A84DEF2000D70CD /* BCOQueryCatalogEntry.m in Sources */,
+				82AA6AC11A84DEF2000D70CD /* BCOStorageRecord.m in Sources */,
+				82AA6AB51A84DEF2000D70CD /* BCOIndexDescription.m in Sources */,
+				82AA6ABA1A84DEF2000D70CD /* BCOObjectStoreSnapshot.m in Sources */,
+				82AA6AB71A84DEF2000D70CD /* BCOObjectStorageContainer.m in Sources */,
+				82AA6AB81A84DEF2000D70CD /* BCOObjectStore.m in Sources */,
+				82AA6AC61A84E5EA000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift in Sources */,
+				82AA6AB21A84DCA5000D70CD /* BCOIndexEntryTests.swift in Sources */,
+				82AA6AD01A850772000D70CD /* BCOIndexTests.swift in Sources */,
+				82AA6AB41A84DEF2000D70CD /* BCOIndex.m in Sources */,
+				82AA6AAD1A84DC81000D70CD /* BCOObjectStoreTests.swift in Sources */,
+				82AA6ABD1A84DEF2000D70CD /* BCOQueryCatalog.m in Sources */,
+				82AA6ABB1A84DEF2000D70CD /* BCOObjectStoreSnapshotChangeMonitor.m in Sources */,
+				82AA6AB61A84DEF2000D70CD /* BCOIndexEntry.m in Sources */,
+				82AA6ACD1A84F2CF000D70CD /* BCOThrowsChecking.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -271,6 +466,43 @@
 			};
 			name = Release;
 		};
+		82AA6AAF1A84DC81000D70CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = BCOObjectStoreTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "BCOObjectStoreTests/BCOObjectStoreTests-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		82AA6AB01A84DC81000D70CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(DEVELOPER_FRAMEWORKS_DIR)",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = BCOObjectStoreTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "BCOObjectStoreTests/BCOObjectStoreTests-Bridging-Header.h";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -288,6 +520,15 @@
 			buildConfigurations = (
 				822B9F0719E92B76009A4030 /* Debug */,
 				822B9F0819E92B76009A4030 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		82AA6AAE1A84DC81000D70CD /* Build configuration list for PBXNativeTarget "BCOObjectStoreTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				82AA6AAF1A84DC81000D70CD /* Debug */,
+				82AA6AB01A84DC81000D70CD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
