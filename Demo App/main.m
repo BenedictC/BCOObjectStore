@@ -10,30 +10,37 @@
 
 #import "LUMStation.h"
 #import "LUMLine.h"
-#import "BCOObjectStoreCoordinator.h"
+#import "BCOObjectStore.h"
 
 
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
 
-        NSArray *norternLineStationNames = @[@"Angel", @"Camden Town", @"Old Street", @"Edgeware", @"Moorgate", @"High Barnet", @"Hampstead", @"Morden"];
-        NSMutableSet *northernLine = [NSMutableSet new];
+        BCOObjectStoreConfiguration *config = [BCOObjectStoreConfiguration new];
+        [config addIndexWithName:@"name" indexValueGenerator:^id(id object) {
+            return [object name];
+        } valueComparator:^NSComparisonResult(id obj1, id obj2) {
+            return [obj1 compare:obj2];
+        }];
+        BCOObjectStore *objectStore = [[BCOObjectStore alloc] initWithConfiguration:config];
 
-        for (NSString *name in norternLineStationNames) {
-            LUMStation *station = [[LUMStation alloc] init];
-            station.name = name;
-            [northernLine addObject:station];
-        }
 
-        BCOObjectStoreCoordinator *objectStore = [BCOObjectStoreCoordinator new];
-        [objectStore addPrimaryIndexForClass:[LUMStation class] valueKeyPath:@"name"];
-        [objectStore setObjects:northernLine forStoreWithName:@"NorthernLine"];
+        [objectStore setObjectsUsingBlock:^(id<BCOObjectStoreSnapshot> currentSnapshot, BCOObjectStoreSetObjectsCompletionHandler completionHandler) {
+            NSArray *norternLineStationNames = @[@"Angel", @"Camden Town", @"Old Street", @"Edgeware", @"Moorgate", @"High Barnet", @"Hampstead", @"Morden"];
+            NSMutableSet *northernLine = [NSMutableSet new];
 
-        LUMStation *angel = [objectStore.snapshot fetchObjectWithPrimaryID:@"Angel" class:LUMStation.class];
-        NSLog(@"%@", angel);
-        NSDictionary *stationObjects = [objectStore.snapshot fetchAllObjectsOfClass:LUMStation.class];
-        NSLog(@"%@", stationObjects);
+            for (NSString *name in norternLineStationNames) {
+                LUMStation *station = [[LUMStation alloc] init];
+                station.name = name;
+                [northernLine addObject:station];
+            }
+            completionHandler(northernLine);
+        }];
+
+
+        LUMStation *angel = [objectStore executeQuery:@"SELECT @first() WHERE name = 'Angel'"];
+        NSLog(@"%@: %@", angel, angel.name);
     }
     return 0;
 }
