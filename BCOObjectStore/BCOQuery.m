@@ -46,12 +46,12 @@ static inline BOOL isObjectABlock(id variable) {
 
 @implementation BCOQuery
 
--(instancetype)initWithSelectMapper:(id (^)(NSArray *))selectMapper rootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression groupBy:(NSString *)groupBy sortDescriptors:(NSArray *)sortDescriptors
+-(instancetype)initWithSelectFunction:(id (^)(NSArray *))selectFunction rootWhereClauseExpression:(BCOWhereClauseExpression *)rootWhereExpression groupBy:(NSString *)groupBy sortDescriptors:(NSArray *)sortDescriptors
 {
     self = [super init];
     if (self == nil) return nil;
 
-    _selectMapper = selectMapper;
+    _selectFunction = selectFunction;
     _rootWhereExpression = rootWhereExpression;
     _groupBy = [groupBy copy];
     _sortDescriptors = sortDescriptors;
@@ -62,11 +62,11 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 #pragma mark - Query Scanning
-+(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable
++(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)selectFunctions
 {
     NSScanner *scanner = [NSScanner scannerWithString:queryString];
 
-    id (^selectMapper)(NSArray *) = [self scanSelectMapperWithScanner:scanner substitutionVariables:subsitutionVariable];
+    id (^selectFunction)(NSArray *) = [self scanSelectStatementWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSELECTFunctions:selectFunctions];
     BCOWhereClauseExpression *where = [self scanWhereClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSString *groupBy = [self scanGroupByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSArray *sortDescriptors = [self scanOrderByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
@@ -78,25 +78,26 @@ static inline BOOL isObjectABlock(id variable) {
         return nil;
     }
 
-    return [[BCOQuery alloc] initWithSelectMapper:selectMapper rootWhereClauseExpression:where groupBy:groupBy sortDescriptors:sortDescriptors];
+    return [[BCOQuery alloc] initWithSelectFunction:selectFunction rootWhereClauseExpression:where groupBy:groupBy sortDescriptors:sortDescriptors];
 }
 
 
 
-+(id(^)(NSArray *))scanSelectMapperWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
++(id(^)(NSArray *))scanSelectStatementWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)functions
 {
     BOOL didScanSELECT = [scanner scanString:@"SELECT" intoString:NULL];
     if (!didScanSELECT) return NULL;
 
     //Check for 'full object' selector
+    //TODO: Should we create an explict token for *? What are the downsides?
     BOOL didScanObjectSelector = [scanner scanString:@"*" intoString:NULL];
-    if (didScanObjectSelector) return NULL;
+    if (didScanObjectSelector) return ^(NSArray *objects){return objects;};
 
     //Scan a function selector
-    id function = [self scanSelectFunctionWithScanner:scanner substitutionVariables:subsitutionVariable];
+    id function = [self scanSelectFunctionWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSELECTFunctions:functions];
     if (function != nil) return function;
 
-    //The selector mist be a fieldMapper
+    //The select function must be an actual function
     NSString *fieldName = nil;
 
     //Scan a variable string fieldMapper
@@ -138,7 +139,7 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
-+(id(^)(NSArray *))scanSelectFunctionWithScanner:(NSScanner *)scanner  substitutionVariables:(NSDictionary *)subsitutionVariable
++(id(^)(NSArray *))scanSelectFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)functions
 {
     BOOL didScanFunctionOpenDelimitter = [scanner scanString:@"@" intoString:NULL];
     if (!didScanFunctionOpenDelimitter) return nil;
@@ -151,12 +152,12 @@ static inline BOOL isObjectABlock(id variable) {
     //Named functions...
     BOOL shouldScanNamedFunction = (function == NULL);
     if (shouldScanNamedFunction) {
-        function = [self scanSelectNamedFunctionWithScanner:scanner substitutionVariables:subsitutionVariable];
+        function = [self scanSelectNamedFunctionWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSELECTFunctions:functions];
     }
 
     //Err...
     if (function == NULL) {
-        [NSException raise:NSInvalidArgumentException format:@"Invalid SELECT mapper."];
+        [NSException raise:NSInvalidArgumentException format:@"Invalid SELECT function."];
         return nil;
     }
 
@@ -170,7 +171,7 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
-+(id(^)(NSArray *, NSArray *))scanSelectVariableFunctionWithScanner:(NSScanner *)scanner  substitutionVariables:(NSDictionary *)subsitutionVariable
++(id(^)(NSArray *, NSArray *))scanSelectVariableFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
     id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
     BOOL didScanFunctionVariable = (variable != nil);
@@ -186,101 +187,14 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
-+(id(^)(NSArray *, NSArray *))scanSelectNamedFunctionWithScanner:(NSScanner *)scanner  substitutionVariables:(NSDictionary *)subsitutionVariable
++(id(^)(NSArray *, NSArray *))scanSelectNamedFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)functions
 {
     NSString *functionName = [self scanIdentifierWithScanner:scanner];
     if (functionName == nil) return nil;
 
-    //Generic objects functions
-    if ([@"dict" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            NSMutableDictionary *dict = [NSMutableDictionary new];
-            NSString *kvcKey = [parameters firstObject];
-            for (id object in objects) {
-                id dictKey = [object valueForKey:kvcKey];
-                dict[dictKey] = object;
-            }
-            return dict;
-        };
-    }
-    if ([@"count" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            return @(objects.count);
-        };
-    }
-    if ([@"first" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            id object = [objects firstObject];
-            NSString *kvcKey = [parameters firstObject];
-            BOOL shouldReturnObject = kvcKey == nil || [@"*" isEqualToString:kvcKey];
+    id function = functions[functionName];
 
-            return (shouldReturnObject) ? object : [object valueForKey:kvcKey];
-        };
-    }
-    if ([@"last" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            id object = [objects lastObject];
-            NSString *kvcKey = [parameters firstObject];
-            BOOL shouldReturnObject = kvcKey == nil || [@"*" isEqualToString:kvcKey];
-
-            return (shouldReturnObject) ? object : [object valueForKey:kvcKey];
-        };
-    }
-
-    //Comparable objects functions (compare:)
-    if ([@"max" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            id max = [objects firstObject];
-            for (id object in objects) {
-                NSComparisonResult result = [max compare:object];
-                if (result == NSOrderedAscending) max = object;
-            }
-
-            return max;
-        };
-    }
-    if ([@"min" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            id max = [objects firstObject];
-            for (id object in objects) {
-                NSComparisonResult result = [max compare:object];
-                if (result == NSOrderedDescending) max = object;
-            }
-
-            return max;
-        };
-    }
-
-    //Numeric objects functions
-    if ([@"avg" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            double total = 0;
-            for (NSNumber *num in objects) {
-                total += [num doubleValue];
-            }
-
-            double count = objects.count;
-            return (objects.count == 0) ? @0 : @(total/count);
-        };
-    }
-    if ([@"sum" isEqualToString:functionName]) {
-        return ^(NSArray *objects, NSArray *parameters){
-            double total = 0;
-            for (NSNumber *num in objects) {
-                total += [num doubleValue];
-            }
-
-            return @(total);
-        };
-    }
-
-    #pragma message "TODO: add more functions"
-    //DistinctUnionOfArrays
-    //DistinctUnionOfObjects
-    //DistinctUnionOfSets
-    //UnionOfArrays
-    //UnionOfObjects
-    //UnionOfSets
+    if (function != nil) return function;
 
     [NSException raise:NSInvalidArgumentException format:@"Unknown SELECT mapper for name '%@'", functionName];
     return nil;

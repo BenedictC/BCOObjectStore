@@ -13,6 +13,7 @@
 #import "BCOQueryCatalog.h"
 #import "BCOQuery.h"
 #import "BCOQueryResultGroup.h"
+#import "BCOSELECTFunction.h"
 
 
 
@@ -163,7 +164,7 @@
 
 -(id)executeQuery:(NSString *)queryString
 {
-    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:nil];
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:nil predefinedSELECTFunctions:BCOSELECTFunction.allSELECTFunctions];
     return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
 }
 
@@ -171,7 +172,7 @@
 
 -(id)executeQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable
 {
-    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable];
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable predefinedSELECTFunctions:BCOSELECTFunction.allSELECTFunctions];
     return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
 }
 
@@ -198,7 +199,7 @@
     }
 
     //Create ORDERed GROUPs
-    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectBlock:query.selectMapper];
+    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectFunction:query.selectFunction];
 }
 
 

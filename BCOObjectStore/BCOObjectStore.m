@@ -133,7 +133,7 @@
 #pragma mark - Change monitoring
 -(id)monitorStoreForChangesToQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)substitutionVariables changeHandler:(void(^)(id result, id<BCOObjectStoreSnapshot> snapshot))changeHandler
 {
-    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:substitutionVariables];
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:substitutionVariables predefinedSELECTFunctions:nil];
 
     BCOObjectStoreSnapshotChangeMonitor *monitor = [[BCOObjectStoreSnapshotChangeMonitor alloc] initWithObjectStore:self query:query queue:self.configuration.dispatchQueue changeHandler:changeHandler];
     [monitor start];
