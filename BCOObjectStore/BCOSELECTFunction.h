@@ -1,6 +1,6 @@
 //
-//  BCOSELECTFunction.h
-//  Pods
+//  BCOSelectFunction.h
+//  BCOObjectStore
 //
 //  Created by Benedict Cohen on 06/02/2015.
 //
@@ -10,8 +10,8 @@
 
 
 
-@interface BCOSELECTFunction : NSObject
+@interface BCOSelectFunction : NSObject
 
-+(NSDictionary *)allSELECTFunctions;
++(NSDictionary *)allSelectFunctions;
 
 @end

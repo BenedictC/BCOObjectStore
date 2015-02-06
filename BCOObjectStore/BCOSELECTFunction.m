@@ -1,18 +1,18 @@
 //
-//  BCOSELECTFunction.m
+//  BCOSelectFunction.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 06/02/2015.
 //
 //
 
-#import "BCOSELECTFunction.h"
+#import "BCOSelectFunction.h"
 
 
 
-@implementation BCOSELECTFunction
+@implementation BCOSelectFunction
 
-+(NSDictionary *)allSELECTFunctions
++(NSDictionary *)allSelectFunctions
 {
     static dispatch_once_t onceToken;
     static NSDictionary *functions = nil;
