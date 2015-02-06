@@ -53,7 +53,8 @@
 #pragma mark - copying
 -(id)copyWithZone:(NSZone *)zone
 {
-    return ([self.class isEqual:BCOIndexEntry.class]) ? self : [[BCOIndexEntry alloc] initWithIndexValue:self.indexValue records:self.records];
+    BOOL isImmutable = [self.class isEqual:BCOIndexEntry.class];
+    return (isImmutable) ? self : [[BCOIndexEntry alloc] initWithIndexValue:self.indexValue records:self.records];
 }
 
 
@@ -68,7 +69,7 @@
 #pragma mark - equality
 -(BOOL)isEqual:(BCOIndexEntry *)object
 {
-    if (![object isKindOfClass:BCOIndexEntry.class])  return NO;
+    if (![object isKindOfClass:BCOIndexEntry.class]) return NO;
 
     return [object.indexValue isEqual:self.indexValue];
 }
