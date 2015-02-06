@@ -166,6 +166,8 @@
         return newEntry;
     }
 
+    if (outIndex != NULL) *outIndex = index;
+
     BOOL isAlreadyDirty = (entry != nil) && [self.dirtyIndexEntries containsObject:entry];
     if (isAlreadyDirty) return entry;
 
