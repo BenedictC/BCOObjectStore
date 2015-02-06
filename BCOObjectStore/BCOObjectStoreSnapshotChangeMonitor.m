@@ -32,7 +32,7 @@
     _objectStore = objectStore;
     _query = query;
 #if !OS_OBJECT_USE_OBJC
-    dispatch_retain(queue);
+    if (queue) dispatch_retain(queue);
 #endif
     _queue = queue;
     _changeHandler = changeHandler;
@@ -47,7 +47,7 @@
     [self stop];
 
 #if !OS_OBJECT_USE_OBJC
-    dispatch_release(_queue);
+    if (_queue) dispatch_release(_queue);
 #endif
 
 }
