@@ -12,6 +12,6 @@
 
 @interface BCOQueryResultGroup : NSObject <BCOQueryResultGroup>
 
-+(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectBlock:(id(^)(NSArray *))selectBlock;
++(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectFunction:(id(^)(NSArray *))selectBlock;
 
 @end

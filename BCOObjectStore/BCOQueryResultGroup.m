@@ -15,7 +15,7 @@
 //Query parameters
 @property(nonatomic, readonly) NSString *groupByField;
 @property(nonatomic, readonly) NSArray *sortDescriptors;
-@property(nonatomic, readonly) id (^selectBlock)(NSArray *);
+@property(nonatomic, readonly) id (^selectFunction)(NSArray *);
 
 //Group properties
 //@property(nonatomic, readonly) id objects;
@@ -36,7 +36,7 @@
 @implementation BCOQueryResultGroup
 
 #pragma mark - factory
-+(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectBlock:(id (^)(NSArray *))selectBlock
++(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectFunction:(id (^)(NSArray *))selectBlock
 {
     BCOQueryResultGroup *group = [[BCOQueryResultGroup alloc] initWithGroupByField:groupByField SortDescriptors:sortDescriptors groupIdentifier:nil selectBlock:selectBlock];
     for (id object in objects) {
@@ -51,7 +51,7 @@
 
 
 #pragma mark - instance life cycle
--(instancetype)initWithGroupByField:(NSString *)groupByField SortDescriptors:(NSArray *)sortDescriptors groupIdentifier:(id)groupIdentifier selectBlock:(id (^)(NSArray *))selectBlock
+-(instancetype)initWithGroupByField:(NSString *)groupByField SortDescriptors:(NSArray *)sortDescriptors groupIdentifier:(id)groupIdentifier selectBlock:(id (^)(NSArray *))selectFunction
 {
     self = [super init];
     if (self == nil) return nil;
@@ -59,7 +59,7 @@
     _groupByField = [groupByField copy];
     _sortDescriptors = [sortDescriptors copy];
     _groupIdentifier = groupIdentifier;
-    _selectBlock = selectBlock;
+    _selectFunction = selectFunction;
 
     BOOL isGrouped = (groupByField != nil);
     _mutableObjects = (isGrouped) ?  nil : [NSMutableArray new];
@@ -152,9 +152,9 @@
 {
     //Map the objects if necessary
     NSArray *objects = self.mutableObjects;
-    id (^selectBlock)(NSArray *) = self.selectBlock;
+    id (^selectFunction)(NSArray *) = self.selectFunction;
 
-    return (selectBlock == NULL) ? objects : selectBlock(objects);
+    return (selectFunction == NULL) ? objects : selectFunction(objects);
 }
 
 
@@ -215,7 +215,7 @@
     BCOQueryResultGroup *group = groups[groupIdentifer];
     if (group == nil) {
         //Create and insert a group
-        BCOQueryResultGroup *insertionGroup = [[BCOQueryResultGroup alloc] initWithGroupByField:nil SortDescriptors:self.sortDescriptors groupIdentifier:groupIdentifer selectBlock:self.selectBlock];
+        BCOQueryResultGroup *insertionGroup = [[BCOQueryResultGroup alloc] initWithGroupByField:nil SortDescriptors:self.sortDescriptors groupIdentifier:groupIdentifer selectBlock:self.selectFunction];
         groups[groupIdentifer] = insertionGroup;
 
         group = insertionGroup;
