@@ -19,7 +19,7 @@
 		82AA6A9E1A84DA51000D70CD /* BCOQueryCatalog.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A891A84DA51000D70CD /* BCOQueryCatalog.m */; };
 		82AA6A9F1A84DA51000D70CD /* BCOQueryCatalogEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8B1A84DA51000D70CD /* BCOQueryCatalogEntry.m */; };
 		82AA6AA01A84DA51000D70CD /* BCOQueryResultGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */; };
-		82AA6AA11A84DA51000D70CD /* BCOSELECTFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */; };
+		82AA6AA11A84DA51000D70CD /* BCOSelectFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A901A84DA51000D70CD /* BCOSelectFunction.m */; };
 		82AA6AA21A84DA51000D70CD /* BCOStorageRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */; };
 		82AA6AA31A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A941A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m */; };
 		82AA6AAD1A84DC81000D70CD /* BCOObjectStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6AAC1A84DC81000D70CD /* BCOObjectStoreTests.swift */; };
@@ -36,7 +36,7 @@
 		82AA6ABD1A84DEF2000D70CD /* BCOQueryCatalog.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A891A84DA51000D70CD /* BCOQueryCatalog.m */; };
 		82AA6ABE1A84DEF2000D70CD /* BCOQueryCatalogEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8B1A84DA51000D70CD /* BCOQueryCatalogEntry.m */; };
 		82AA6ABF1A84DEF2000D70CD /* BCOQueryResultGroup.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */; };
-		82AA6AC01A84DEF2000D70CD /* BCOSELECTFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */; };
+		82AA6AC01A84DEF2000D70CD /* BCOSelectFunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A901A84DA51000D70CD /* BCOSelectFunction.m */; };
 		82AA6AC11A84DEF2000D70CD /* BCOStorageRecord.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */; };
 		82AA6AC21A84DEF2000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A941A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m */; };
 		82AA6AC41A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6AC31A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift */; };
@@ -91,8 +91,8 @@
 		82AA6A8C1A84DA51000D70CD /* BCOQueryResultGroup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQueryResultGroup.h; sourceTree = "<group>"; };
 		82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOQueryResultGroup.m; sourceTree = "<group>"; };
 		82AA6A8E1A84DA51000D70CD /* BCOQueryResultGroupProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOQueryResultGroupProtocol.h; sourceTree = "<group>"; };
-		82AA6A8F1A84DA51000D70CD /* BCOSELECTFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOSELECTFunction.h; sourceTree = "<group>"; };
-		82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOSELECTFunction.m; sourceTree = "<group>"; };
+		82AA6A8F1A84DA51000D70CD /* BCOSelectFunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOSelectFunction.h; sourceTree = "<group>"; };
+		82AA6A901A84DA51000D70CD /* BCOSelectFunction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOSelectFunction.m; sourceTree = "<group>"; };
 		82AA6A911A84DA51000D70CD /* BCOStorageRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOStorageRecord.h; sourceTree = "<group>"; };
 		82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOStorageRecord.m; sourceTree = "<group>"; };
 		82AA6A931A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h; sourceTree = "<group>"; };
@@ -216,8 +216,8 @@
 				82AA6A8C1A84DA51000D70CD /* BCOQueryResultGroup.h */,
 				82AA6A8D1A84DA51000D70CD /* BCOQueryResultGroup.m */,
 				82AA6A8E1A84DA51000D70CD /* BCOQueryResultGroupProtocol.h */,
-				82AA6A8F1A84DA51000D70CD /* BCOSELECTFunction.h */,
-				82AA6A901A84DA51000D70CD /* BCOSELECTFunction.m */,
+				82AA6A8F1A84DA51000D70CD /* BCOSelectFunction.h */,
+				82AA6A901A84DA51000D70CD /* BCOSelectFunction.m */,
 				82AA6A911A84DA51000D70CD /* BCOStorageRecord.h */,
 				82AA6A921A84DA51000D70CD /* BCOStorageRecord.m */,
 				82AA6A931A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h */,
@@ -334,7 +334,7 @@
 				82AA6A991A84DA51000D70CD /* BCOObjectStore.m in Sources */,
 				82AA6A9E1A84DA51000D70CD /* BCOQueryCatalog.m in Sources */,
 				82AA6A951A84DA51000D70CD /* BCOIndex.m in Sources */,
-				82AA6AA11A84DA51000D70CD /* BCOSELECTFunction.m in Sources */,
+				82AA6AA11A84DA51000D70CD /* BCOSelectFunction.m in Sources */,
 				82AF59941A6D70370056EDB2 /* main.m in Sources */,
 				82AA6A9D1A84DA51000D70CD /* BCOQuery.m in Sources */,
 				82AA6A9A1A84DA51000D70CD /* BCOObjectStoreConfiguration.m in Sources */,
@@ -352,7 +352,7 @@
 			files = (
 				82AA6ACB1A84ED87000D70CD /* BCOThrowsChecking.m in Sources */,
 				82AA6AB91A84DEF2000D70CD /* BCOObjectStoreConfiguration.m in Sources */,
-				82AA6AC01A84DEF2000D70CD /* BCOSELECTFunction.m in Sources */,
+				82AA6AC01A84DEF2000D70CD /* BCOSelectFunction.m in Sources */,
 				82AA6AC21A84DEF2000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */,
 				82AA6ABC1A84DEF2000D70CD /* BCOQuery.m in Sources */,
 				82AA6AC41A84E31B000D70CD /* BCOObjectStoreConfigurationTests.swift in Sources */,
