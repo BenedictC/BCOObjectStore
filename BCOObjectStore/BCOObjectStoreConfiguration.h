@@ -22,7 +22,6 @@
 @property(nonatomic, readonly) NSDictionary *indexDescriptions;
 
 -(void)addIndexWithName:(NSString *)indexName indexValueGenerator:(BCOIndexValueGenerator)generator valueComparator:(NSComparator)comparator;
--(void)addIndexWithName:(NSString *)indexName indexDescription:(BCOIndexDescription *)indexDescription;
 
 @end
 
