@@ -62,11 +62,11 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 #pragma mark - Query Scanning
-+(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)selectFunctions
++(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSelectFunctions:(NSDictionary *)selectFunctions
 {
     NSScanner *scanner = [NSScanner scannerWithString:queryString];
 
-    id (^selectFunction)(NSArray *) = [self scanSelectStatementWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSELECTFunctions:selectFunctions];
+    id (^selectFunction)(NSArray *) = [self scanSelectClauseWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSelectFunctions:selectFunctions];
     BCOWhereClauseExpression *where = [self scanWhereClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSString *groupBy = [self scanGroupByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
     NSArray *sortDescriptors = [self scanOrderByClauseWithScanner:scanner substitutionVariables:subsitutionVariable];
@@ -83,63 +83,46 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
-+(id(^)(NSArray *))scanSelectStatementWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)functions
+#pragma mark - SELECT
++(id(^)(NSArray *))scanSelectClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSelectFunctions:(NSDictionary *)functions
 {
     BOOL didScanSELECT = [scanner scanString:@"SELECT" intoString:NULL];
+
+    //Default to selecting whole objects
     if (!didScanSELECT) return NULL;
 
-    //Check for 'full object' selector
-    //TODO: Should we create an explict token for *? What are the downsides?
-    BOOL didScanObjectSelector = [scanner scanString:@"*" intoString:NULL];
-    if (didScanObjectSelector) return ^(NSArray *objects){return objects;};
-
-    //Scan a function selector
-    id function = [self scanSelectFunctionWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSELECTFunctions:functions];
-    if (function != nil) return function;
-
-    //The select function must be an actual function
-    NSString *fieldName = nil;
-
-    //Scan a variable string fieldMapper
-    id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
-    BOOL didScanVariable = variable != nil;
-    if (didScanVariable) {
-        if (![variable isKindOfClass:NSString.class]) {
-            [NSException raise:NSInvalidArgumentException format:@"Variable for SELECT clause is not a string"];
-            return nil;
-        }
-        fieldName = variable;
+    //Scan wholeObjects
+    BOOL didScanWholeObject = [self scanSelectWholeObjectsWithScanner:scanner substitutionVariables:subsitutionVariable];
+    if (didScanWholeObject) {
+        return NULL;
     }
 
-    //Scan an identifier fieldMapper
-    BOOL shouldScanIdentifier = (fieldName == nil);
-    NSString *identifier = (shouldScanIdentifier) ? [self scanIdentifierWithScanner:scanner] : nil;
-    BOOL didScanIdentifier = identifier != nil;
-    if (didScanIdentifier) {
-        fieldName = identifier;
+    //Scan a function
+    id generalFunction = [self scanSelectFunctionWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSelectFunctions:functions];
+    if (generalFunction != nil) {
+        return generalFunction;
     }
 
-    if (fieldName == nil) {
-        [NSException raise:NSInvalidArgumentException format:@"Failed to scan identifier for SELECT clause."];
-        return nil;
+    //Scan a keyPath
+    id fieldFunction = [self scanSelectKeyPathWithScanner:scanner substitutionVariables:subsitutionVariable];
+    if (fieldFunction != nil) {
+        return fieldFunction;
     }
 
-    //Create and return an fieldName mapper
-    return ^(NSArray *objects){
-        NSMutableArray *results = [NSMutableArray new];
-        for (id object in objects) {
-            id result = [object valueForKey:identifier];
-            NSAssert(result != nil, @"object <%@> does not yield a value for key <%@>", object, identifier);
-            [results addObject:result];
-        }
-
-        return results;
-    };
+    return NULL;
 }
 
 
 
-+(id(^)(NSArray *))scanSelectFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)functions
++(BOOL)scanSelectWholeObjectsWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    BOOL didScanObjectSelector = [scanner scanString:@"*" intoString:NULL];
+    return didScanObjectSelector;
+}
+
+
+
++(id(^)(NSArray *))scanSelectFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSelectFunctions:(NSDictionary *)functions
 {
     BOOL didScanFunctionOpenDelimitter = [scanner scanString:@"@" intoString:NULL];
     if (!didScanFunctionOpenDelimitter) return nil;
@@ -147,12 +130,24 @@ static inline BOOL isObjectABlock(id variable) {
     id(^function)(NSArray *objects, NSArray *parameters) = NULL;
 
     //Variable function...
-    function = [self scanSelectVariableFunctionWithScanner:scanner substitutionVariables:subsitutionVariable];
+    function = ({
+        id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+        BOOL didScanFunctionVariable = (variable != nil);
+        if (didScanFunctionVariable && !isObjectABlock(variable)) {
+    #ifdef DEBUG
+            //This check is possibly unsafe as it relies on private implementation.
+            [NSException raise:NSInvalidArgumentException format:@"Varible for SELECT function is not a block"];
+            return nil;
+    #endif
+        }
+         variable;
+    });
 
-    //Named functions...
+    //predefined functions...
     BOOL shouldScanNamedFunction = (function == NULL);
     if (shouldScanNamedFunction) {
-        function = [self scanSelectNamedFunctionWithScanner:scanner substitutionVariables:subsitutionVariable predefinedSELECTFunctions:functions];
+        NSString *functionName = [self scanIdentifierWithScanner:scanner];
+        function = (functionName != nil) ? functions[functionName] : nil;
     }
 
     //Err...
@@ -161,43 +156,11 @@ static inline BOOL isObjectABlock(id variable) {
         return nil;
     }
 
+    //Get the parameters for the function and curry it
     NSArray *parameters = [self scanSelectFunctionParametersWithScanner:scanner substitutionVariables:subsitutionVariable];
-
-    //Let's have a some indian food.
     return ^(NSArray *objects){
         return function(objects, parameters);
     };
-}
-
-
-
-+(id(^)(NSArray *, NSArray *))scanSelectVariableFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
-{
-    id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
-    BOOL didScanFunctionVariable = (variable != nil);
-    if (didScanFunctionVariable && !isObjectABlock(variable)) {
-#ifdef DEBUG
-        //This check is possibly unsafe as it relies on private implementation.
-        [NSException raise:NSInvalidArgumentException format:@"Varible for SELECT function is not a block"];
-        return nil;
-#endif
-    }
-    return variable;
-}
-
-
-
-+(id(^)(NSArray *, NSArray *))scanSelectNamedFunctionWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)functions
-{
-    NSString *functionName = [self scanIdentifierWithScanner:scanner];
-    if (functionName == nil) return nil;
-
-    id function = functions[functionName];
-
-    if (function != nil) return function;
-
-    [NSException raise:NSInvalidArgumentException format:@"Unknown SELECT mapper for name '%@'", functionName];
-    return nil;
 }
 
 
@@ -240,6 +203,46 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
++(id(^)(NSArray *))scanSelectKeyPathWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
+{
+    NSString *keyPath = nil;
+
+    //Scan a variable and check it's a string
+    id variable = [self scanVariableWithScanner:scanner substitutionVariables:subsitutionVariable];
+    BOOL didScanVariable = variable != nil;
+    if (didScanVariable) {
+        if (![variable isKindOfClass:NSString.class]) {
+            [NSException raise:NSInvalidArgumentException format:@"Variable for SELECT clause is not a string"];
+            return nil;
+        }
+        keyPath = variable;
+    }
+
+    //Scan an keyPath
+    BOOL shouldScanKeyPath = (keyPath == nil);
+    if (shouldScanKeyPath) {
+        keyPath = [self scanKeyPathWithScanner:scanner];
+    }
+
+    //If we don't have a keyPath then we can't create a function
+    if (keyPath == nil) return nil;
+
+    //Create and return an keyPath select function
+    return ^(NSArray *objects){
+        NSMutableArray *results = [NSMutableArray new];
+        for (id object in objects) {
+            id result = [object valueForKeyPath:keyPath];
+            NSAssert(result != nil, @"object <%@> does not yield a value for keyPath <%@>", object, keyPath);
+            [results addObject:result];
+        }
+
+        return results;
+    };
+}
+
+
+
+#pragma mark - WHERE
 +(BCOWhereClauseExpression *)scanWhereClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
     //A query must start with 'WHERE'
@@ -330,6 +333,7 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
+#pragma mark - GROUP BY
 +(NSString *)scanGroupByClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
     BOOL didScanGROUPBYDelimitter = [scanner scanString:@"GROUP BY" intoString:NULL];
@@ -357,6 +361,7 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
+#pragma mark ORDER BY
 +(NSArray *)scanOrderByClauseWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
     BOOL didScanORDERBYDelimitter = [scanner scanString:@"ORDER BY" intoString:NULL];
@@ -399,6 +404,7 @@ static inline BOOL isObjectABlock(id variable) {
 
 
 
+#pragma mark - values
 +(NSPredicate *)scanPredicateWithScanner:(NSScanner *)scanner substitutionVariables:(NSDictionary *)subsitutionVariable
 {
     BOOL didScanPredicateOpeningDelimitter = [scanner scanString:@"`" intoString:NULL];
@@ -526,6 +532,25 @@ static inline BOOL isObjectABlock(id variable) {
     [scanner scanCharactersFromSet:variableNameCharacters intoString:&variableName];
 
     return variableName;
+}
+
+
+
++(NSString *)scanKeyPathWithScanner:(NSScanner *)scanner
+{
+    BOOL didScanDot = NO;
+    NSMutableArray *components = [NSMutableArray new];
+    do {
+        NSString *identifier = [self scanIdentifierWithScanner:scanner];
+        if (identifier == nil)  break;
+
+        [components addObject:identifier];
+        didScanDot = [scanner scanString:@"." intoString:NULL];
+    } while (didScanDot);
+
+    if (components.count == 0) return nil;
+
+    return [components componentsJoinedByString:@"."];
 }
 
 

@@ -35,7 +35,7 @@ typedef NS_ENUM(NSInteger, BCOQueryOperator) {
 
 
 @interface BCOQuery : NSObject
-+(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSELECTFunctions:(NSDictionary *)selectFunctions;
++(BCOQuery *)queryFromString:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable predefinedSelectFunctions:(NSDictionary *)selectFunctions;
 
 @property(nonatomic, readonly) id (^selectFunction)(NSArray *objects);
 @property(nonatomic, readonly) BCOWhereClauseExpression *rootWhereExpression;

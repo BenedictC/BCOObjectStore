@@ -13,7 +13,7 @@
 #import "BCOQueryCatalog.h"
 #import "BCOQuery.h"
 #import "BCOQueryResultGroup.h"
-#import "BCOSELECTFunction.h"
+#import "BCOSelectFunction.h"
 
 
 
@@ -164,7 +164,7 @@
 
 -(id)executeQuery:(NSString *)queryString
 {
-    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:nil predefinedSELECTFunctions:BCOSELECTFunction.allSELECTFunctions];
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:nil predefinedSelectFunctions:BCOSelectFunction.allSelectFunctions];
     return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
 }
 
@@ -172,7 +172,7 @@
 
 -(id)executeQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)subsitutionVariable
 {
-    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable predefinedSELECTFunctions:BCOSELECTFunction.allSELECTFunctions];
+    BCOQuery *query = [BCOQuery queryFromString:queryString substitutionVariables:subsitutionVariable predefinedSelectFunctions:BCOSelectFunction.allSelectFunctions];
     return [BCOObjectStoreSnapshot executeQuery:query objectStorage:self.objectStorage queryCatalog:self.queryCatalog];
 }
 
@@ -189,7 +189,7 @@
 +(id)executeQuery:(BCOQuery *)query objectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog
 {
     //Match the objects (WHERE)
-    NSSet *matchedRecords = [self evaluateWHEREClauseExpression:query.rootWhereExpression storage:storage queryCatalog:queryCatalog searchSpace:nil];
+    NSSet *matchedRecords = [self evaluateWhereClauseExpression:query.rootWhereExpression storage:storage queryCatalog:queryCatalog searchSpace:nil];
 
     //Convert the records to objects
     NSMutableArray *objects = [NSMutableArray new];
@@ -198,19 +198,24 @@
         [objects addObject:object];
     }
 
+    //Provide a default select function
+    id (^selectFunction)(NSArray *) = query.selectFunction ?: ^(NSArray *objects){
+        return objects;
+    };
+
     //Create ORDERed GROUPs
-    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectFunction:query.selectFunction];
+    return [BCOQueryResultGroup queryResultsWithObjects:objects groupByField:query.groupBy sortDescriptors:query.sortDescriptors selectFunction:selectFunction];
 }
 
 
 
 #pragma mark - Object fetching
-+(NSSet *)evaluateWHEREClauseExpression:(BCOWhereClauseExpression *)expression storage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog searchSpace:(NSSet *)searchSpace
++(NSSet *)evaluateWhereClauseExpression:(BCOWhereClauseExpression *)expression storage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog searchSpace:(NSSet *)searchSpace
 {
     switch (expression.operator) {
 
         case BCOQueryOperatorAND: {
-            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
+            NSSet *leftSet = [self evaluateWhereClauseExpression:expression.leftOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
 
             //Optimizations
             BOOL isRightBranchRedundant = (leftSet.count == 0);
@@ -218,15 +223,15 @@
             //TODO: What other optimizations are there?
 
             //Not that we're restricting the search space to leftSet. Only predicate uses this but that is potential very useful as predicates would otherwise have to scan ALL objects.
-            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage queryCatalog:queryCatalog searchSpace:leftSet];
+            NSSet *rightSet = [self evaluateWhereClauseExpression:expression.rightOperand storage:storage queryCatalog:queryCatalog searchSpace:leftSet];
             NSMutableSet *intersectSet = [leftSet mutableCopy];
             [intersectSet intersectSet:rightSet];
             return intersectSet;
         }
 
         case BCOQueryOperatorOR: {
-            NSSet *leftSet = [self evaluateWHEREClauseExpression:expression.leftOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
-            NSSet *rightSet = [self evaluateWHEREClauseExpression:expression.rightOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
+            NSSet *leftSet = [self evaluateWhereClauseExpression:expression.leftOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
+            NSSet *rightSet = [self evaluateWhereClauseExpression:expression.rightOperand storage:storage queryCatalog:queryCatalog searchSpace:searchSpace];
             NSMutableSet *unionSet = [leftSet mutableCopy];
             [unionSet unionSet:rightSet];
             return unionSet;

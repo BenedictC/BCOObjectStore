@@ -36,9 +36,9 @@
 @implementation BCOQueryResultGroup
 
 #pragma mark - factory
-+(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectFunction:(id (^)(NSArray *))selectBlock
++(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectFunction:(id (^)(NSArray *))selectFunction
 {
-    BCOQueryResultGroup *group = [[BCOQueryResultGroup alloc] initWithGroupByField:groupByField SortDescriptors:sortDescriptors groupIdentifier:nil selectBlock:selectBlock];
+    BCOQueryResultGroup *group = [[BCOQueryResultGroup alloc] initWithGroupByField:groupByField SortDescriptors:sortDescriptors groupIdentifier:nil selectFunction:selectFunction];
     for (id object in objects) {
         [group insertObject:object];
     }
@@ -51,7 +51,7 @@
 
 
 #pragma mark - instance life cycle
--(instancetype)initWithGroupByField:(NSString *)groupByField SortDescriptors:(NSArray *)sortDescriptors groupIdentifier:(id)groupIdentifier selectBlock:(id (^)(NSArray *))selectFunction
+-(instancetype)initWithGroupByField:(NSString *)groupByField SortDescriptors:(NSArray *)sortDescriptors groupIdentifier:(id)groupIdentifier selectFunction:(id (^)(NSArray *))selectFunction
 {
     self = [super init];
     if (self == nil) return nil;
@@ -215,7 +215,7 @@
     BCOQueryResultGroup *group = groups[groupIdentifer];
     if (group == nil) {
         //Create and insert a group
-        BCOQueryResultGroup *insertionGroup = [[BCOQueryResultGroup alloc] initWithGroupByField:nil SortDescriptors:self.sortDescriptors groupIdentifier:groupIdentifer selectBlock:self.selectFunction];
+        BCOQueryResultGroup *insertionGroup = [[BCOQueryResultGroup alloc] initWithGroupByField:nil SortDescriptors:self.sortDescriptors groupIdentifier:groupIdentifer selectFunction:self.selectFunction];
         groups[groupIdentifer] = insertionGroup;
 
         group = insertionGroup;
