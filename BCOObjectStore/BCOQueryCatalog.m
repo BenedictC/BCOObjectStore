@@ -14,7 +14,7 @@
 
 @interface BCOQueryCatalog ()
 
-@property(nonatomic, readonly) NSDictionary *indexesByName;
+@property(nonatomic, readonly) NSMutableDictionary *mutableIndexesByName;
 
 @end
 
@@ -23,34 +23,100 @@
 @implementation BCOQueryCatalog
 
 #pragma mark - instance life cycle
--(instancetype)initWithIndexesByName:(NSDictionary *)indexesByName
+-(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions
 {
-    NSParameterAssert(indexesByName);
+    //Create and add the index
+    NSMutableDictionary *mutableIndexesByName = [NSMutableDictionary new];
+    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
+        BCOIndex *newIndex = [[BCOIndex alloc] initWithIndexDescription:indexDescription];
+        mutableIndexesByName[indexName] = newIndex;
+    }];
+
+    return [self initWithIndexDescriptions:indexDescriptions mutableIndexesByName:mutableIndexesByName];
+}
+
+
+
+-(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions mutableIndexesByName:(NSMutableDictionary *)mutableIndexesByName
+{
+    NSParameterAssert(indexDescriptions);
+    NSParameterAssert(mutableIndexesByName);
 
     self = [super init];
     if (self == nil) return nil;
 
-    _indexesByName = indexesByName;
+    _indexDescriptions = [indexDescriptions copy];
+    _mutableIndexesByName = mutableIndexesByName;
 
     return self;
 }
 
 
 
-#pragma mark - properties
--(NSDictionary *)indexDescriptions
+#pragma mark - copying
+-(id)copyWithZone:(NSZone *)zone
 {
-    NSMutableDictionary *descriptions = [NSMutableDictionary new];
-    [self.indexesByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-        descriptions[indexName] = index.indexDescription;
+    //Perfrom a deep copy of the indexes
+    NSMutableDictionary *mutableIndexesByName = [NSMutableDictionary new];
+    [self.mutableIndexesByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
+        mutableIndexesByName[indexName] = [index copy];
     }];
 
-    return descriptions;
+    return [[BCOQueryCatalog alloc] initWithIndexDescriptions:self.indexDescriptions mutableIndexesByName:mutableIndexesByName];
+}
+
+
+
+#pragma mark - properties
+-(NSDictionary *)indexesByName
+{
+    return _mutableIndexesByName;
 }
 
 
 
 #pragma mark - access
+-(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object
+{
+    NSMutableDictionary *indexValuesByIndexName = [NSMutableDictionary new];
+
+    [self.indexesByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
+        id value = [index generateIndexValueForObject:object];
+        if (value == nil) return;
+
+        //Add the record to the index
+        [index addRecord:record forIndexValue:value];
+
+        //Add a reference for the indexName:value pair to the entry.
+        indexValuesByIndexName[indexName] = value;
+    }];
+
+    BCOQueryCatalogEntry *entry = [[BCOQueryCatalogEntry alloc] initWithRecord:record indexValuesByIndexName:indexValuesByIndexName];
+
+    return entry;
+}
+
+
+
+-(void)removeEntry:(BCOQueryCatalogEntry *)queryCatalogEntry
+{
+    NSDictionary *mutableIndexes = self.mutableIndexesByName;
+    [queryCatalogEntry.indexValuesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, id value, BOOL *stop) {
+        BCOIndex *index = mutableIndexes[indexName];
+        [index removeRecord:queryCatalogEntry.record forIndexValue:value];
+    }];
+}
+
+
+
+-(void)enumerateKeysAndObjectsUsingBlock:(void(^)(NSString *indexName, BCOIndex *index, BOOL *stop))block
+{
+    [self.mutableIndexesByName enumerateKeysAndObjectsUsingBlock:block];
+}
+
+
+
+#pragma mark - modifying
 -(NSSet *)recordsInIndex:(NSString *)indexName forValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
@@ -111,103 +177,6 @@
 {
     BCOIndex *index = self.indexesByName[indexName];
     return [index recordsWithValueGreaterThanOrEqualTo:value];
-}
-
-@end
-
-
-
-@interface BCOQueryCatalogBuilder ()
-@property(nonatomic, readonly) NSDictionary *indexBuildersByIndexName;
-@end
-
-
-
-@implementation BCOQueryCatalogBuilder
-
-+(instancetype)builderWithIndexDescriptions:(NSDictionary *)indexDescriptions
-{
-    NSMutableDictionary *indexBuildersByIndexName = [NSMutableDictionary new];
-    [indexDescriptions enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexDescription *indexDescription, BOOL *stop) {
-        indexBuildersByIndexName[indexName] = [BCOIndexBuilder builderWithIndexDescription:indexDescription];
-    }];
-
-    return [[BCOQueryCatalogBuilder alloc] initWithIndexBuildersByIndexName:indexBuildersByIndexName];
-}
-
-
-
-+(instancetype)builderWithPreviousQueryCatalog:(BCOQueryCatalog *)queryCatalog
-{
-    NSMutableDictionary *indexBuildersByIndexName = [NSMutableDictionary new];
-    [queryCatalog.indexesByName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndex *index, BOOL *stop) {
-        indexBuildersByIndexName[indexName] = [BCOIndexBuilder builderWithPreviousIndex:index];
-    }];
-
-    return [[BCOQueryCatalogBuilder alloc] initWithIndexBuildersByIndexName:indexBuildersByIndexName];
-}
-
-
-
--(instancetype)initWithIndexBuildersByIndexName:(NSDictionary *)indexBuildersByIndexName
-{
-    NSParameterAssert(indexBuildersByIndexName);
-    if (self == nil) return nil;
-
-    _indexBuildersByIndexName = indexBuildersByIndexName;
-
-    return self;
-}
-
-
-
-#pragma mark - access
--(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object
-{
-    //Keep track of which values are added to which index
-    NSMutableDictionary *indexValuesByIndexName = [NSMutableDictionary new];
-
-    [self.indexBuildersByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexBuilder *builder, BOOL *stop) {
-        id value = [builder generateIndexValueForObject:object];
-        if (value == nil) return;
-
-        //Add the record to the index
-        [builder addRecord:record forIndexValue:value];
-
-        //Add a reference for the indexName:value pair to the entry.
-        indexValuesByIndexName[indexName] = value;
-    }];
-
-    BCOQueryCatalogEntry *entry = [[BCOQueryCatalogEntry alloc] initWithRecord:record indexValuesByIndexName:indexValuesByIndexName];
-
-    return entry;
-}
-
-
-
--(void)removeEntry:(BCOQueryCatalogEntry *)queryCatalogEntry
-{
-    NSDictionary *builders = self.indexBuildersByIndexName;
-    [queryCatalogEntry.indexValuesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, id value, BOOL *stop) {
-        BCOIndexBuilder *builder = builders[indexName];
-        [builder removeRecord:queryCatalogEntry.record forIndexValue:value];
-    }];
-}
-
-
-
--(BCOQueryCatalog *)finalize
-{
-    NSAssert(_indexBuildersByIndexName != nil, @"");
-
-    NSMutableDictionary *indexesByName = [NSMutableDictionary new];
-    [self.indexBuildersByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, BCOIndexBuilder *builder, BOOL *stop) {
-        indexesByName[indexName] = builder.finalize;
-    }];
-
-    _indexBuildersByIndexName = nil;
-
-    return [[BCOQueryCatalog alloc] initWithIndexesByName:indexesByName];
 }
 
 @end
