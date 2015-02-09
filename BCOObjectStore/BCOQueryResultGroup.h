@@ -10,6 +10,7 @@
 #import "BCOQueryResultGroupProtocol.h"
 
 
+
 @interface BCOQueryResultGroup : NSObject <BCOQueryResultGroup>
 
 +(NSArray *)queryResultsWithObjects:(NSArray *)objects groupByField:(NSString *)groupByField sortDescriptors:(NSArray *)sortDescriptors selectFunction:(id(^)(NSArray *))selectFunction;
