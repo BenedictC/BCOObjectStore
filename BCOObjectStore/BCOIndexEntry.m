@@ -106,7 +106,8 @@
 
 -(instancetype)initWithIndexValue:(id)value records:(NSSet *)records
 {
-    return [super initWithIndexValue:value records:[records mutableCopy] shouldCopyObjects:NO];
+    NSMutableSet *mutableRecords = (records == nil) ? [NSMutableSet new] : [records mutableCopy];
+    return [super initWithIndexValue:value records:mutableRecords shouldCopyObjects:NO];
 }
 
 

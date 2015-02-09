@@ -71,17 +71,17 @@
     NSParameterAssert(indexDescriptions);
 
     //Create index
-    BCOQueryCatalog *queryCatalog = [[BCOQueryCatalog alloc] initWithIndexDescriptions:indexDescriptions];
-    BCOStorageRecordsToQueryCatalogEntriesLookUpTable *queryCatalogEntriesByStorageRecords = [[BCOStorageRecordsToQueryCatalogEntriesLookUpTable alloc] init];
+    BCOQueryCatalogBuilder *qcBuilder = [BCOQueryCatalogBuilder builderWithIndexDescriptions:indexDescriptions];
+    BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder *queryCatalogEntriesByStorageRecordsBuilder = [[BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder alloc] init];
 
     //Add each object to the queryCatalog
     [storage enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *record, id object, BOOL *stop) {
-        BCOQueryCatalogEntry *entry = [queryCatalog addEntryForRecord:record byIndexingObject:object];
+        BCOQueryCatalogEntry *entry = [qcBuilder addEntryForRecord:record byIndexingObject:object];
         //Store the index entry by storage record
-        [queryCatalogEntriesByStorageRecords setQueryCatalogEntry:entry forStorageRecord:record];
+        [queryCatalogEntriesByStorageRecordsBuilder setQueryCatalogEntry:entry forStorageRecord:record];
     }];
 
-    return [self initWithObjectStorage:storage queryCatalog:queryCatalog queryCatalogEntriesLookUpTable:queryCatalogEntriesByStorageRecords];
+    return [self initWithObjectStorage:storage queryCatalog:qcBuilder.finalize queryCatalogEntriesLookUpTable:queryCatalogEntriesByStorageRecordsBuilder.finalize];
 }
 
 
@@ -123,8 +123,10 @@
 //TODO: We can optimize here based on the bounds of the sizes. EG. If the new set is so much smaller/bigger than the old set it's easier to start again. Figure out what these conditions are.
     //Copy state
     BCOObjectStorageContainer *newStorage = [self.objectStorage copy];
-    BCOQueryCatalog *newQueryCatalog = [self.queryCatalog copy];
-    BCOStorageRecordsToQueryCatalogEntriesLookUpTable *newQueryCatalogEntriesByStorageRecords = [self.queryCatalogEntriesByStorageRecords copy];
+    BCOQueryCatalog *queryCatalog = self.queryCatalog;
+    BCOQueryCatalogBuilder *qcBuilder = [BCOQueryCatalogBuilder builderWithPreviousQueryCatalog:queryCatalog];
+    BCOStorageRecordsToQueryCatalogEntriesLookUpTable *table = self.queryCatalogEntriesByStorageRecords;
+    BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder *newQueryCatalogEntriesByStorageRecordsBuilder = [BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder builderWithPreviousTable:table];
 
     //Remove expiredObjects from...
     for (id expiredObject in expiredObjects) {
@@ -132,10 +134,10 @@
         BCOStorageRecord *record = [newStorage storageRecordForObject:expiredObject];
         [newStorage removeObjectForStorageRecord:record];
         //...the index by getting the entry
-        BCOQueryCatalogEntry *entry = [newQueryCatalogEntriesByStorageRecords queryCatalogEntryForStorageRecord:record];
-        [newQueryCatalog removeEntry:entry];
+        BCOQueryCatalogEntry *entry = [table queryCatalogEntryForStorageRecord:record];
+        [qcBuilder removeEntry:entry];
         //... the lookup table
-        [newQueryCatalogEntriesByStorageRecords removeQueryCatalogEntryForStorageRecord:record];
+        [newQueryCatalogEntriesByStorageRecordsBuilder removeQueryCatalogEntryForStorageRecord:record];
     }
 
     //Add freshObjects to...
@@ -143,13 +145,13 @@
         //...storage
         BCOStorageRecord *storageRecord = [newStorage addObject:freshObject];
         //...index
-        BCOQueryCatalogEntry *queryCatalogEntry = [newQueryCatalog addEntryForRecord:storageRecord byIndexingObject:freshObject];
+        BCOQueryCatalogEntry *queryCatalogEntry = [qcBuilder addEntryForRecord:storageRecord byIndexingObject:freshObject];
         //... the lookUp table
-        [newQueryCatalogEntriesByStorageRecords setQueryCatalogEntry:queryCatalogEntry forStorageRecord:storageRecord];
+        [newQueryCatalogEntriesByStorageRecordsBuilder setQueryCatalogEntry:queryCatalogEntry forStorageRecord:storageRecord];
     }
 
     //Construct the new snapshot
-    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:newStorage queryCatalog:newQueryCatalog queryCatalogEntriesLookUpTable:newQueryCatalogEntriesByStorageRecords];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:newStorage queryCatalog:qcBuilder.finalize queryCatalogEntriesLookUpTable:newQueryCatalogEntriesByStorageRecordsBuilder.finalize];
 }
 
 

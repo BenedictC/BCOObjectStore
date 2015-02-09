@@ -13,10 +13,9 @@
 
 
 @interface BCOStorageRecordsToQueryCatalogEntriesLookUpTable ()
-{
-    NSDictionary *_queryCatalogEntriesByStorageRecords;
-    NSMutableDictionary *_mutableQueryCatalogEntriesByStorageRecords;
-}
+
+@property(nonatomic, readonly) NSDictionary *queryCatalogEntriesByStorageRecords;
+@property(nonatomic, readonly) BCOStorageRecordsToQueryCatalogEntriesLookUpTable *previousTable;
 
 @end
 
@@ -27,78 +26,102 @@
 #pragma mark - instance life cycle
 -(instancetype)init
 {
-    return [self initWithQueryCatalogEntriesByStorageRecords:[NSMutableDictionary new]];
+    return [self initWithQueryCatalogEntriesByStorageRecords:nil previousTable:nil];
 }
 
 
 
--(instancetype)initWithQueryCatalogEntriesByStorageRecords:(NSDictionary *)queryCatalogEntriesByStorageRecords
+-(instancetype)initWithQueryCatalogEntriesByStorageRecords:(NSDictionary *)queryCatalogEntriesByStorageRecords previousTable:(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)previousTable
 {
     self = [super init];
     if (self == nil) return nil;
 
     _queryCatalogEntriesByStorageRecords = queryCatalogEntriesByStorageRecords;
+    _previousTable = previousTable;
 
     return self;
 }
 
 
 
-#pragma mark - copying
--(id)copyWithZone:(NSZone *)zone
-{
-    NSDictionary *entries = ([self isQueryCatalogEntriesByStorageRecordsDirty]) ? [self.queryCatalogEntriesByStorageRecords copy] : self.queryCatalogEntriesByStorageRecords;
-
-    return  [[BCOStorageRecordsToQueryCatalogEntriesLookUpTable alloc] initWithQueryCatalogEntriesByStorageRecords:entries];
-}
-
-
-
-#pragma mark - properties
--(BOOL)isQueryCatalogEntriesByStorageRecordsDirty
-{
-    return (_mutableQueryCatalogEntriesByStorageRecords != nil);
-}
-
-
-
--(NSDictionary *)queryCatalogEntriesByStorageRecords
-{
-    return ([self isQueryCatalogEntriesByStorageRecordsDirty]) ? _mutableQueryCatalogEntriesByStorageRecords : _queryCatalogEntriesByStorageRecords;
-}
-
-
-
--(NSMutableDictionary *)mutableQueryCatalogEntriesByStorageRecords
-{
-    if (_mutableQueryCatalogEntriesByStorageRecords != nil) return _mutableQueryCatalogEntriesByStorageRecords;
-
-    _mutableQueryCatalogEntriesByStorageRecords  = [_queryCatalogEntriesByStorageRecords mutableCopy];
-    _queryCatalogEntriesByStorageRecords = nil;
-
-    return _mutableQueryCatalogEntriesByStorageRecords;
-}
-
-
-
 #pragma mark - object access
--(void)setQueryCatalogEntry:(id)queryCatalogEntry forStorageRecord:(BCOStorageRecord *)storageRecord
+-(BCOQueryCatalogEntry *)queryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord
+{
+    id entry = self.queryCatalogEntriesByStorageRecords[storageRecord];
+    if (entry != nil) {
+        return (entry == [NSNull null]) ? nil : entry;
+    }
+
+    return [self.previousTable queryCatalogEntryForStorageRecord:storageRecord];
+}
+
+@end
+
+
+
+@interface BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder ()
+@property(nonatomic, readonly) NSMutableDictionary *mutableQueryCatalogEntriesByStorageRecords;
+@property(nonatomic, readonly) BCOStorageRecordsToQueryCatalogEntriesLookUpTable *previousTable;
+
+@end
+
+
+
+@implementation BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder
+
+#pragma mark - instance life cycle
++(instancetype)builderWithPreviousTable:(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)table
+{
+    return [[BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder alloc] initWithPreviousTable:table];
+}
+
+
+
+-(instancetype)init
+{
+    return [self initWithPreviousTable:nil];
+}
+
+
+
+-(instancetype)initWithPreviousTable:(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)table
+{
+    self = [super init];
+    if (self == nil) return nil;
+
+    _previousTable = table;
+    _mutableQueryCatalogEntriesByStorageRecords = [NSMutableDictionary new];
+
+    return self;
+}
+
+
+
+#pragma mark - data updating
+-(void)setQueryCatalogEntry:(BCOQueryCatalogEntry *)queryCatalogEntry forStorageRecord:(BCOStorageRecord *)storageRecord
 {
     self.mutableQueryCatalogEntriesByStorageRecords[storageRecord] = queryCatalogEntry;
 }
 
 
 
--(BCOQueryCatalogEntry *)queryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord
+-(void)removeQueryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord
 {
-    return self.queryCatalogEntriesByStorageRecords[storageRecord];
+    self.mutableQueryCatalogEntriesByStorageRecords[storageRecord] = [NSNull null];
 }
 
 
 
--(void)removeQueryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord
+#pragma mark - generation
+-(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)finalize
 {
-    [self.mutableQueryCatalogEntriesByStorageRecords removeObjectForKey:storageRecord];
+    NSAssert(_mutableQueryCatalogEntriesByStorageRecords != nil, @"Attempted to re-finalize an object.");
+
+    BCOStorageRecordsToQueryCatalogEntriesLookUpTable *table = [[BCOStorageRecordsToQueryCatalogEntriesLookUpTable alloc] initWithQueryCatalogEntriesByStorageRecords:self.mutableQueryCatalogEntriesByStorageRecords previousTable:self.previousTable];
+    _mutableQueryCatalogEntriesByStorageRecords = nil;
+    _previousTable = nil;
+
+    return table;
 }
 
 @end
