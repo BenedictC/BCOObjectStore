@@ -12,18 +12,7 @@
 
 
 
-@protocol BCOQueryCatalogBuilder <NSObject, NSCopying>
-
--(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object;
--(void)removeEntry:(BCOQueryCatalogEntry *)entry;
-
-@end
-
-
-
-@interface BCOQueryCatalog : NSObject <BCOQueryCatalogBuilder>
-
--(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions;
+@interface BCOQueryCatalog : NSObject
 
 @property(nonatomic, readonly) NSDictionary *indexDescriptions;
 
@@ -38,5 +27,19 @@
 -(NSSet *)recordsInIndex:(NSString *)indexName greaterThanValue:(id)value;
 -(NSSet *)recordsInIndex:(NSString *)indexName greaterThanOrEqualToValue:(id)value;
 
+@end
+
+
+
+@interface BCOQueryCatalogBuilder : NSObject
+
++(instancetype)builderWithIndexDescriptions:(NSDictionary *)indexDescriptions;
++(instancetype)builderWithPreviousQueryCatalog:(BCOQueryCatalog *)queryCatalog;
+
+-(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object;
+-(void)removeEntry:(BCOQueryCatalogEntry *)entry;
+
+-(BCOQueryCatalog *)finalize;
 
 @end
+

@@ -13,17 +13,21 @@
 
 
 
-@protocol BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder <NSObject, NSCopying>
+@interface BCOStorageRecordsToQueryCatalogEntriesLookUpTable : NSObject
 
--(void)setQueryCatalogEntry:(BCOQueryCatalogEntry *)queryCatalogEntry forStorageRecord:(BCOStorageRecord *)storageRecord;
--(void)removeQueryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord;
+-(BCOQueryCatalogEntry *)queryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord;
 
 @end
 
 
 
-@interface BCOStorageRecordsToQueryCatalogEntriesLookUpTable : NSObject <BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder>
+@interface BCOStorageRecordsToQueryCatalogEntriesLookUpTableBuilder : NSObject
 
--(BCOQueryCatalogEntry *)queryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord;
++(instancetype)builderWithPreviousTable:(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)table;
+
+-(void)setQueryCatalogEntry:(BCOQueryCatalogEntry *)queryCatalogEntry forStorageRecord:(BCOStorageRecord *)storageRecord;
+-(void)removeQueryCatalogEntryForStorageRecord:(BCOStorageRecord *)storageRecord;
+
+-(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)finalize;
 
 @end

@@ -10,23 +10,9 @@
 
 @class BCOIndexDescription;
 
-@class BCOIndex;
 
 
-
-@protocol BCOIndexBuilder <NSObject, NSCopying>
-
-//Entry Updating
--(id)generateIndexValueForObject:(id)object;
-
--(void)addRecord:(id)record forIndexValue:(id)value;
--(void)removeRecord:(id)record forIndexValue:(id)value;
-
-@end
-
-
-
-@interface BCOIndex : NSObject <BCOIndexBuilder>
+@interface BCOIndex : NSObject
 
 -(instancetype)initWithIndexDescription:(BCOIndexDescription *)indexDescription;
 
@@ -45,3 +31,21 @@
 -(NSSet *)recordsForValuesNotInSet:(NSArray *)values;
 
 @end
+
+
+
+@interface BCOIndexBuilder : NSObject
+
++(instancetype)builderWithPreviousIndex:(BCOIndex *)index;
++(instancetype)builderWithIndexDescription:(BCOIndexDescription *)indexDescription;
+
+@property(nonatomic, readonly) BCOIndexDescription *indexDescription;
+
+//Entry Updating
+-(id)generateIndexValueForObject:(id)object;
+
+-(void)addRecord:(id)record forIndexValue:(id)value;
+-(void)removeRecord:(id)record forIndexValue:(id)value;
+-(BCOIndex *)finalize;
+@end
+
