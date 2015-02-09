@@ -12,14 +12,20 @@
 
 
 
-@interface BCOObjectStorageContainer : NSObject <NSCopying>
-
-//Instance life cycle
-+(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path;
+@protocol BCOObjectStorageContainerBuilder <NSObject, NSCopying>
 
 //Content updating
 -(BCOStorageRecord *)addObject:(id)object;
 -(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;
+
+@end
+
+
+
+@interface BCOObjectStorageContainer : NSObject <BCOObjectStorageContainerBuilder>
+
+//Instance life cycle
++(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path;
 
 //Random content access
 -(id)objectForStorageRecord:(BCOStorageRecord *)storageRecord;

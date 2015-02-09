@@ -12,14 +12,20 @@
 
 
 
-@interface BCOQueryCatalog : NSObject <NSCopying>
+@protocol BCOQueryCatalogBuilder <NSObject, NSCopying>
+
+-(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object;
+-(void)removeEntry:(BCOQueryCatalogEntry *)entry;
+
+@end
+
+
+
+@interface BCOQueryCatalog : NSObject <BCOQueryCatalogBuilder>
 
 -(instancetype)initWithIndexDescriptions:(NSDictionary *)indexDescriptions;
 
 @property(nonatomic, readonly) NSDictionary *indexDescriptions;
-
--(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object;
--(void)removeEntry:(BCOQueryCatalogEntry *)entry;
 
 -(NSSet *)recordsInIndex:(NSString *)indexName forValue:(id)value;
 -(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value;
