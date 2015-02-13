@@ -15,9 +15,14 @@
 
 @interface BCOObjectStoreConfiguration : NSObject <NSCopying>
 
++(id(^)(NSData *))defaultObjectDeserializer;
++(NSData *(^)(id))defaultObjectSerializer;
+
 @property(nonatomic) dispatch_queue_t dispatchQueue;
 
 @property(nonatomic, copy) NSString *persistentStorePath;
+@property(nonatomic, copy) id (^objectDeserializer)(NSData * archive);
+@property(nonatomic, copy) NSData *(^objectSerializer)(id object);
 
 @property(nonatomic, readonly) NSDictionary *indexDescriptions;
 

@@ -35,6 +35,8 @@
     if (self == nil) return nil;
 
     _mutableIndexDescriptions = [indexDescriptions mutableCopy];
+    _objectDeserializer = [[self class] defaultObjectDeserializer];
+    _objectSerializer = [[self class] defaultObjectSerializer];
 
     return self;
 }
@@ -45,6 +47,7 @@
 -(id)copyWithZone:(NSZone *)zone
 {
     BCOObjectStoreConfiguration *copy = [[BCOObjectStoreConfiguration alloc] initWithIndexDescriptions:self.mutableIndexDescriptions];
+    copy.objectSerializer = self.objectSerializer;
     copy.dispatchQueue = self.dispatchQueue;
     copy.persistentStorePath = self.persistentStorePath;
 
@@ -54,6 +57,28 @@
 
 
 #pragma mark - properties
++(id(^)(NSData *))defaultObjectDeserializer
+{
+    static  NSData *(^ const deserializer)(id) = ^(NSData *archive){
+        return [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+    };
+
+    return deserializer;
+}
+
+
+
++(NSData *(^)(id))defaultObjectSerializer
+{
+    static  NSData *(^ const serializer)(id) = ^(id object){
+        return [NSKeyedArchiver archivedDataWithRootObject:object];
+    };
+
+    return serializer;
+}
+
+
+
 -(NSDictionary *)indexDescriptions
 {
     return [self.mutableIndexDescriptions copy];
