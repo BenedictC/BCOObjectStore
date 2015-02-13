@@ -44,7 +44,7 @@
     if (self == nil) return nil;
 
     _configuration = [configuration copy];
-    _snapshot = [BCOObjectStoreSnapshot snapshotWithPersistentStorePath:configuration.persistentStorePath indexDescriptions:configuration.indexDescriptions];
+    _snapshot = [BCOObjectStoreSnapshot snapshotWithPersistentStorePath:configuration.persistentStorePath indexDescriptions:configuration.indexDescriptions objectDeserializer:self.configuration.objectDeserializer];
 
     return self;
 }
@@ -157,9 +157,19 @@
 
 
 
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)outError objectSerializer:(NSData *(^)(id))serializer
+{
+    return [self.snapshot writeToPath:path error:outError objectSerializer:serializer];
+}
+
+
+
+#pragma mark - Archiving
 -(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
 {
-    return [self.snapshot writeToPath:path error:outError];
+    return [self writeToPath:path error:outError objectSerializer:self.configuration.objectSerializer];
 }
+
+
 
 @end
