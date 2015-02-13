@@ -12,9 +12,6 @@
 
 @protocol BCOObjectStoreSnapshot <NSObject>
 
-//Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
-
 //Querying
 -(id)executeQuery:(NSString *)query;
 -(id)executeQuery:(NSString *)query substitutionVariables:(NSDictionary *)substitutionVariables;
