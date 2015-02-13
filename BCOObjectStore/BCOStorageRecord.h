@@ -10,7 +10,7 @@
 
 
 
-@interface BCOStorageRecord : NSObject <NSCopying>
+@interface BCOStorageRecord : NSObject <NSCopying, NSCoding>
 
 +(BCOStorageRecord *)storageRecordForObject:(id)object;
 

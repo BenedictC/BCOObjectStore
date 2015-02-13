@@ -19,6 +19,7 @@
 
 @implementation BCOStorageRecord
 
+#pragma mark - instance life cycle
 +(NSString *)md5HashForData:(NSData *)data
 {
     unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
@@ -47,17 +48,39 @@
         //Once we have the hash then we can store the object on disk.
     }
 
-    return [[BCOStorageRecord alloc] initWithValue:object];
+    NSData *archive = [NSKeyedArchiver archivedDataWithRootObject:object];
+    NSString *md5 = [BCOStorageRecord md5HashForData:archive];
+
+    return [[BCOStorageRecord alloc] initWithValue:md5];
 }
 
 
 
-#pragma mark - instance life cycle
 -(instancetype)initWithValue:(id)value
 {
     self = [super init];
     if (self == nil) return nil;
     _value = value;
+    return self;
+}
+
+
+
+#pragma mark - NSArchiving
+-(void)encodeWithCoder:(NSCoder *)aCoder
+{
+    [aCoder encodeObject:self.value forKey:@"value"];
+}
+
+
+
+-(instancetype)initWithCoder:(NSCoder *)aDecoder
+{
+    self = [super init];
+    if (self == nil) return nil;
+
+    _value = [aDecoder decodeObjectForKey:@"value"];
+
     return self;
 }
 
