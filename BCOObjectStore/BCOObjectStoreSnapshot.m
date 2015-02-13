@@ -34,9 +34,13 @@
 @implementation BCOObjectStoreSnapshot
 
 #pragma mark - instance life cycle
-+(BCOObjectStoreSnapshot *)snapshotWithPersistentStorePath:(NSString *)path indexDescriptions:(NSDictionary *)indexDescriptions
++(BCOObjectStoreSnapshot *)snapshotWithPersistentStorePath:(NSString *)path indexDescriptions:(NSDictionary *)indexDescriptions objectDeserializer:(id(^)(NSData *))deserializer
 {
-    BCOObjectStorageContainer *storage = [BCOObjectStorageContainer objectStorageWithPersistentStorePath:path];
+    NSError *error;
+    BCOObjectStorageContainer *storage = [BCOObjectStorageContainer objectStorageWithPersistentStorePath:path objectDeserializer:deserializer error:&error];
+    if (storage == nil) {
+        //TODO: Handle the error and return nil.
+    }
 
     return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storage indexDescriptions:indexDescriptions];
 }
@@ -156,9 +160,9 @@
 
 
 #pragma mark - BCOObjectStoreSnapshot protocol
--(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)outError objectSerializer:(NSData *(^)(id))serializer
 {
-    return [self.objectStorage writeToPath:path error:outError];
+    return [self.objectStorage writeToPath:path error:outError objectSerializer:serializer];
 }
 
 
@@ -273,12 +277,13 @@
         case BCOQueryOperatorPredicate: {
             NSPredicate *predicate = expression.leftOperand;
             NSMutableSet *filteredRecords = [NSMutableSet new];
-            id recordsToSearch = searchSpace ?: storage.allStorageRecords;
-            for (id record in recordsToSearch) {
-                id object = [storage objectForStorageRecord:record];
+            id<BCOObjectStorageEnumerator> recordEnumerator = (searchSpace == nil) ? storage : [storage storageRecordEnumeratorWithStorageRecords:searchSpace];
+
+            [recordEnumerator enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *record, id object, BOOL *stop) {
                 BOOL didMatch = [predicate evaluateWithObject:object];
                 if (didMatch) [filteredRecords addObject:record];
-            }
+            }];
+
             return filteredRecords;
         }
 

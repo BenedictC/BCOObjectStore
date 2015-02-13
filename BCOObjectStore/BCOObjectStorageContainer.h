@@ -12,30 +12,40 @@
 
 
 
-@protocol BCOObjectStorageContainerBuilder <NSObject, NSCopying>
+@protocol BCOObjectStorageEnumerator <NSObject>
 
-//Content updating
--(BCOStorageRecord *)addObject:(id)object;
--(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;
+-(void)enumerateStorageRecordsUsingBlock:(void(^)(BCOStorageRecord *record, BOOL *stop))block;
+-(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block;
 
 @end
 
 
 
-@interface BCOObjectStorageContainer : NSObject <BCOObjectStorageContainerBuilder>
+@interface BCOObjectStorageContainer : NSObject <BCOObjectStorageEnumerator>
 
 //Instance life cycle
-+(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path;
++(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path objectDeserializer:(id(^)(NSData *))deserializer error:(NSError **)outError;
+//Archiving
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError objectSerializer:(NSData *(^)(id))serializer;
 
 //Random content access
 -(id)objectForStorageRecord:(BCOStorageRecord *)storageRecord;
 -(BCOStorageRecord *)storageRecordForObject:(id)object;
 
 //Enumerated content access
--(NSArray *)allStorageRecords;
--(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block;
+-(id)storageRecordEnumeratorWithStorageRecords:(id<NSFastEnumeration>)records;
 
-//Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError;
+@end
+
+
+
+@interface BCOObjectStorageContainerBuilder : NSObject
+
++(instancetype)builderWithPreviousStorageContainer:(BCOObjectStorageContainer *)previousContainer;
+
+-(BCOStorageRecord *)addObject:(id)object;
+-(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;
+
+-(BCOObjectStorageContainer *)finalize;
 
 @end

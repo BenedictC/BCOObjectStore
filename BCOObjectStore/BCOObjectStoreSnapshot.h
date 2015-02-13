@@ -16,8 +16,11 @@
 @interface BCOObjectStoreSnapshot : NSObject <BCOObjectStoreSnapshot>
 
 //Snapshot creation
-+(BCOObjectStoreSnapshot *)snapshotWithPersistentStorePath:(NSString *)path indexDescriptions:(NSDictionary *)indexDescriptions;
++(BCOObjectStoreSnapshot *)snapshotWithPersistentStorePath:(NSString *)path indexDescriptions:(NSDictionary *)indexDescriptions objectDeserializer:(id(^)(NSData *))deserializer;
+//Archiving
+-(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError objectSerializer:(NSData *(^)(id))serializer;
 
+//'Copying'
 -(BCOObjectStoreSnapshot *)snapshotWithObjects:(NSSet *)newObjects;
 -(BCOObjectStoreSnapshot *)snapshotByInsertingObjects:(NSSet *)freshObjects deletingObjects:(NSSet *)expiredObjects;
 
@@ -26,5 +29,6 @@
 
 //Object access
 -(id)executeQueryObject:(BCOQuery *)query;
+
 
 @end
