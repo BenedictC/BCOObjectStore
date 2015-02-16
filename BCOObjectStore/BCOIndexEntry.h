@@ -12,9 +12,9 @@
 
 @interface BCOIndexEntry : NSObject <NSCopying, NSMutableCopying>
 
--(instancetype)initWithIndexValue:(id)value records:(NSSet *)records;
+-(instancetype)initWithIndexValue:(id)value references:(NSSet *)references;
 @property(nonatomic, readonly) id indexValue;
-@property(nonatomic, readonly) NSSet *records;
+@property(nonatomic, readonly) NSSet *references;
 
 @end
 
@@ -22,6 +22,6 @@
 
 @interface BCOMutableIndexEntry : BCOIndexEntry
 @property(nonatomic) id indexValue;
--(void)addRecord:(id)record;
--(void)removeRecord:(id)record;
+-(void)addReference:(id)reference;
+-(void)removeReference:(id)reference;
 @end

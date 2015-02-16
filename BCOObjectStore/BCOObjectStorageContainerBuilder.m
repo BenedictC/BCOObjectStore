@@ -8,14 +8,14 @@
 
 #import "BCOObjectStorageContainerBuilder.h"
 #import "BCOObjectStorageContainer+Protected.h"
-#import "BCOStorageRecord.h"
+#import "BCOObjectReference.h"
 
 
 
 @implementation BCOObjectStorageContainerBuilder
 {
     BCOObjectStorageContainer *_previousContainer;
-    NSMutableDictionary *_objectsByStorageRecords;
+    NSMutableDictionary *_objectsByObjectReferences;
 }
 
 
@@ -41,7 +41,7 @@
     if (self == nil) return nil;
 
     _previousContainer = previousContainer;
-    _objectsByStorageRecords = [NSMutableDictionary new];
+    _objectsByObjectReferences = [NSMutableDictionary new];
 
     return self;
 }
@@ -49,26 +49,26 @@
 
 
 #pragma mark -
--(BCOStorageRecord *)addObject:(id)object
+-(BCOObjectReference *)addObject:(id)object
 {
-    BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
-    _objectsByStorageRecords[record] = object;
+    BCOObjectReference *reference = [BCOObjectReference objectReferenceForObject:object];
+    _objectsByObjectReferences[reference] = object;
 
-    return record;
+    return reference;
 }
 
 
 
--(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord
+-(void)removeObjectForObjectReference:(BCOObjectReference *)objectReference
 {
-    _objectsByStorageRecords[storageRecord] = [NSNull null];
+    _objectsByObjectReferences[objectReference] = [NSNull null];
 }
 
 
 
 -(BCOObjectStorageContainer *)finalize
 {
-    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:_objectsByStorageRecords previousContainer:_previousContainer];
+    return [[BCOObjectStorageContainer alloc] initWithObjectsByObjectReferences:_objectsByObjectReferences previousContainer:_previousContainer persistentStorageManager:_previousContainer.persistentStorageManager];
 }
 
 @end

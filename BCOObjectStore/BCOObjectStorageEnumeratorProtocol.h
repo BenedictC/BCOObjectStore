@@ -8,14 +8,14 @@
 
 #import <Foundation/Foundation.h>
 
-@class BCOStorageRecord;
+@class BCOObjectReference;
 
 
 
 @protocol BCOObjectStorageEnumerator <NSObject>
 
--(void)enumerateStorageRecordsUsingBlock:(void(^)(BCOStorageRecord *record, BOOL *stop))block;
--(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block;
+-(void)enumerateObjectReferencesUsingBlock:(void(^)(BCOObjectReference *reference, BOOL *stop))block;
+-(void)enumerateObjectReferencesAndObjectsUsingBlock:(void(^)(BCOObjectReference *reference, id object, BOOL *stop))block;
 
 @end
 

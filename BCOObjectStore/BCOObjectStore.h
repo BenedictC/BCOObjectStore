@@ -37,6 +37,6 @@ typedef void (^BCOObjectStoreUpdateObjectsCompletionHandler)(NSSet *insertedObje
 -(id)monitorStoreForChangesToQuery:(NSString *)queryString substitutionVariables:(NSDictionary *)substitutionVariables changeHandler:(void(^)(id result, id<BCOObjectStoreSnapshot> snapshot))changeHandler;
 
 //Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)outError;
+-(BOOL)save:(NSError **)outError;
 
 @end

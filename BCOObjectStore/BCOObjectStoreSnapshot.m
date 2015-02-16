@@ -10,7 +10,7 @@
 
 #import "BCOObjectStorageContainer.h"
 #import "BCOObjectStorageContainerBuilder.h"
-#import "BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h"
+#import "BCOObjectReferencesToQueryCatalogEntriesLookUpTable.h"
 #import "BCOQueryCatalog.h"
 #import "BCOQuery.h"
 #import "BCOQueryResultGroup.h"
@@ -24,10 +24,10 @@
 //Index
 @property(readonly) BCOQueryCatalog *queryCatalog;
 //Storage->Index
-@property(readonly) BCOStorageRecordsToQueryCatalogEntriesLookUpTable *queryCatalogEntriesByStorageRecords;
+@property(readonly) BCOObjectReferencesToQueryCatalogEntriesLookUpTable *queryCatalogEntriesByObjectReferences;
 
 //The snap shot assumes ownership of these object so is able to modify them without copying them.
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog queryCatalogEntriesLookUpTable:(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog queryCatalogEntriesLookUpTable:(BCOObjectReferencesToQueryCatalogEntriesLookUpTable *)lookupTable __attribute__((objc_designated_initializer));
 @end
 
 
@@ -77,21 +77,21 @@
 
     //Create index
     BCOQueryCatalog *queryCatalog = [[BCOQueryCatalog alloc] initWithIndexDescriptions:indexDescriptions];
-    BCOStorageRecordsToQueryCatalogEntriesLookUpTable *queryCatalogEntriesByStorageRecords = [[BCOStorageRecordsToQueryCatalogEntriesLookUpTable alloc] init];
+    BCOObjectReferencesToQueryCatalogEntriesLookUpTable *queryCatalogEntriesByObjectReferences = [[BCOObjectReferencesToQueryCatalogEntriesLookUpTable alloc] init];
 
     //Add each object to the queryCatalog
-    [storage enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *record, id object, BOOL *stop) {
-        BCOQueryCatalogEntry *entry = [queryCatalog addEntryForRecord:record byIndexingObject:object];
-        //Store the index entry by storage record
-        [queryCatalogEntriesByStorageRecords setQueryCatalogEntry:entry forStorageRecord:record];
+    [storage enumerateObjectReferencesAndObjectsUsingBlock:^(BCOObjectReference *reference, id object, BOOL *stop) {
+        BCOQueryCatalogEntry *entry = [queryCatalog addEntryForReference:reference byIndexingObject:object];
+        //Store the index entry by storage reference
+        [queryCatalogEntriesByObjectReferences setQueryCatalogEntry:entry forObjectReference:reference];
     }];
 
-    return [self initWithObjectStorage:storage queryCatalog:queryCatalog queryCatalogEntriesLookUpTable:queryCatalogEntriesByStorageRecords];
+    return [self initWithObjectStorage:storage queryCatalog:queryCatalog queryCatalogEntriesLookUpTable:queryCatalogEntriesByObjectReferences];
 }
 
 
 
--(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog queryCatalogEntriesLookUpTable:(BCOStorageRecordsToQueryCatalogEntriesLookUpTable *)lookupTable
+-(instancetype)initWithObjectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog queryCatalogEntriesLookUpTable:(BCOObjectReferencesToQueryCatalogEntriesLookUpTable *)lookupTable
 {
     //self assumes ownership of all objects
     self = [super init];
@@ -99,7 +99,7 @@
 
     _objectStorage = storage;
     _queryCatalog = queryCatalog;
-    _queryCatalogEntriesByStorageRecords = lookupTable;
+    _queryCatalogEntriesByObjectReferences = lookupTable;
 
     return self;
 }
@@ -130,32 +130,32 @@
     BCOObjectStorageContainer *storage = self.objectStorage;
     BCOObjectStorageContainerBuilder *storageBuilder = [BCOObjectStorageContainerBuilder builderWithPreviousStorageContainer:storage];
     BCOQueryCatalog *newQueryCatalog = [self.queryCatalog copy];
-    BCOStorageRecordsToQueryCatalogEntriesLookUpTable *newQueryCatalogEntriesByStorageRecords = [self.queryCatalogEntriesByStorageRecords copy];
+    BCOObjectReferencesToQueryCatalogEntriesLookUpTable *newQueryCatalogEntriesByObjectReferences = [self.queryCatalogEntriesByObjectReferences copy];
 
     //Remove expiredObjects from...
     for (id expiredObject in expiredObjects) {
         //... storage
-        BCOStorageRecord *record = [storage storageRecordForObject:expiredObject];
-        [storageBuilder removeObjectForStorageRecord:record];
+        BCOObjectReference *reference = [storage objectReferenceForObject:expiredObject];
+        [storageBuilder removeObjectForObjectReference:reference];
         //...the index by getting the entry
-        BCOQueryCatalogEntry *entry = [newQueryCatalogEntriesByStorageRecords queryCatalogEntryForStorageRecord:record];
+        BCOQueryCatalogEntry *entry = [newQueryCatalogEntriesByObjectReferences queryCatalogEntryForObjectReference:reference];
         [newQueryCatalog removeEntry:entry];
         //... the lookup table
-        [newQueryCatalogEntriesByStorageRecords removeQueryCatalogEntryForStorageRecord:record];
+        [newQueryCatalogEntriesByObjectReferences removeQueryCatalogEntryForObjectReference:reference];
     }
 
     //Add freshObjects to...
     for (id freshObject in freshObjects) {
         //...storage
-        BCOStorageRecord *storageRecord = [storageBuilder addObject:freshObject];
+        BCOObjectReference *objectReference = [storageBuilder addObject:freshObject];
         //...index
-        BCOQueryCatalogEntry *queryCatalogEntry = [newQueryCatalog addEntryForRecord:storageRecord byIndexingObject:freshObject];
+        BCOQueryCatalogEntry *queryCatalogEntry = [newQueryCatalog addEntryForReference:objectReference byIndexingObject:freshObject];
         //... the lookUp table
-        [newQueryCatalogEntriesByStorageRecords setQueryCatalogEntry:queryCatalogEntry forStorageRecord:storageRecord];
+        [newQueryCatalogEntriesByObjectReferences setQueryCatalogEntry:queryCatalogEntry forObjectReference:objectReference];
     }
 
     //Construct the new snapshot
-    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storageBuilder.finalize queryCatalog:newQueryCatalog queryCatalogEntriesLookUpTable:newQueryCatalogEntriesByStorageRecords];
+    return [[BCOObjectStoreSnapshot alloc] initWithObjectStorage:storageBuilder.finalize queryCatalog:newQueryCatalog queryCatalogEntriesLookUpTable:newQueryCatalogEntriesByObjectReferences];
 }
 
 
@@ -195,12 +195,12 @@
 +(id)executeQuery:(BCOQuery *)query objectStorage:(BCOObjectStorageContainer *)storage queryCatalog:(BCOQueryCatalog *)queryCatalog
 {
     //Match the objects (WHERE)
-    NSSet *matchedRecords = [self evaluateWhereClauseExpression:query.rootWhereExpression storage:storage queryCatalog:queryCatalog searchSpace:nil];
+    NSSet *matchedReferences = [self evaluateWhereClauseExpression:query.rootWhereExpression storage:storage queryCatalog:queryCatalog searchSpace:nil];
 
-    //Convert the records to objects
+    //Convert the references to objects
     NSMutableArray *objects = [NSMutableArray new];
-    for (BCOStorageRecord *record in matchedRecords) {
-        id object = [storage objectForStorageRecord:record];
+    for (BCOObjectReference *reference in matchedReferences) {
+        id object = [storage objectForObjectReference:reference];
         [objects addObject:object];
     }
 
@@ -244,48 +244,48 @@
         }
 
         case BCOQueryOperatorEqualTo: {
-            return [queryCatalog recordsInIndex:expression.leftOperand forValue:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand forValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorNotEqualTo: {
-            return [queryCatalog recordsInIndex:expression.leftOperand forValuesNotEqualToValue:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand forValuesNotEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorIn: {
-            return [queryCatalog recordsInIndex:expression.leftOperand forValuesInSet:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand forValuesInSet:expression.rightOperand];
         }
 
         case BCOQueryOperatorNotIn: {
-            return [queryCatalog recordsInIndex:expression.leftOperand forValuesNotInSet:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand forValuesNotInSet:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThan: {
-            return [queryCatalog recordsInIndex:expression.leftOperand lessThanValue:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand lessThanValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorLessThanOrEqualTo: {
-            return [queryCatalog recordsInIndex:expression.leftOperand lessThanOrEqualToValue:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand lessThanOrEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorGreaterThan: {
-            return [queryCatalog recordsInIndex:expression.leftOperand greaterThanValue:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand greaterThanValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorGreaterThanOrEqualTo: {
-            return [queryCatalog recordsInIndex:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
+            return [queryCatalog referencesInIndex:expression.leftOperand greaterThanOrEqualToValue:expression.rightOperand];
         }
 
         case BCOQueryOperatorPredicate: {
             NSPredicate *predicate = expression.leftOperand;
-            NSMutableSet *filteredRecords = [NSMutableSet new];
-            id<BCOObjectStorageEnumerator> recordEnumerator = (searchSpace == nil) ? storage : [storage storageRecordEnumeratorWithStorageRecords:searchSpace];
+            NSMutableSet *filteredReferences = [NSMutableSet new];
+            id<BCOObjectStorageEnumerator> referenceEnumerator = (searchSpace == nil) ? storage : [storage objectReferenceEnumeratorWithObjectReferences:searchSpace];
 
-            [recordEnumerator enumerateStorageRecordsAndObjectsUsingBlock:^(BCOStorageRecord *record, id object, BOOL *stop) {
+            [referenceEnumerator enumerateObjectReferencesAndObjectsUsingBlock:^(BCOObjectReference *reference, id object, BOOL *stop) {
                 BOOL didMatch = [predicate evaluateWithObject:object];
-                if (didMatch) [filteredRecords addObject:record];
+                if (didMatch) [filteredReferences addObject:reference];
             }];
 
-            return filteredRecords;
+            return filteredReferences;
         }
 
         case BCOQueryOperatorInvalid: {

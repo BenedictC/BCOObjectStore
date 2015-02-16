@@ -14,9 +14,9 @@
 
 @interface BCOObjectStorageEnumerator : NSObject <BCOObjectStorageEnumerator>
 
--(instancetype)initWithStorageContainer:(BCOObjectStorageContainer *)storageContainer records:(id<NSFastEnumeration>)records;
+-(instancetype)initWithStorageContainer:(BCOObjectStorageContainer *)storageContainer references:(id<NSFastEnumeration>)references;
 @property(nonatomic, readonly) BCOObjectStorageContainer *storageContainer;
-@property(nonatomic, readonly) id<NSFastEnumeration> records;
+@property(nonatomic, readonly) id<NSFastEnumeration> references;
 
 @end
 

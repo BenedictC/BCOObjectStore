@@ -165,7 +165,7 @@
 
 
 #pragma mark - Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)outError
+-(BOOL)save:(NSError **)outError
 {
     return [self writeToPath:path error:outError objectSerializer:self.configuration.objectSerializer];
 }

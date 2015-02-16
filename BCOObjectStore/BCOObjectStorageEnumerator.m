@@ -13,7 +13,7 @@
 
 @implementation BCOObjectStorageEnumerator
 
--(instancetype)initWithStorageContainer:(BCOObjectStorageContainer *)storageContainer records:(id<NSFastEnumeration>)records
+-(instancetype)initWithStorageContainer:(BCOObjectStorageContainer *)storageContainer references:(id<NSFastEnumeration>)references
 {
     NSParameterAssert(storageContainer);
 
@@ -21,36 +21,36 @@
     if (self == nil) return nil;
 
     _storageContainer = storageContainer;
-    _records = records;
+    _references = references;
 
     return self;
 }
 
 
 
--(void)enumerateStorageRecordsUsingBlock:(void(^)(BCOStorageRecord *record, BOOL *stop))block
+-(void)enumerateObjectReferencesUsingBlock:(void(^)(BCOObjectReference *reference, BOOL *stop))block
 {
-    if (self.records != nil) {
+    if (self.references != nil) {
         BOOL stop = NO;
-        for (BCOStorageRecord *record in self.records) {
-            block(record, &stop);
+        for (BCOObjectReference *reference in self.references) {
+            block(reference, &stop);
             if (stop) return;
         }
         return;
     }
 
-    NSMutableSet *visitedRecords = [NSMutableSet new];
+    NSMutableSet *visitedReferences = [NSMutableSet new];
     BCOObjectStorageContainer *container = self.storageContainer;
 
     while (container != nil) {
 
-        [container.objectsByStorageRecords enumerateKeysAndObjectsUsingBlock:^(BCOStorageRecord *record, id obj, BOOL *stop) {
-            BOOL isVisited = [visitedRecords containsObject:record];
+        [container.objectsByObjectReferences enumerateKeysAndObjectsUsingBlock:^(BCOObjectReference *reference, id obj, BOOL *stop) {
+            BOOL isVisited = [visitedReferences containsObject:reference];
             if (isVisited) return;
 
-            [visitedRecords addObject:record];
+            [visitedReferences addObject:reference];
 
-            if (obj != [NSNull null]) block(record, stop);
+            if (obj != [NSNull null]) block(reference, stop);
         }];
 
         container = container.previousContainer;
@@ -59,13 +59,13 @@
 
 
 
--(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block
+-(void)enumerateObjectReferencesAndObjectsUsingBlock:(void(^)(BCOObjectReference *reference, id object, BOOL *stop))block
 {
     BCOObjectStorageContainer *container = self.storageContainer;
 
-    [self enumerateStorageRecordsUsingBlock:^(BCOStorageRecord *record, BOOL *stop) {
-        id object = [container objectForStorageRecord:record];
-        block(record, object, stop);
+    [self enumerateObjectReferencesUsingBlock:^(BCOObjectReference *reference, BOOL *stop) {
+        id object = [container objectForObjectReference:reference];
+        block(reference, object, stop);
     }];
 }
 

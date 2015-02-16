@@ -76,7 +76,7 @@
 
 
 #pragma mark - access
--(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object
+-(BCOQueryCatalogEntry *)addEntryForReference:(id)reference byIndexingObject:(id)object
 {
     NSMutableDictionary *indexValuesByIndexName = [NSMutableDictionary new];
 
@@ -84,14 +84,14 @@
         id value = [index generateIndexValueForObject:object];
         if (value == nil) return;
 
-        //Add the record to the index
-        [index addRecord:record forIndexValue:value];
+        //Add the reference to the index
+        [index addReference:reference forIndexValue:value];
 
         //Add a reference for the indexName:value pair to the entry.
         indexValuesByIndexName[indexName] = value;
     }];
 
-    BCOQueryCatalogEntry *entry = [[BCOQueryCatalogEntry alloc] initWithRecord:record indexValuesByIndexName:indexValuesByIndexName];
+    BCOQueryCatalogEntry *entry = [[BCOQueryCatalogEntry alloc] initWithReference:reference indexValuesByIndexName:indexValuesByIndexName];
 
     return entry;
 }
@@ -103,7 +103,7 @@
     NSDictionary *mutableIndexes = self.mutableIndexesByName;
     [queryCatalogEntry.indexValuesByIndexName enumerateKeysAndObjectsUsingBlock:^(NSString *indexName, id value, BOOL *stop) {
         BCOIndex *index = mutableIndexes[indexName];
-        [index removeRecord:queryCatalogEntry.record forIndexValue:value];
+        [index removeReference:queryCatalogEntry.reference forIndexValue:value];
     }];
 }
 
@@ -117,66 +117,66 @@
 
 
 #pragma mark - modifying
--(NSSet *)recordsInIndex:(NSString *)indexName forValue:(id)value
+-(NSSet *)referencesInIndex:(NSString *)indexName forValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsForValue:value];
+    return [index referencesForValue:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value
+-(NSSet *)referencesInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsWithValueNotEqualTo:value];
+    return [index referencesWithValueNotEqualTo:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesInSet:(NSArray *)value
+-(NSSet *)referencesInIndex:(NSString *)indexName forValuesInSet:(NSArray *)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsForValuesInSet:value];
+    return [index referencesForValuesInSet:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotInSet:(NSArray *)value
+-(NSSet *)referencesInIndex:(NSString *)indexName forValuesNotInSet:(NSArray *)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsForValuesNotInSet:value];
+    return [index referencesForValuesNotInSet:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName lessThanValue:(id)value
+-(NSSet *)referencesInIndex:(NSString *)indexName lessThanValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsWithValueLessThan:value];
+    return [index referencesWithValueLessThan:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName lessThanOrEqualToValue:(id)value
+-(NSSet *)referencesInIndex:(NSString *)indexName lessThanOrEqualToValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsWithValueLessThanOrEqualTo:value];
+    return [index referencesWithValueLessThanOrEqualTo:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName greaterThanValue:(id)value
+-(NSSet *)referencesInIndex:(NSString *)indexName greaterThanValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsWithValueGreaterThan:value];
+    return [index referencesWithValueGreaterThan:value];
 }
 
 
 
--(NSSet *)recordsInIndex:(NSString *)indexName greaterThanOrEqualToValue:(id)value
+-(NSSet *)referencesInIndex:(NSString *)indexName greaterThanOrEqualToValue:(id)value
 {
     BCOIndex *index = self.indexesByName[indexName];
-    return [index recordsWithValueGreaterThanOrEqualTo:value];
+    return [index referencesWithValueGreaterThanOrEqualTo:value];
 }
 
 @end

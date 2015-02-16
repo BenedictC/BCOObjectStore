@@ -1,23 +1,23 @@
 //
-//  BCOStorageRecord.m
+//  BCOObjectReference.m
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 26/01/2015.
 //
 //
 
-#import "BCOStorageRecord.h"
+#import "BCOObjectReference.h"
 #import <CommonCrypto/CommonCrypto.h>
 
 
 
-@interface BCOStorageRecord ()
+@interface BCOObjectReference ()
 @property(nonatomic, readonly) id value;
 @end
 
 
 
-@implementation BCOStorageRecord
+@implementation BCOObjectReference
 
 #pragma mark - instance life cycle
 +(NSString *)md5HashForData:(NSData *)data
@@ -39,7 +39,7 @@
 
 
 
-+(BCOStorageRecord *)storageRecordForObject:(id)object
++(BCOObjectReference *)objectReferenceForObject:(id)object
 {
     BOOL isSerializable = NO; //TODO:
     if (isSerializable) {
@@ -48,10 +48,15 @@
         //Once we have the hash then we can store the object on disk.
     }
 
-    NSData *archive = [NSKeyedArchiver archivedDataWithRootObject:object];
-    NSString *md5 = [BCOStorageRecord md5HashForData:archive];
+    BOOL shouldUseMD5AsValue = [object respondsToSelector:@selector(encodeWithCoder:)];
+    if (!shouldUseMD5AsValue) {
+        return [[BCOObjectReference alloc] initWithValue:object];
+    }
 
-    return [[BCOStorageRecord alloc] initWithValue:md5];
+    NSData *archive = [NSKeyedArchiver archivedDataWithRootObject:object];
+    NSString *md5 = [BCOObjectReference md5HashForData:archive];
+
+    return [[BCOObjectReference alloc] initWithValue:md5];
 }
 
 
@@ -97,11 +102,11 @@
 #pragma mark - equality
 -(BOOL)isEqual:(id)object
 {
-    if (![object isKindOfClass:BCOStorageRecord.class]) return NO;
+    if (![object isKindOfClass:BCOObjectReference.class]) return NO;
 
-    BCOStorageRecord *otherRecord = object;
+    BCOObjectReference *otherReference = object;
 
-    return [self.value isEqual:otherRecord.value];
+    return [self.value isEqual:otherReference.value];
 }
 
 

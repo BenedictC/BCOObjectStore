@@ -16,7 +16,7 @@ class BCOIndexTests: XCTestCase {
     var original: BCOIndex?
     var objects: [AnyObject]?
     var indexValues: [AnyObject]?
-    var records: [BCOStorageRecord]?
+    var references: [BCOObjectReference]?
 
 
 
@@ -31,7 +31,7 @@ class BCOIndexTests: XCTestCase {
 
         var objects:[AnyObject] = []
         var indexValues:[AnyObject] = []
-        var records:[BCOStorageRecord] = []
+        var references:[BCOObjectReference] = []
 
         for (var i = 0; i < 100; i++) {
             let obj:String = {
@@ -39,19 +39,19 @@ class BCOIndexTests: XCTestCase {
                 for (var j = 0; j < i; j++) {o += "-"}
                 return o
             }()
-            let record = BCOStorageRecord(forObject:obj)
+            let reference = BCOObjectReference(forObject:obj)
             let value:AnyObject = original.generateIndexValueForObject(obj)
 
             objects.append(obj)
-            records.append(record)
+            references.append(reference)
             indexValues.append(value)
 
-            original.addRecord(record, forIndexValue: value)
+            original.addReference(reference, forIndexValue: value)
         }
 
         self.objects = objects
         self.indexValues = indexValues
-        self.records = records
+        self.references = references
         self.original = original
     }
 
@@ -65,11 +65,11 @@ class BCOIndexTests: XCTestCase {
         let copy = original.copy() as BCOIndex
 
         //When
-        original.removeRecord(self.records![0], forIndexValue:self.indexValues![0])
+        original.removeReference(self.references![0], forIndexValue:self.indexValues![0])
 
         //Then
-        let expected = NSSet(objects:self.records![0])
-        let actual = copy.recordsForValue(self.indexValues![0])
+        let expected = NSSet(objects:self.references![0])
+        let actual = copy.referencesForValue(self.indexValues![0])
         XCTAssertEqual(expected, actual)
     }
 
@@ -81,11 +81,11 @@ class BCOIndexTests: XCTestCase {
         let copy = original.copy() as BCOIndex
 
         //When
-        copy.removeRecord(self.records![0], forIndexValue:self.indexValues![0])
+        copy.removeReference(self.references![0], forIndexValue:self.indexValues![0])
 
         //Then
-        let expected = NSSet(objects:self.records![0])
-        let actual = original.recordsForValue(self.indexValues![0])
+        let expected = NSSet(objects:self.references![0])
+        let actual = original.referencesForValue(self.indexValues![0])
         XCTAssertEqual(expected, actual)
     }
 

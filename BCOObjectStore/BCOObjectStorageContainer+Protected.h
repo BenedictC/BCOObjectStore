@@ -8,13 +8,15 @@
 
 #import "BCOObjectStorageContainer.h"
 
+@class BCOObjectStorageContainerPersistentStorageManager;
+
 
 
 @interface BCOObjectStorageContainer ()//Protected
 
--(instancetype)initWithObjectsByStorageRecords:(NSDictionary *)objectsByStorageRecords previousContainer:(BCOObjectStorageContainer *)previousContainer  __attribute__((objc_designated_initializer));
-
-@property(nonatomic, readonly) NSDictionary *objectsByStorageRecords;
+-(instancetype)initWithObjectsByObjectReferences:(NSDictionary *)objectsByObjectReferences previousContainer:(BCOObjectStorageContainer *)previousContainer persistentStorageManager:(BCOObjectStorageContainerPersistentStorageManager *)persistentStorageManager  __attribute__((objc_designated_initializer));
+@property(nonatomic, readonly) NSDictionary *objectsByObjectReferences;
 @property(nonatomic, readonly) BCOObjectStorageContainer *previousContainer;
+@property(nonatomic, readonly) BCOObjectStorageContainerPersistentStorageManager *persistentStorageManager;
 
 @end

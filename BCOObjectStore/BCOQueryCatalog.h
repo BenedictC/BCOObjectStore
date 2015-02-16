@@ -14,7 +14,7 @@
 
 @protocol BCOQueryCatalogBuilder <NSObject, NSCopying>
 
--(BCOQueryCatalogEntry *)addEntryForRecord:(id)record byIndexingObject:(id)object;
+-(BCOQueryCatalogEntry *)addEntryForReference:(id)reference byIndexingObject:(id)object;
 -(void)removeEntry:(BCOQueryCatalogEntry *)entry;
 
 @end
@@ -27,16 +27,16 @@
 
 @property(nonatomic, readonly) NSDictionary *indexDescriptions;
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValue:(id)value;
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName forValue:(id)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName forValuesNotEqualToValue:(id)value;
 
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesInSet:(NSArray *)value;
--(NSSet *)recordsInIndex:(NSString *)indexName forValuesNotInSet:(NSArray *)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName forValuesInSet:(NSArray *)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName forValuesNotInSet:(NSArray *)value;
 
--(NSSet *)recordsInIndex:(NSString *)indexName lessThanValue:(id)value;
--(NSSet *)recordsInIndex:(NSString *)indexName lessThanOrEqualToValue:(id)value;
--(NSSet *)recordsInIndex:(NSString *)indexName greaterThanValue:(id)value;
--(NSSet *)recordsInIndex:(NSString *)indexName greaterThanOrEqualToValue:(id)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName lessThanValue:(id)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName lessThanOrEqualToValue:(id)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName greaterThanValue:(id)value;
+-(NSSet *)referencesInIndex:(NSString *)indexName greaterThanOrEqualToValue:(id)value;
 
 
 @end

@@ -13,13 +13,13 @@
 
 @implementation BCOQueryCatalogEntry
 
--(instancetype)initWithRecord:(id)record indexValuesByIndexName:(NSDictionary *)indexValuesByIndexName
+-(instancetype)initWithReference:(id)reference indexValuesByIndexName:(NSDictionary *)indexValuesByIndexName
 {
-    NSParameterAssert(record);
+    NSParameterAssert(reference);
     self = [super init];
     if (self == nil) return nil;
 
-    _record = record;
+    _reference = reference;
     _indexValuesByIndexName = [indexValuesByIndexName copy];
 
     return self;

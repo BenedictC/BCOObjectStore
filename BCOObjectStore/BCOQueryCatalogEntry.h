@@ -12,9 +12,9 @@
 
 @interface BCOQueryCatalogEntry : NSObject
 
--(instancetype)initWithRecord:(id)record indexValuesByIndexName:(NSDictionary *)indexValuesByIndexName;
+-(instancetype)initWithReference:(id)reference indexValuesByIndexName:(NSDictionary *)indexValuesByIndexName;
 
-@property(nonatomic, readonly) id record;
+@property(nonatomic, readonly) id reference;
 @property(nonatomic, readonly) NSDictionary *indexValuesByIndexName;
 
 

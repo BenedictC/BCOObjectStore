@@ -1,5 +1,5 @@
 //
-//  BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests.swift
+//  BCOObjectReferencesToQueryCatalogEntriesLookUpTableTests.swift
 //  BCOObjectStore
 //
 //  Created by Benedict Cohen on 06/02/2015.
@@ -11,23 +11,23 @@ import XCTest
 
 
 
-class BCOStorageRecordsToQueryCatalogEntriesLookUpTableTests: XCTestCase {
+class BCOObjectReferencesToQueryCatalogEntriesLookUpTableTests: XCTestCase {
 
     func testCopyDoesNotModifyMutatedOriginal() {
         //Given
-        let original = BCOStorageRecordsToQueryCatalogEntriesLookUpTable()
-        let record1:AnyObject = BCOStorageRecord(forObject:NSUUID())
-        let entry1 = BCOQueryCatalogEntry(record: record1, indexValuesByIndexName: NSDictionary())
-        original.setQueryCatalogEntry(entry1, forStorageRecord:record1 as BCOStorageRecord)
+        let original = BCOObjectReferencesToQueryCatalogEntriesLookUpTable()
+        let reference1:AnyObject = BCOObjectReference(forObject:NSUUID())
+        let entry1 = BCOQueryCatalogEntry(reference: reference1, indexValuesByIndexName: NSDictionary())
+        original.setQueryCatalogEntry(entry1, forObjectReference:reference1 as BCOObjectReference)
 
-        let copy = original.copy() as BCOStorageRecordsToQueryCatalogEntriesLookUpTable
+        let copy = original.copy() as BCOObjectReferencesToQueryCatalogEntriesLookUpTable
 
         //When
-        copy.removeQueryCatalogEntryForStorageRecord(record1 as BCOStorageRecord)
+        copy.removeQueryCatalogEntryForObjectReference(reference1 as BCOObjectReference)
 
         //Then
         let expected = entry1
-        let actual = original.queryCatalogEntryForStorageRecord(record1 as BCOStorageRecord)
+        let actual = original.queryCatalogEntryForObjectReference(reference1 as BCOObjectReference)
         XCTAssertEqual(expected, actual)
     }
 

@@ -13,7 +13,7 @@
 @interface BCOIndexEntry ()
 {
     @protected
-    NSSet *_records;
+    NSSet *_references;
 }
 @property(nonatomic) id indexValue;
 @end
@@ -25,17 +25,17 @@
 #pragma mark - instance life cylce
 -(instancetype)init
 {
-    return [self initWithIndexValue:nil records:nil];
+    return [self initWithIndexValue:nil references:nil];
 }
 
 
--(instancetype)initWithIndexValue:(id)value records:(NSSet *)records
+-(instancetype)initWithIndexValue:(id)value references:(NSSet *)references
 {
-    return [self initWithIndexValue:value records:records shouldCopyObjects:YES];
+    return [self initWithIndexValue:value references:references shouldCopyObjects:YES];
 }
 
 
--(instancetype)initWithIndexValue:(id)value records:(NSSet *)records shouldCopyObjects:(BOOL)shouldCopyRecords
+-(instancetype)initWithIndexValue:(id)value references:(NSSet *)references shouldCopyObjects:(BOOL)shouldCopyReferences
 {
     NSParameterAssert(value);
 
@@ -43,7 +43,7 @@
     if (self == nil) return nil;
 
     _indexValue = value;
-    _records = (shouldCopyRecords) ? [records copy] : records;
+    _references = (shouldCopyReferences) ? [references copy] : references;
 
     return self;
 }
@@ -54,14 +54,14 @@
 -(id)copyWithZone:(NSZone *)zone
 {
     BOOL isImmutable = [self.class isEqual:BCOIndexEntry.class];
-    return (isImmutable) ? self : [[BCOIndexEntry alloc] initWithIndexValue:self.indexValue records:self.records];
+    return (isImmutable) ? self : [[BCOIndexEntry alloc] initWithIndexValue:self.indexValue references:self.references];
 }
 
 
 
 -(id)mutableCopyWithZone:(NSZone *)zone
 {
-    return [[BCOMutableIndexEntry alloc] initWithIndexValue:self.indexValue records:self.records];
+    return [[BCOMutableIndexEntry alloc] initWithIndexValue:self.indexValue references:self.references];
 }
 
 
@@ -84,10 +84,10 @@
 
 
 #pragma mark - properties
--(NSSet *)records
+-(NSSet *)references
 {
     //Note that we return a copy because of the mutable subclass
-    return [_records copy];
+    return [_references copy];
 }
 
 
@@ -104,33 +104,33 @@
 
 @implementation BCOMutableIndexEntry
 
--(instancetype)initWithIndexValue:(id)value records:(NSSet *)records
+-(instancetype)initWithIndexValue:(id)value references:(NSSet *)references
 {
-    NSMutableSet *mutableRecords = (records == nil) ? [NSMutableSet new] : [records mutableCopy];
-    return [super initWithIndexValue:value records:mutableRecords shouldCopyObjects:NO];
+    NSMutableSet *mutableReferences = (references == nil) ? [NSMutableSet new] : [references mutableCopy];
+    return [super initWithIndexValue:value references:mutableReferences shouldCopyObjects:NO];
 }
 
 
 
--(NSMutableSet *)mutableRecords
+-(NSMutableSet *)mutableReferences
 {
-    id records = _records;
-    NSAssert([records isKindOfClass:NSMutableSet.class], @"BCOMutableIndexEntry.records is expected to be an NSMutableSet but is a %@.", NSStringFromClass([records class]));
-    return records;
+    id references = _references;
+    NSAssert([references isKindOfClass:NSMutableSet.class], @"BCOMutableIndexEntry.references is expected to be an NSMutableSet but is a %@.", NSStringFromClass([references class]));
+    return references;
 }
 
 
 
--(void)addRecord:(id)record
+-(void)addReference:(id)reference
 {
-    [self.mutableRecords addObject:record];
+    [self.mutableReferences addObject:reference];
 }
 
 
 
--(void)removeRecord:(id)record
+-(void)removeReference:(id)reference
 {
-    [self.mutableRecords removeObject:record];
+    [self.mutableReferences removeObject:reference];
 }
 
 @end

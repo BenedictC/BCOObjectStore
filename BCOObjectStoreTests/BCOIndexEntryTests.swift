@@ -16,17 +16,17 @@ class BCOIndexEntryTests: XCTestCase {
     func testCopyDoesNotModifyOriginal() {
         //Given
         let value = "arf arf arf"
-        let records = NSSet()
-        let original = BCOIndexEntry(indexValue:value, records:records)
+        let references = NSSet()
+        let original = BCOIndexEntry(indexValue:value, references:references)
         let copy = original.mutableCopy() as BCOMutableIndexEntry
-        let record = NSUUID()
+        let reference = NSUUID()
 
         //When
-        copy.addRecord(record)
+        copy.addReference(reference)
 
         //Then
-        let expected = records
-        let actual = original.records
+        let expected = references
+        let actual = original.references
 
         XCTAssertEqual(expected, actual)
     }

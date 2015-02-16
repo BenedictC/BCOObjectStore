@@ -19,8 +19,8 @@
 //Entry Updating
 -(id)generateIndexValueForObject:(id)object;
 
--(void)addRecord:(id)record forIndexValue:(id)value;
--(void)removeRecord:(id)record forIndexValue:(id)value;
+-(void)addReference:(id)reference forIndexValue:(id)value;
+-(void)removeReference:(id)reference forIndexValue:(id)value;
 
 @end
 
@@ -33,15 +33,15 @@
 @property(nonatomic, readonly) BCOIndexDescription *indexDescription;
 
 //Object Access
--(NSSet *)recordsWithValueLessThan:(id)value;
--(NSSet *)recordsWithValueLessThanOrEqualTo:(id)value;
--(NSSet *)recordsWithValueGreaterThan:(id)value;
--(NSSet *)recordsWithValueGreaterThanOrEqualTo:(id)value;
+-(NSSet *)referencesWithValueLessThan:(id)value;
+-(NSSet *)referencesWithValueLessThanOrEqualTo:(id)value;
+-(NSSet *)referencesWithValueGreaterThan:(id)value;
+-(NSSet *)referencesWithValueGreaterThanOrEqualTo:(id)value;
 
--(NSSet *)recordsForValue:(id)value;
--(NSSet *)recordsWithValueNotEqualTo:(id)value;
+-(NSSet *)referencesForValue:(id)value;
+-(NSSet *)referencesWithValueNotEqualTo:(id)value;
 
--(NSSet *)recordsForValuesInSet:(NSArray *)values;
--(NSSet *)recordsForValuesNotInSet:(NSArray *)values;
+-(NSSet *)referencesForValuesInSet:(NSArray *)values;
+-(NSSet *)referencesForValuesNotInSet:(NSArray *)values;
 
 @end

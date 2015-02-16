@@ -7,16 +7,176 @@
 //
 
 #import "BCOObjectStorageContainer+Protected.h"
-#import "BCOStorageRecord.h"
+#import "BCOObjectReference.h"
 #import "BCOObjectStorageEnumerator.h"
+
+
+
+@interface BCOObjectStorageContainerPersistentStorageManager : NSObject
+@property(nonatomic, readonly) NSString *path;
+
+@property(nonatomic, readonly) id(^objectDeserializer)(NSData *);
+@property(nonatomic, readonly) NSData *(^objectSerializer)(id);
+
+@end
+
+
+
+@implementation BCOObjectStorageContainerPersistentStorageManager
+
+-(instancetype)initWithPath:(NSString *)path objectSerializer:(NSData *(^)(id))objectSerializer objectDeserializer:(NSData *(^)(id))objectDeserializer
+{
+    self = [super init];
+    if (self == nil) return nil;
+
+    _path = [path copy];
+    _objectDeserializer = objectDeserializer;
+    _objectSerializer = objectSerializer;
+
+    return self;
+}
+
+@end
+
 
 
 @implementation BCOObjectStorageContainer
 
-#pragma mark - Archiving
-+(NSMutableDictionary *)readAllObjectsAndRecordsFromPath:(NSString *)objectsPath objectDeserializer:(id(^)(NSData *))deserializer
+#pragma mark - instance factory
++(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path objectDeserializer:(id(^)(NSData *))deserializer error:(NSError **)outError
 {
-    NSMutableDictionary *objectsByStorageRecords = [NSMutableDictionary new];
+    //Attempt to load objects
+    NSString *objectsPath = [path stringByAppendingPathComponent:@"objects.archive"];
+    NSData *archive = [NSData dataWithContentsOfFile:objectsPath];
+    if (archive == nil) {
+        //TODO: Should we return an error?
+        return [[BCOObjectStorageContainer alloc] initWithObjectsByObjectReferences:@{}];
+    }
+
+    //Load objects
+    NSMutableDictionary *objectsByObjectReferences = [self readAllObjectsAndReferencesFromPath:objectsPath objectDeserializer:deserializer];
+    if (objectsByObjectReferences == nil) {
+        //TODO: Should we return an error?
+        return [[BCOObjectStorageContainer alloc] initWithObjectsByObjectReferences:@{}];
+    }
+
+    return [[BCOObjectStorageContainer alloc] initWithObjectsByObjectReferences:objectsByObjectReferences];
+}
+
+
+
+#pragma mark - Instance life cycle
+-(instancetype)init
+{
+    return [self initWithObjectsByObjectReferences:[NSMutableDictionary new]];
+}
+
+
+
+-(instancetype)initWithObjectsByObjectReferences:(NSDictionary *)objectsByObjectReferences
+{
+    return [self initWithObjectsByObjectReferences:objectsByObjectReferences previousContainer:nil persistentStorageManager:nil];
+}
+
+
+
+-(instancetype)initWithObjectsByObjectReferences:(NSDictionary *)objectsByObjectReferences previousContainer:(BCOObjectStorageContainer *)previousContainer persistentStorageManager:(BCOObjectStorageContainerPersistentStorageManager *)persistentStorageManager;
+{
+    NSParameterAssert(objectsByObjectReferences);
+
+    self = [super init];
+    if (self == nil) return nil;
+
+    _objectsByObjectReferences = objectsByObjectReferences;
+    _previousContainer = previousContainer;
+    _persistentStorageManager = persistentStorageManager;
+
+    return self;
+}
+
+
+
+#pragma mark - Random content access
+-(id)objectForObjectReference:(BCOObjectReference *)reference
+{
+    id object = self.objectsByObjectReferences[reference];
+    if (object != nil) {
+        return (object == [NSNull null]) ? nil : object;
+    }
+
+    return [self.previousContainer objectForObjectReference:reference];
+}
+
+
+
+-(BCOObjectReference *)objectReferenceForObject:(id)object
+{
+    BCOObjectReference *reference = [BCOObjectReference objectReferenceForObject:object];
+
+    id canonicalObject = self.objectsByObjectReferences[reference];
+
+    return (canonicalObject == nil) ? nil : reference;
+}
+
+
+
+#pragma mark - BCOObjectStorageEnumerator
+-(void)enumerateObjectReferencesUsingBlock:(void(^)(BCOObjectReference *reference, BOOL *stop))block
+{
+    [[[BCOObjectStorageEnumerator alloc] initWithStorageContainer:self references:nil] enumerateObjectReferencesUsingBlock:block];
+}
+
+
+
+-(void)enumerateObjectReferencesAndObjectsUsingBlock:(void(^)(BCOObjectReference *reference, id object, BOOL *stop))block
+{
+    [[[BCOObjectStorageEnumerator alloc] initWithStorageContainer:self references:nil] enumerateObjectReferencesAndObjectsUsingBlock:block];
+}
+
+
+
+//Enumerated content access
+-(id)objectReferenceEnumeratorWithObjectReferences:(id<NSFastEnumeration>)references
+{
+    return [[BCOObjectStorageEnumerator alloc] initWithStorageContainer:self references:references];
+}
+
+
+
+#pragma mark - Archiving
+
+-(BOOL)writeToPath:(NSString *)directoryPath error:(NSError **)outError
+{
+    NSString *objectsPath = [directoryPath stringByAppendingPathComponent:@"objects.archive"];
+    NSData *(^serializer)(id) = self.persistentStorageManager.objectSerializer;
+
+    NSParameterAssert(serializer);
+
+    //Write archive
+    BOOL didWriteArchive = [self.class writeObjects:self.objectsByObjectReferences.allValues toPath:objectsPath objectSerializer:serializer error:outError];
+    return didWriteArchive;
+
+
+    //    if (!didWriteArchive) return NO;
+    //
+    //    //Write index
+    //    NSError *error;
+    //    NSInteger previousVersion = -1;
+    //    NSString *previousIndexPath = [[self class] latestObjectReferencesPathInDirectoryAtPath:directoryPath version:&previousVersion error:&error];
+    //    NSString *indexFilename = [NSString stringWithFormat:@"%@.index", @((previousIndexPath == nil) ? 1 : previousVersion+1)];
+    //    NSString *indexPath = [directoryPath stringByAppendingPathComponent:indexFilename];
+    //
+    //    NSData *indexData = [NSKeyedArchiver archivedDataWithRootObject:self.objectsByObjectReferences.allKeys];
+    //    BOOL didWriteIndex = [indexData writeToFile:indexPath atomically:YES];
+    //
+    //    return didWriteIndex;
+}
+
+
+
++(NSMutableDictionary *)readAllObjectsAndReferencesFromPath:(NSString *)objectsPath objectDeserializer:(id(^)(NSData *))deserializer
+{
+    NSMutableDictionary *objectsByObjectReferences = [NSMutableDictionary new];
     NSInputStream *stream = [NSInputStream inputStreamWithFileAtPath:objectsPath];
     [stream open];
 
@@ -38,14 +198,14 @@
         NSData *archive = [NSData dataWithBytesNoCopy:buffer length:dataLength freeWhenDone:YES];
         id object = deserializer(archive);
 
-        //Create a record and store
-        BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
-        objectsByStorageRecords[record] = object;
+        //Create a reference and store
+        BCOObjectReference *reference = [BCOObjectReference objectReferenceForObject:object];
+        objectsByObjectReferences[reference] = object;
     } while (stream.streamStatus != NSStreamStatusAtEnd);
 
     [stream close];
 
-    return objectsByStorageRecords;
+    return objectsByObjectReferences;
 }
 
 
@@ -108,29 +268,7 @@
 
 
 
-+(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path objectDeserializer:(id(^)(NSData *))deserializer error:(NSError **)outError
-{
-    //Attempt to load objects
-    NSString *objectsPath = [path stringByAppendingPathComponent:@"objects.archive"];
-    NSData *archive = [NSData dataWithContentsOfFile:objectsPath];
-    if (archive == nil) {
-        //TODO: Should we return an error?
-        return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:@{}];
-    }
-
-    //Load objects
-    NSMutableDictionary *objectsByStorageRecords = [self readAllObjectsAndRecordsFromPath:objectsPath objectDeserializer:deserializer];
-    if (objectsByStorageRecords == nil) {
-        //TODO: Should we return an error?
-        return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:@{}];
-    }
-
-    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:objectsByStorageRecords];
-}
-
-
-
-//+(NSString *)latestStorageRecordsPathInDirectoryAtPath:(NSString *)directoryPath version:(NSInteger *)outVersion error:(NSError **)outError
+//+(NSString *)latestObjectReferencesPathInDirectoryAtPath:(NSString *)directoryPath version:(NSInteger *)outVersion error:(NSError **)outError
 //{
 //    //Load latest index
 //    NSFileManager *fileManager = [NSFileManager new];
@@ -165,109 +303,4 @@
 //    return path;
 //}
 
-
-
--(BOOL)writeToPath:(NSString *)directoryPath error:(NSError **)outError objectSerializer:(NSData *(^)(id))serializer
-{
-    NSString *objectsPath = [directoryPath stringByAppendingPathComponent:@"objects.archive"];
-
-    //Write archive
-    BOOL didWriteArchive = [self.class writeObjects:self.objectsByStorageRecords.allValues toPath:objectsPath objectSerializer:serializer error:outError];
-    return didWriteArchive;
-
-
-//    if (!didWriteArchive) return NO;
-//
-//    //Write index
-//    NSError *error;
-//    NSInteger previousVersion = -1;
-//    NSString *previousIndexPath = [[self class] latestStorageRecordsPathInDirectoryAtPath:directoryPath version:&previousVersion error:&error];
-//    NSString *indexFilename = [NSString stringWithFormat:@"%@.index", @((previousIndexPath == nil) ? 1 : previousVersion+1)];
-//    NSString *indexPath = [directoryPath stringByAppendingPathComponent:indexFilename];
-//
-//    NSData *indexData = [NSKeyedArchiver archivedDataWithRootObject:self.objectsByStorageRecords.allKeys];
-//    BOOL didWriteIndex = [indexData writeToFile:indexPath atomically:YES];
-//
-//    return didWriteIndex;
-}
-
-
-
-#pragma mark - Instance life cycle
--(instancetype)init
-{
-    return [self initWithObjectsByStorageRecords:[NSMutableDictionary new]];
-}
-
-
-
--(instancetype)initWithObjectsByStorageRecords:(NSDictionary *)objectsByStorageRecords
-{
-    return [self initWithObjectsByStorageRecords:objectsByStorageRecords previousContainer:nil];
-}
-
-
-
--(instancetype)initWithObjectsByStorageRecords:(NSDictionary *)objectsByStorageRecords previousContainer:(BCOObjectStorageContainer *)previousContainer
-{
-    NSParameterAssert(objectsByStorageRecords);
-
-    self = [super init];
-    if (self == nil) return nil;
-
-    _objectsByStorageRecords = objectsByStorageRecords;
-
-    return self;
-}
-
-
-
-#pragma mark - Random content access
--(id)objectForStorageRecord:(BCOStorageRecord *)record
-{
-    id object = self.objectsByStorageRecords[record];
-    if (object != nil) {
-        return (object == [NSNull null]) ? nil : object;
-    }
-
-    return [self.previousContainer objectForStorageRecord:record];
-}
-
-
-
--(BCOStorageRecord *)storageRecordForObject:(id)object
-{
-    BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
-
-    id canonicalObject = self.objectsByStorageRecords[record];
-
-    return (canonicalObject == nil) ? nil : record;
-}
-
-
-
-#pragma mark - BCOObjectStorageEnumerator
--(void)enumerateStorageRecordsUsingBlock:(void(^)(BCOStorageRecord *record, BOOL *stop))block
-{
-    [[[BCOObjectStorageEnumerator alloc] initWithStorageContainer:self records:nil] enumerateStorageRecordsUsingBlock:block];
-}
-
-
-
--(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block
-{
-    [[[BCOObjectStorageEnumerator alloc] initWithStorageContainer:self records:nil] enumerateStorageRecordsAndObjectsUsingBlock:block];
-}
-
-
-
-//Enumerated content access
--(id)storageRecordEnumeratorWithStorageRecords:(id<NSFastEnumeration>)records
-{
-    return [[BCOObjectStorageEnumerator alloc] initWithStorageContainer:self records:records];
-}
-
 @end
-
-
-

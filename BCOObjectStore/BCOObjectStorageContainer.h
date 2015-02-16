@@ -8,22 +8,23 @@
 
 #import "BCOObjectStorageEnumeratorProtocol.h"
 
-@class BCOStorageRecord;
+@class BCOObjectReference;
 
 
 
 @interface BCOObjectStorageContainer : NSObject <BCOObjectStorageEnumerator>
 
-//Instance life cycle
+//Instance factory
 +(BCOObjectStorageContainer *)objectStorageWithPersistentStorePath:(NSString *)path objectDeserializer:(id(^)(NSData *))deserializer error:(NSError **)outError;
-//Archiving
--(BOOL)writeToPath:(NSString *)path error:(NSError **)ourError objectSerializer:(NSData *(^)(id))serializer;
 
 //Random content access
--(id)objectForStorageRecord:(BCOStorageRecord *)storageRecord;
--(BCOStorageRecord *)storageRecordForObject:(id)object;
+-(id)objectForObjectReference:(BCOObjectReference *)objectReference;
+-(BCOObjectReference *)objectReferenceForObject:(id)object;
 
 //Enumerated content access
--(id)storageRecordEnumeratorWithStorageRecords:(id<NSFastEnumeration>)records;
+-(id)objectReferenceEnumeratorWithObjectReferences:(id<NSFastEnumeration>)references;
+
+//Archiving
+-(BOOL)writeToPath:(NSString *)path objectSerializer:(NSData *(^)(id))objectSerializer error:(NSError **)ourError;
 
 @end

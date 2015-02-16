@@ -9,7 +9,7 @@
 #import <Foundation/Foundation.h>
 
 @class BCOObjectStorageContainer;
-@class BCOStorageRecord;
+@class BCOObjectReference;
 
 
 
@@ -17,8 +17,8 @@
 
 +(instancetype)builderWithPreviousStorageContainer:(BCOObjectStorageContainer *)previousContainer;
 
--(BCOStorageRecord *)addObject:(id)object;
--(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;
+-(BCOObjectReference *)addObject:(id)object;
+-(void)removeObjectForObjectReference:(BCOObjectReference *)objectReference;
 
 -(BCOObjectStorageContainer *)finalize;
 

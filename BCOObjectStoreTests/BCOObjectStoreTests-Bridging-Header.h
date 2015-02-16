@@ -10,8 +10,8 @@
 
 #import "../BCOObjectStore/BCOObjectStore.h"
 #import "../BCOObjectStore/BCOIndexEntry.h"
-#import "../BCOObjectStore/BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h"
+#import "../BCOObjectStore/BCOObjectReferencesToQueryCatalogEntriesLookUpTable.h"
 #import "../BCOObjectStore/BCOQueryCatalogEntry.h"
-#import "../BCOObjectStore/BCOStorageRecord.h"
+#import "../BCOObjectStore/BCOObjectReference.h"
 #import "../BCOObjectStore/BCOIndex.h"
 #import "../BCOObjectStore/BCOIndexDescription.h"
