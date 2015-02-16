@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8200C7C81A92167F0018DAFC /* BCOObjectStorageContainerBuilder.m in Sources */ = {isa = PBXBuildFile; fileRef = 8200C7C71A92167F0018DAFC /* BCOObjectStorageContainerBuilder.m */; };
+		8200C7CC1A9217ED0018DAFC /* BCOObjectStorageEnumerator.m in Sources */ = {isa = PBXBuildFile; fileRef = 8200C7CB1A9217ED0018DAFC /* BCOObjectStorageEnumerator.m */; };
 		82AA6A951A84DA51000D70CD /* BCOIndex.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A741A84DA51000D70CD /* BCOIndex.m */; };
 		82AA6A961A84DA51000D70CD /* BCOIndexDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A761A84DA51000D70CD /* BCOIndexDescription.m */; };
 		82AA6A971A84DA51000D70CD /* BCOIndexEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 82AA6A781A84DA51000D70CD /* BCOIndexEntry.m */; };
@@ -62,6 +64,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8200C7C61A92167F0018DAFC /* BCOObjectStorageContainerBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStorageContainerBuilder.h; sourceTree = "<group>"; };
+		8200C7C71A92167F0018DAFC /* BCOObjectStorageContainerBuilder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStorageContainerBuilder.m; sourceTree = "<group>"; };
+		8200C7C91A9217080018DAFC /* BCOObjectStorageContainer+Protected.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "BCOObjectStorageContainer+Protected.h"; sourceTree = "<group>"; };
+		8200C7CA1A9217ED0018DAFC /* BCOObjectStorageEnumerator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOObjectStorageEnumerator.h; sourceTree = "<group>"; };
+		8200C7CB1A9217ED0018DAFC /* BCOObjectStorageEnumerator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOObjectStorageEnumerator.m; sourceTree = "<group>"; };
+		8200C7CD1A9218750018DAFC /* BCOObjectStorageEnumeratorProtocol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BCOObjectStorageEnumeratorProtocol.h; sourceTree = "<group>"; };
 		822B9EFF19E92B76009A4030 /* BCOObjectStore */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BCOObjectStore; sourceTree = BUILT_PRODUCTS_DIR; };
 		82AA6A731A84DA51000D70CD /* BCOIndex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BCOIndex.h; sourceTree = "<group>"; };
 		82AA6A741A84DA51000D70CD /* BCOIndex.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BCOIndex.m; sourceTree = "<group>"; };
@@ -196,7 +204,13 @@
 				82AA6A781A84DA51000D70CD /* BCOIndexEntry.m */,
 				82AA6A791A84DA51000D70CD /* BCOIndexValue.h */,
 				82AA6A7A1A84DA51000D70CD /* BCOObjectStorageContainer.h */,
+				8200C7C91A9217080018DAFC /* BCOObjectStorageContainer+Protected.h */,
 				82AA6A7B1A84DA51000D70CD /* BCOObjectStorageContainer.m */,
+				8200C7CD1A9218750018DAFC /* BCOObjectStorageEnumeratorProtocol.h */,
+				8200C7CA1A9217ED0018DAFC /* BCOObjectStorageEnumerator.h */,
+				8200C7CB1A9217ED0018DAFC /* BCOObjectStorageEnumerator.m */,
+				8200C7C61A92167F0018DAFC /* BCOObjectStorageContainerBuilder.h */,
+				8200C7C71A92167F0018DAFC /* BCOObjectStorageContainerBuilder.m */,
 				82AA6A7C1A84DA51000D70CD /* BCOObjectStore.h */,
 				82AA6A7D1A84DA51000D70CD /* BCOObjectStore.m */,
 				82AA6A7E1A84DA51000D70CD /* BCOObjectStore+Protected.h */,
@@ -335,8 +349,10 @@
 				82AA6A9E1A84DA51000D70CD /* BCOQueryCatalog.m in Sources */,
 				82AA6A951A84DA51000D70CD /* BCOIndex.m in Sources */,
 				82AA6AA11A84DA51000D70CD /* BCOSelectFunction.m in Sources */,
+				8200C7C81A92167F0018DAFC /* BCOObjectStorageContainerBuilder.m in Sources */,
 				82AF59941A6D70370056EDB2 /* main.m in Sources */,
 				82AA6A9D1A84DA51000D70CD /* BCOQuery.m in Sources */,
+				8200C7CC1A9217ED0018DAFC /* BCOObjectStorageEnumerator.m in Sources */,
 				82AA6A9A1A84DA51000D70CD /* BCOObjectStoreConfiguration.m in Sources */,
 				82AA6AA31A84DA51000D70CD /* BCOStorageRecordsToQueryCatalogEntriesLookUpTable.m in Sources */,
 				82AF59931A6D70370056EDB2 /* LUMStation.m in Sources */,

@@ -6,18 +6,9 @@
 //
 //
 
-#import <Foundation/Foundation.h>
+#import "BCOObjectStorageEnumeratorProtocol.h"
 
 @class BCOStorageRecord;
-
-
-
-@protocol BCOObjectStorageEnumerator <NSObject>
-
--(void)enumerateStorageRecordsUsingBlock:(void(^)(BCOStorageRecord *record, BOOL *stop))block;
--(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block;
-
-@end
 
 
 
@@ -34,18 +25,5 @@
 
 //Enumerated content access
 -(id)storageRecordEnumeratorWithStorageRecords:(id<NSFastEnumeration>)records;
-
-@end
-
-
-
-@interface BCOObjectStorageContainerBuilder : NSObject
-
-+(instancetype)builderWithPreviousStorageContainer:(BCOObjectStorageContainer *)previousContainer;
-
--(BCOStorageRecord *)addObject:(id)object;
--(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord;
-
--(BCOObjectStorageContainer *)finalize;
 
 @end

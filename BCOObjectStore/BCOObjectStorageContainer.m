@@ -6,34 +6,10 @@
 //
 //
 
-#import "BCOObjectStorageContainer.h"
+#import "BCOObjectStorageContainer+Protected.h"
 #import "BCOStorageRecord.h"
+#import "BCOObjectStorageEnumerator.h"
 
-
-
-#pragma mark - Interfaces
-
-@interface BCOObjectStorageContainer ()
-
-@property(nonatomic, readonly) NSDictionary *objectsByStorageRecords;
-@property(nonatomic, readonly) BCOObjectStorageContainer *previousContainer;
-@end
-
-
-
-@interface BCOObjectStorageEnumerator : NSObject <BCOObjectStorageEnumerator>
-
--(instancetype)initWithStorageContainer:(BCOObjectStorageContainer *)storageContainer records:(id<NSFastEnumeration>)records;
-@property(nonatomic, readonly) BCOObjectStorageContainer *storageContainer;
-@property(nonatomic, readonly) id<NSFastEnumeration> records;
-
-@end
-
-
-
-
-
-#pragma mark - BCOObjectStorageContainer
 
 @implementation BCOObjectStorageContainer
 
@@ -74,7 +50,7 @@
 
 
 
-+(id)readObjectAtOffset:(NSInteger)offset fromPath:(NSString *)path
++(id)readObjectAtOffset:(uint32_t)offset fromPath:(NSString *)path
 {
     NSData *data = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:NULL];
     if (data == nil) return nil;
@@ -102,7 +78,7 @@
 
         //Write the length
         {
-            const uint32_t scalarToWrite = archive.length;
+            const uint32_t scalarToWrite = (uint32_t)archive.length; //TODO: Is this cast safe? Is there a better solution?
             const uint8_t *bytes = (uint8_t *)&scalarToWrite;
             const uint32_t totalBytes = sizeof(scalarToWrite);
 
@@ -115,7 +91,7 @@
         //Write the data
         {
             const uint8_t *bytes = (uint8_t *)archive.bytes;
-            const uint32_t totalBytes = archive.length;
+            const uint32_t totalBytes = (uint32_t)archive.length; //TODO: Is this cast safe? Is there a better solution?
 
             uint32_t bytesWritten = 0;
             while (bytesWritten < totalBytes) {
@@ -295,131 +271,3 @@
 
 
 
-
-
-#pragma mark - BCOObjectStorageEnumerator
-
-@implementation BCOObjectStorageEnumerator
-
--(instancetype)initWithStorageContainer:(BCOObjectStorageContainer *)storageContainer records:(id<NSFastEnumeration>)records
-{
-    NSParameterAssert(storageContainer);
-
-    self = [super init];
-    if (self == nil) return nil;
-
-    _storageContainer = storageContainer;
-    _records = records;
-
-    return self;
-}
-
-
-
--(void)enumerateStorageRecordsUsingBlock:(void(^)(BCOStorageRecord *record, BOOL *stop))block
-{
-    if (self.records != nil) {
-        BOOL stop = NO;
-        for (BCOStorageRecord *record in self.records) {
-            block(record, &stop);
-            if (stop) return;
-        }
-        return;
-    }
-
-    NSMutableSet *visitedRecords = [NSMutableSet new];
-    BCOObjectStorageContainer *container = self.storageContainer;
-
-    while (container != nil) {
-
-        [container.objectsByStorageRecords enumerateKeysAndObjectsUsingBlock:^(BCOStorageRecord *record, id obj, BOOL *stop) {
-            BOOL isVisited = [visitedRecords containsObject:record];
-            if (isVisited) return;
-
-            [visitedRecords addObject:record];
-
-            if (obj != [NSNull null]) block(record, stop);
-        }];
-
-        container = container.previousContainer;
-    }
-}
-
-
-
--(void)enumerateStorageRecordsAndObjectsUsingBlock:(void(^)(BCOStorageRecord *record, id object, BOOL *stop))block
-{
-    BCOObjectStorageContainer *container = self.storageContainer;
-
-    [self enumerateStorageRecordsUsingBlock:^(BCOStorageRecord *record, BOOL *stop) {
-        id object = [container objectForStorageRecord:record];
-        block(record, object, stop);
-    }];
-}
-
-@end
-
-
-
-
-
-@implementation BCOObjectStorageContainerBuilder
-{
-    BCOObjectStorageContainer *_previousContainer;
-    NSMutableDictionary *_objectsByStorageRecords;
-}
-
-
-
-#pragma mark - Instance life cycle
-+(instancetype)builderWithPreviousStorageContainer:(BCOObjectStorageContainer *)previousContainer
-{
-    return [[self alloc] initWithPreviousStorageContainer:previousContainer];
-}
-
-
-
--(instancetype)init
-{
-    return [self initWithPreviousStorageContainer:nil];
-}
-
-
-
--(instancetype)initWithPreviousStorageContainer:(BCOObjectStorageContainer *)previousContainer
-{
-    self = [super init];
-    if (self == nil) return nil;
-
-    _previousContainer = previousContainer;
-    _objectsByStorageRecords = [NSMutableDictionary new];
-
-    return self;
-}
-
-
-
-#pragma mark -
--(BCOStorageRecord *)addObject:(id)object
-{
-    BCOStorageRecord *record = [BCOStorageRecord storageRecordForObject:object];
-    _objectsByStorageRecords[record] = object;
-
-    return record;
-}
-
-
-
--(void)removeObjectForStorageRecord:(BCOStorageRecord *)storageRecord
-{
-    _objectsByStorageRecords[storageRecord] = [NSNull null];
-}
-
-
-
--(BCOObjectStorageContainer *)finalize
-{
-    return [[BCOObjectStorageContainer alloc] initWithObjectsByStorageRecords:_objectsByStorageRecords previousContainer:_previousContainer];
-}
-
-@end

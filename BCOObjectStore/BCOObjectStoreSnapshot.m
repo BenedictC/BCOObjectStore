@@ -9,6 +9,7 @@
 #import "BCOObjectStoreSnapshot.h"
 
 #import "BCOObjectStorageContainer.h"
+#import "BCOObjectStorageContainerBuilder.h"
 #import "BCOStorageRecordsToQueryCatalogEntriesLookUpTable.h"
 #import "BCOQueryCatalog.h"
 #import "BCOQuery.h"
